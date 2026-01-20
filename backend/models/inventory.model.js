@@ -23,7 +23,7 @@ const inventorySchema = new mongoose.Schema(
 
     locationInFactory: {
       type: String,
-      enum: ["warehouse"], // to be done 
+      enum: ["warehouse"], // to be done
       required: true,
     },
 
@@ -36,7 +36,7 @@ const inventorySchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.model("Inventory", inventorySchema);

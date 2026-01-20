@@ -21,7 +21,7 @@ const productSchema = new mongoose.Schema(
 
     color: {
       type: String,
-     enum: [
+      enum: [
         "Red",
         "Blue",
         "Black",
@@ -44,27 +44,26 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
-  quantityPerSize: {
+    quantityPerSize: {
       type: Number,
       required: true,
       min: 0,
     },
 
-
     costPrice: {
       type: Number,
-      min:1,
+      min: 1,
     },
 
     salePrice: {
       type: Number,
       required: true,
-      min:1,
+      min: 1,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.model("Product", productSchema);
