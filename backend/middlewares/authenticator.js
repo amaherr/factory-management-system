@@ -23,7 +23,7 @@ const authenticator = async (req, res, next) => {
         }
 
         // add the user data to the request
-        req.user = { id: decodedPayload.id, role: decodedPayload.role };
+        req.user = { id: decodedPayload.id, roles: decodedPayload.roles };
         console.log("User authenticated: \n", req.user);
 
         next();

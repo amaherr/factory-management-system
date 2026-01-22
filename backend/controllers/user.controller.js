@@ -1,21 +1,22 @@
+const User = require("../models/user.model");
 const createError = require("../utils/errorFactory");
 
 const userController = {
     // function to handle user login
     login: async (req, res, next) => {
         try {
-            const { email, password } = req.body;
+            const { phoneNumber, password } = req.body;
 
-            // find user by email (override password's 'select: false')
-            const user = await User.findOne({ email }).select("+password");
+            // find user by phoneNumber (override password's 'select: false')
+            const user = await User.findOne({ phoneNumber }).select("+password");
             if (!user) {
-                return next(createError("Invalid email or password", 401));
+                return next(createError("Invalid Phone Number or password", 401));
             }
 
             // compare both passwords
             const match = await bcrypt.compare(password, user.password);
             if (!match) {
-                return next(createError("Invalid email or password", 401));
+                return next(createError("Invalid Phone Number or password", 401));
             }
 
             // create jwt token
@@ -24,7 +25,7 @@ const userController = {
             const token = jwt.sign(
                 {
                     id: user._id,
-                    role: user.role,
+                    roles: user.roles,
                 },
                 JWT_SECRET,
                 {
