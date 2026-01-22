@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const connectDB = require("./config/connectDB");
 
 // import routes
 const userRoutes = require("./routes/user.routes");
@@ -11,6 +12,7 @@ const logger = require("./middlewares/logger");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
+connectDB();
 
 // mount middlewares
 app.use(cookieParser(process.env.COOKIE_KEY));
