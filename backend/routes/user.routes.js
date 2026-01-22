@@ -15,4 +15,10 @@ router.use(authorizor([ROLES.ADMIN]));
 // route to create a new user
 router.post("/", userController.createUser);
 
+// route to get all users
+router.get("/", userController.getAllUsers);
+
+// route to change specific user roles
+router.patch("/:userId", userController.changeUserRoles);
+
 module.exports = router;

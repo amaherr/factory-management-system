@@ -91,6 +91,47 @@ const userController = {
             next(createError(err, 500));
         }
     },
+
+    // function to get all users
+    getAllUsers: async (req, res, next) => {
+        try {
+            const users = await User.find();
+
+            res.status(200).json({
+                success: true,
+                message: "Users retieved successfully",
+                users,
+            });
+        } catch (err) {
+            next(createError(err, 500));
+        }
+    },
+
+    // function to change the role of a specific user
+    changeUserRoles: async (req, res, next) => {
+        try {
+            const userId = req.params.userId;
+            const { newRoles } = req.body;
+
+            // update user role
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { roles: newRoles },
+                { new: true, runValidators: true },
+            );
+            if (!user) {
+                return next(createError("User not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "User roles updated successfully",
+                user,
+            });
+        } catch (err) {
+            next(createError(err, 500));
+        }
+    },
 };
 
 module.exports = userController;

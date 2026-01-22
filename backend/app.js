@@ -22,7 +22,7 @@ app.use(logger);
 app.use(authenticator);
 
 // mount user routes
-app.use("/api/user", userRoutes);
+app.use("/api/users", userRoutes);
 
 // mount error handler
 app.use(errorHandler);
