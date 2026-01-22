@@ -2,27 +2,24 @@ import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema(
   {
+    receiverUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
     senderUserId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    receivers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-      },
-    ],
-
-    seenBy: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        default: [],
-      },
-    ],
+    status: {
+      type: String,
+      enum: ["unread", "read"],
+      default: "unread",
+      required: true,
+    },
 
     content: {
       type: String,
@@ -30,7 +27,9 @@ const notificationSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 export default mongoose.model("Notification", notificationSchema);
