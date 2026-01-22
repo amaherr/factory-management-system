@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const ROLES = require("../enums/roles.enum");
+
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -19,7 +21,7 @@ const userSchema = new mongoose.Schema(
             type: [
                 {
                     type: String,
-                    enum: ["admin", "sales", "inventory", "accounting"],
+                    enum: Object.values(ROLES),
                 },
             ],
             required: true,

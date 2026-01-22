@@ -1,3 +1,6 @@
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
 const User = require("../models/user.model");
 const createError = require("../utils/errorFactory");
 
@@ -51,6 +54,39 @@ const userController = {
                     message: "User logged in successfully",
                     user: userObj,
                 });
+        } catch (err) {
+            next(createError(err, 500));
+        }
+    },
+
+    // function to create a new user
+    createUser: async (req, res, next) => {
+        try {
+            const { name, password, roles, phoneNumber } = req.body;
+
+            // check if user already exists
+            const existingUser = await User.findOne({ phoneNumber });
+            if (existingUser) {
+                return next(createError("User already exists", 400));
+            }
+
+            // hash password
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+            // create new user
+            const user = await User.create({
+                name,
+                password: hashedPassword,
+                roles,
+                phoneNumber,
+            });
+
+            res.status(201).json({
+                success: true,
+                message: "User created successfully",
+                user,
+            });
         } catch (err) {
             next(createError(err, 500));
         }

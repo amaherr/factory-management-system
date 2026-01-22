@@ -16,12 +16,13 @@ const app = express();
 connectDB();
 
 // mount middlewares
+app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_KEY));
 app.use(logger);
 app.use(authenticator);
 
 // mount user routes
-app.use("/api/auth", userRoutes);
+app.use("/api/user", userRoutes);
 
 // mount error handler
 app.use(errorHandler);
