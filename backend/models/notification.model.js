@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
+const NOTIFICATION_STATUS = require("../enums/notification.enum");
 
 const notificationSchema = new mongoose.Schema(
   {
@@ -16,8 +17,8 @@ const notificationSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["unread", "read"],
-      default: "unread",
+      enum: Object.values(NOTIFICATION_STATUS),
+      default: NOTIFICATION_STATUS.UNREAD,
       required: true,
     },
 
@@ -32,4 +33,4 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Notification", notificationSchema);
+module.exports = mongoose.model("Notification", notificationSchema);
