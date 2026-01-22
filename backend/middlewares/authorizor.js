@@ -6,15 +6,12 @@ const authorizor = (allowedRoles) => (req, res, next) => {
         const userRoles = req.user.roles;
 
         // check if atleast one role is in the array of allowed roles
-        userRoles.forEach((role) => {
-            if (allowedRoles.includes(role)) {
-                console.log("User authorized");
-                return next();
-            }
-        });
+        const isAuthorized = userRoles.some((role) => allowedRoles.includes(role));
+        if (!isAuthorized) {
+            return next(createError("Access denied", 403));
+        }
 
-        // no user role is in allowed roles
-        next(createError("Access denied", 403));
+        next();
     } catch (err) {
         next(createError(err, 500));
     }
