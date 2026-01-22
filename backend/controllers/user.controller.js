@@ -15,6 +15,9 @@ const userController = {
             if (!user) {
                 return next(createError("Invalid Phone Number or password", 401));
             }
+            if (!user.isActive) {
+                return next(createError("User deactivated", 401));
+            }
 
             // compare both passwords
             const match = await bcrypt.compare(password, user.password);
@@ -126,6 +129,36 @@ const userController = {
             res.status(200).json({
                 success: true,
                 message: "User roles updated successfully",
+                user,
+            });
+        } catch (err) {
+            next(createError(err, 500));
+        }
+    },
+
+    // function to change activation for a specific user
+    changeUserActivation: async (req, res, next) => {
+        try {
+            const userId = req.params.userId;
+            const { isActive } = req.body;
+            console.log(isActive);
+
+            // change user activation status
+            const user = await User.findByIdAndUpdate(
+                userId,
+                { isActive },
+                {
+                    new: true,
+                    runValidators: true,
+                },
+            );
+            if (!user) {
+                return next(createError("User not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Changed user activation status successfully",
                 user,
             });
         } catch (err) {

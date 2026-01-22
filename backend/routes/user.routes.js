@@ -19,6 +19,11 @@ router.post("/", userController.createUser);
 router.get("/", userController.getAllUsers);
 
 // route to change specific user roles
-router.patch("/:userId", userController.changeUserRoles);
+router.patch("/change-role/:userId", userController.changeUserRoles);
+
+// route to change activation specific user
+router.patch("/activation-status/:userId", userController.changeUserActivation);
+
+// route to delete specific user
 
 module.exports = router;
