@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const createError = require("../utils/errorFactory");
-const User = require("../models/User");
+const User = require("../models/user.model");
 
 // define public paths
 PUBLIC_PATHS = ["/api/auth/login"];
