@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { ISSUE_TYPE, ISSUE_STATUS } = require("../enums/issue.enum");
+
 const issueSchema = mongoose.Schema({
     createdByUserId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -9,7 +11,7 @@ const issueSchema = mongoose.Schema({
     issueType: {
         type: String,
         required: true,
-        enum: ["inventory discrepancy", "damaged goods", "system bug"],
+        enum: Object.values(ISSUE_TYPE),
     },
     description: {
         type: String,
@@ -18,7 +20,7 @@ const issueSchema = mongoose.Schema({
     status: {
         type: String,
         required: true,
-        enum: ["open", "in progress", "resolved", "cancelled"],
+        enum: Object.values(ISSUE_STATUS),
         default: "open",
     },
     resolvedByUserId: {
