@@ -3,15 +3,21 @@ const jwt = require("jsonwebtoken");
 const createError = require("../utils/errorFactory");
 const User = require("../models/User");
 
+// define public paths
+PUBLIC_PATHS = ["/api/auth/login"];
+
 // function that authenticates the token of the user
 const authenticator = async (req, res, next) => {
-    try {
-        // extract jwt token from cookie
-        const token = req.cookies.token;
-        if (!token) {
-            return next(createError("Token missing", 401));
-        }
+    // allow public routes
+    if (PUBLIC_PATHS.includes(req.path)) return next();
 
+    // extract jwt token from cookie
+    const token = req.cookies.token;
+    if (!token) {
+        return next(createError("Token missing", 401));
+    }
+
+    try {
         // decode the jwt token payload
         const JWT_SECRET = process.env.JWT_SECRET;
         const decodedPayload = jwt.verify(token, JWT_SECRET);

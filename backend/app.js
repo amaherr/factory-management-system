@@ -9,6 +9,7 @@ const userRoutes = require("./routes/user.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");
+const authenticator = require("./middlewares/authenticator");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
@@ -17,9 +18,10 @@ connectDB();
 // mount middlewares
 app.use(cookieParser(process.env.COOKIE_KEY));
 app.use(logger);
+app.use(authenticator);
 
 // mount user routes
-app.use("/auth", userRoutes);
+app.use("/api/auth", userRoutes);
 
 // mount error handler
 app.use(errorHandler);
