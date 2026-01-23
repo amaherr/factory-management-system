@@ -1,5 +1,33 @@
 const mongoose = require("mongoose");
 
+const addressSchema = new mongoose.Schema({
+    // should be a enum of countries
+    country: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+
+    // should be an enum of governates inside the country
+    governate: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+
+    city: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+
+    street: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+});
+
 const customerSchema = new mongoose.Schema(
     {
         name: {
@@ -20,10 +48,8 @@ const customerSchema = new mongoose.Schema(
             trim: true,
         },
 
-        ordersCount: {
-            type: Number,
-            default: 0,
-            min: 0,
+        address: {
+            type: addressSchema,
         },
     },
     {
