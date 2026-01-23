@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ORDER_TYPE, ORDER_STATUS } = require("../enums/orderType.enum");
 
 const orderSchema = mongoose.Schema(
     {
@@ -14,6 +15,11 @@ const orderSchema = mongoose.Schema(
         customerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Customer",
+            required: true,
+        },
+        orderType:{
+            type: String,
+            enum: Object.values(ORDER_TYPE),
             required: true,
         },
         items: [
@@ -58,8 +64,22 @@ const orderSchema = mongoose.Schema(
         status: {
             type: String,
             required: true,
-            enum: ["pending", "cancelled", "shipped"],
-            default: "pending",
+            enum: Object.values(ORDER_STATUS),
+            default: ORDER_STATUS.PENDING,
+        },
+        finalizedAt: {
+            type: Date,
+        },
+        finalizedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+        cancelledAt: {
+            type: Date,
+        },
+        cancelledByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
         },
         notes: {
             type: String,
