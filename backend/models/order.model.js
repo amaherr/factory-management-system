@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { ORDER_TYPE, ORDER_STATUS } = require("../enums/orderType.enum");
+const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enum");
 
 const orderSchema = mongoose.Schema(
     {

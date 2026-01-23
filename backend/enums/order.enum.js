@@ -4,9 +4,10 @@ const ORDER_TYPE = Object.freeze({
 });
 
 const ORDER_STATUS = Object.freeze({
-  PENDING: "pending",
+  DRAFT: "draft",
+  FINALIZED: "finalized",
   CANCELLED: "cancelled",
-  SHIPPED: "shipped",
+  RETURNED: "returned",
 });
 
 module.exports = { ORDER_TYPE, ORDER_STATUS };
