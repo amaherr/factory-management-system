@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { COLORS, PRODUCT_STATUS } = require("../enums/product.enums");
+
 const productSchema = new mongoose.Schema(
     {
         code: {
@@ -21,21 +23,7 @@ const productSchema = new mongoose.Schema(
 
         color: {
             type: String,
-            enum: [
-                "Red",
-                "Blue",
-                "Black",
-                "White",
-                "Green",
-                "Yellow",
-                "Gray",
-                "Navy",
-                "Brown",
-                "Beige",
-                "Pink",
-                "Purple",
-                "Orange",
-            ],
+            enum: Object.values(COLORS),
             required: true,
         },
 
@@ -44,7 +32,8 @@ const productSchema = new mongoose.Schema(
             trim: true,
         },
 
-        quantityPerSize: {
+        // stock keeping unit
+        sku: {
             type: Number,
             required: true,
             min: 0,
@@ -59,6 +48,13 @@ const productSchema = new mongoose.Schema(
             type: Number,
             required: true,
             min: 1,
+        },
+
+        status: {
+            type: String,
+            required: true,
+            enum: Object.values(PRODUCT_STATUS),
+            default: PRODUCT_STATUS.PENDING,
         },
     },
     {
