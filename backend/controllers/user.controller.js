@@ -39,6 +39,10 @@ const userController = {
                 },
             );
 
+            // update last login date
+            user.lastLoginAt = Date.now();
+            await user.save();
+
             // remove password when returning the user
             const userObj = user.toObject();
             delete userObj.password;
