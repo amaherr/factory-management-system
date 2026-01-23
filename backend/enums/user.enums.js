@@ -5,4 +5,4 @@ const ROLES = Object.freeze({
     ACCOUNTING: "accounting",
 });
 
-module.exports = ROLES;
+module.exports = { ROLES };

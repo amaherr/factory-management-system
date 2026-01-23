@@ -2,7 +2,7 @@ const express = require("express");
 
 const userController = require("../controllers/user.controller");
 const authorizor = require("../middlewares/authorizor");
-const ROLES = require("../enums/roles.enum");
+const { ROLES } = require("../enums/roles.enum");
 
 const router = express.Router();
 

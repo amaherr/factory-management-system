@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { ISSUE_TYPE, ISSUE_STATUS } = require("../enums/issue.enum");
+const { ISSUE_TYPE, ISSUE_STATUS } = require("../enums/issue.enums");
 
 const issueSchema = mongoose.Schema({
     createdByUserId: {
