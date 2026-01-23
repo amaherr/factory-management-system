@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { FACTORY_LOCATIONS } = require("../enums/inventory.enums");
+
 const inventorySchema = new mongoose.Schema(
     {
         productId: {
@@ -23,15 +25,8 @@ const inventorySchema = new mongoose.Schema(
 
         locationInFactory: {
             type: String,
-            enum: ["warehouse"], // to be done
             required: true,
-        },
-
-        status: {
-            type: String,
-            enum: ["Pending", "Inventory", "Sales", "Sold out"],
-            required: true,
-            default: "Pending",
+            enum: Object.values(FACTORY_LOCATIONS),
         },
     },
     {
