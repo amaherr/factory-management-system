@@ -1,5 +1,4 @@
 const BATCH_STATUS = Object.freeze({
-    IN_PROGRESS: "in progress",
     DONE: "done",
     PLANNING: "planning",
     PRODUCTOON: "production",
