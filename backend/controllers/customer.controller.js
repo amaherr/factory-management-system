@@ -23,6 +23,62 @@ const customerController = {
             next(createError(err.message, 500));
         }
     },
+
+    // function to retrieve all customers
+    getAllCustomers: async (req, res, next) => {
+        try {
+            const customers = await Customer.find();
+
+            res.status(200).json({
+                success: true,
+                message: "Retrieved all customers successfully",
+                customers,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    // function to retrieve a specific customers
+    getCustomer: async (req, res, next) => {
+        try {
+            const customerId = req.params.customerId;
+
+            const customer = await Customer.findById(customerId);
+            if (!customer) {
+                return next(createError("Customer not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Retrieved customer successfully",
+                customer,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    // function to delete a specific customer
+    deleteCustomer: async (req, res, next) => {
+        try {
+            const customerId = req.params.customerId;
+
+            // delete customer
+            const deletedCustomer = await Customer.findByIdAndDelete(customerId);
+            if (!deletedCustomer) {
+                return next(createError("Customer not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Successfully deleted customer",
+                deletedCustomer,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
 };
 
 module.exports = customerController;
