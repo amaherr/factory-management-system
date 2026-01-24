@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enum");
+const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 
 const orderSchema = mongoose.Schema(
     {
@@ -17,7 +17,7 @@ const orderSchema = mongoose.Schema(
             ref: "Customer",
             required: true,
         },
-        orderType:{
+        orderType: {
             type: String,
             enum: Object.values(ORDER_TYPE),
             required: true,
