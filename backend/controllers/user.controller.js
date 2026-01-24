@@ -62,7 +62,7 @@ const userController = {
                     user: userObj,
                 });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 
@@ -95,7 +95,7 @@ const userController = {
                 user,
             });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 
@@ -110,7 +110,7 @@ const userController = {
                 users,
             });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 
@@ -136,7 +136,7 @@ const userController = {
                 user,
             });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 
@@ -166,7 +166,7 @@ const userController = {
                 user,
             });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 
@@ -187,7 +187,7 @@ const userController = {
                 deletedUser,
             });
         } catch (err) {
-            next(createError(err, 500));
+            next(createError(err.message, 500));
         }
     },
 };

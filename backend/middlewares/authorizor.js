@@ -13,7 +13,7 @@ const authorizor = (allowedRoles) => (req, res, next) => {
 
         next();
     } catch (err) {
-        next(createError(err, 500));
+        next(createError(err.message, 500));
     }
 };
 
