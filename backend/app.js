@@ -6,6 +6,7 @@ const connectDB = require("./config/connectDB");
 
 // import routes
 const userRoutes = require("./routes/user.routes");
+const customerRoutes = require("./routes/customer.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");
@@ -23,6 +24,7 @@ app.use(authenticator);
 
 // mount user routes
 app.use("/api/users", userRoutes);
+app.use("/api/customers", customerRoutes);
 
 // mount error handler
 app.use(errorHandler);

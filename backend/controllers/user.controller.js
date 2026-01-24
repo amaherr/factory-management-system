@@ -74,7 +74,7 @@ const userController = {
             // check if user already exists
             const existingUser = await User.findOne({ phoneNumber });
             if (existingUser) {
-                return next(createError("User already exists", 400));
+                return next(createError("User already exists", 409));
             }
 
             // hash password
