@@ -169,6 +169,27 @@ const userController = {
             next(createError(err, 500));
         }
     },
+
+    // function to delete user
+    deleteUser: async (req, res, next) => {
+        try {
+            const userId = req.params.userId;
+
+            // delete user
+            const deletedUser = await User.findByIdAndDelete(userId);
+            if (!deletedUser) {
+                return next(createError("User not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Successfully deleted user",
+                deletedUser,
+            });
+        } catch (err) {
+            next(createError(err, 500));
+        }
+    },
 };
 
 module.exports = userController;

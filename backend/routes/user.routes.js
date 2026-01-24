@@ -25,5 +25,6 @@ router.patch("/change-role/:userId", userController.changeUserRoles);
 router.patch("/activation-status/:userId", userController.changeUserActivation);
 
 // route to delete specific user
+router.delete("/delete/:userId", userController.deleteUser);
 
 module.exports = router;
