@@ -114,6 +114,26 @@ const userController = {
         }
     },
 
+    // function to get a specifc user
+    getUser: async (req, res, next) => {
+        try {
+            const userId = req.params.userId;
+
+            const user = await User.findById(userId);
+            if (!user) {
+                return next(createError("User not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "User retieved successfully",
+                user,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
     // function to change the role of a specific user
     changeUserRoles: async (req, res, next) => {
         try {

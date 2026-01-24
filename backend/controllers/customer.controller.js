@@ -31,7 +31,7 @@ const customerController = {
 
             res.status(200).json({
                 success: true,
-                message: "Retrieved all customers successfully",
+                message: "Customers retrieved successfully",
                 customers,
             });
         } catch (err) {
@@ -51,7 +51,7 @@ const customerController = {
 
             res.status(200).json({
                 success: true,
-                message: "Retrieved customer successfully",
+                message: "Customer retrieved successfully",
                 customer,
             });
         } catch (err) {

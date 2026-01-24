@@ -18,6 +18,9 @@ router.post("/", userController.createUser);
 // route to get all users
 router.get("/", userController.getAllUsers);
 
+// route to get a specific user
+router.get("/:userId", userController.getUser);
+
 // route to change specific user roles
 router.patch("/change-role/:userId", userController.changeUserRoles);
 
