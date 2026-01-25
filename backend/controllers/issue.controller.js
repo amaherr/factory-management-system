@@ -153,6 +153,27 @@ const issueController = {
             next(createError(err.message, 500));
         }
     },
+
+    // function to delete a specific issue
+    deleteIssue: async (req, res, next) => {
+        try {
+            const issueId = req.params.issueId;
+
+            // delete issue
+            const deletedIssue = await Issue.findByIdAndDelete(issueId);
+            if (!deletedIssue) {
+                return next(createError("Issue not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Issue deleted successfully",
+                deletedIssue,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
 };
 
 module.exports = issueController;
