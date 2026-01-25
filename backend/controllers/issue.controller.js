@@ -25,7 +25,9 @@ const issueController = {
     // function to get all issues
     getAllIssues: async (req, res, next) => {
         try {
-            const issues = await Issue.find().populate("createdByUserId");
+            const issues = await Issue.find().populate(
+                "createdByUserId resolvedByUserId cancelledByUserId",
+            );
 
             res.status(200).json({
                 success: true,
@@ -42,7 +44,9 @@ const issueController = {
         try {
             const issueId = req.params.issueId;
 
-            const issue = await Issue.findById(issueId).populate("createdByUserId");
+            const issue = await Issue.findById(issueId).populate(
+                "createdByUserId resolvedByUserId cancelledByUserId",
+            );
             if (!issue) {
                 return next("Issue not found", 404);
             }
@@ -100,6 +104,49 @@ const issueController = {
             res.status(200).json({
                 success: true,
                 messsage: "Issue updated successfully",
+                updatedIssue,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    // function to change the status of an issue
+    changeIssueStatus: async (req, res, next) => {
+        try {
+            const issueId = req.params.issueId;
+            const userId = req.user.id;
+            const { status } = req.body;
+
+            // populate update fields
+            const updateObject = {};
+            updateObject.status = status;
+            if (status === ISSUE_STATUS.CANCELLED) {
+                updateObject.cancelledByUserId = userId;
+                updateObject.cancelledAt = Date.now();
+
+                updateObject.resolvedByUserId = null;
+                updateObject.resolvedAt = null;
+            } else if (status === ISSUE_STATUS.RESOLVED) {
+                updateObject.cancelledByUserId = null;
+                updateObject.cancelledAt = null;
+
+                updateObject.resolvedByUserId = userId;
+                updateObject.resolvedAt = Date.now();
+            }
+
+            // change status
+            const updatedIssue = await Issue.findByIdAndUpdate(issueId, updateObject, {
+                new: true,
+                runValidators: true,
+            });
+            if (!updatedIssue) {
+                return next(createError("Issue not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Issue status updated successfully",
                 updatedIssue,
             });
         } catch (err) {

@@ -21,4 +21,11 @@ router.get("/:issueId", authorizor([ROLES.ADMIN]), issueController.getIssue);
 // route to edit user issue
 router.patch("/edit-my-issue/:issueId", issueController.editUserIssue);
 
+// route to change the status of an issue
+router.patch(
+    "/change-status/:issueId",
+    authorizor([ROLES.ADMIN]),
+    issueController.changeIssueStatus,
+);
+
 module.exports = router;
