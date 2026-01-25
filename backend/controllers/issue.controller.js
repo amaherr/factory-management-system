@@ -1,4 +1,5 @@
 const Issue = require("../models/issue.model");
+const { ISSUE_STATUS } = require("../enums/issue.enums");
 const createError = require("../utils/errorFactory");
 
 const issueController = {
@@ -68,6 +69,38 @@ const issueController = {
                 success: true,
                 message: "User issues retrieved successfully",
                 userIssues,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    // function to edit a user's issue
+    editUserIssue: async (req, res, next) => {
+        try {
+            const userId = req.user.id;
+            const issueId = req.params.issueId;
+            const { issueType, description } = req.body;
+
+            // construct update fields
+            const updateObject = {};
+            if (issueType !== undefined) updateObject.issueType = issueType;
+            if (description !== undefined) updateObject.description = description;
+
+            // update open issue made by authenticated user
+            const updatedIssue = await Issue.findOneAndUpdate(
+                { _id: issueId, createdByUserId: userId, status: ISSUE_STATUS.OPEN },
+                { $set: updateObject },
+                { new: true, runValidators: true },
+            );
+            if (!updatedIssue) {
+                return next(createError("Issue not found or cannot be editted", 403));
+            }
+
+            res.status(200).json({
+                success: true,
+                messsage: "Issue updated successfully",
+                updatedIssue,
             });
         } catch (err) {
             next(createError(err.message, 500));

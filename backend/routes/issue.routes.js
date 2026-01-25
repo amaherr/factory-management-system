@@ -18,4 +18,7 @@ router.get("/my-issues", issueController.getUserIssues);
 // route to get a specific issue
 router.get("/:issueId", authorizor([ROLES.ADMIN]), issueController.getIssue);
 
+// route to edit user issue
+router.patch("/edit-my-issue/:issueId", issueController.editUserIssue);
+
 module.exports = router;
