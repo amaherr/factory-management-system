@@ -28,4 +28,7 @@ router.patch(
     issueController.changeIssueStatus,
 );
 
+// route to delete a speicif issue
+router.delete("/delete/:issueId", authorizor([ROLES.ADMIN]), issueController.deleteIssue);
+
 module.exports = router;
