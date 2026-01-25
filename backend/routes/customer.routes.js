@@ -27,6 +27,9 @@ router.get(
     customerController.getCustomer,
 );
 
+// route to edit a specific customer
+router.patch("/edit/:customerId", customerController.editCustomer);
+
 // route to delete a specific customer
 router.delete(
     "/delete/:customerId",

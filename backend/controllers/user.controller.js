@@ -134,6 +134,47 @@ const userController = {
         }
     },
 
+    // function to edit a specific user
+    editUser: async (req, res, next) => {
+        try {
+            const { name, password, phoneNumber } = req.body;
+            const userId = req.params.userId;
+
+            let updateObject = {};
+
+            // build the update object
+            if (name !== undefined) updateObject.name = name;
+            if (phoneNumber !== undefined) updateObject.phoneNumber = phoneNumber;
+            if (password !== undefined) {
+                // hash new password
+                const saltRounds = 10;
+                updateObject.password = await bcrypt.hash(password, saltRounds);
+            }
+
+            // find and update the user
+            const updatedUser = await User.findByIdAndUpdate(userId, updateObject, {
+                new: true,
+                runValidators: true,
+            });
+            if (!updatedUser) {
+                return next(createError("User not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "User updated successfully",
+                updatedUser,
+            });
+        } catch (err) {
+            // if new phone number already exists
+            if (err.code === 11000 && err.keyPattern?.phoneNumber) {
+                return next(createError("Phone number already exists", 409));
+            }
+
+            next(createError(err.message, 500));
+        }
+    },
+
     // function to change the role of a specific user
     changeUserRoles: async (req, res, next) => {
         try {

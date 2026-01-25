@@ -21,6 +21,9 @@ router.get("/", userController.getAllUsers);
 // route to get a specific user
 router.get("/:userId", userController.getUser);
 
+// route to edit user details
+router.patch("/edit/:userId", userController.editUser);
+
 // route to change specific user roles
 router.patch("/change-role/:userId", userController.changeUserRoles);
 

@@ -59,6 +59,54 @@ const customerController = {
         }
     },
 
+    // function to edit a specific customer
+    editCustomer: async (req, res, next) => {
+        try {
+            const customerId = req.params.customerId;
+
+            // white-list fields to get updated
+            const allowedFields = ["name", "phoneNumber", "email", "notes"];
+            const updates = {};
+
+            // normal top-level fields
+            for (const key of allowedFields) {
+                if (req.body[key] !== undefined) updates[key] = req.body[key];
+            }
+
+            // partial nested address update
+            if (req.body.address && typeof req.body.address === "object") {
+                for (const [k, v] of Object.entries(req.body.address)) {
+                    if (v !== undefined) updates[`address.${k}`] = v;
+                }
+            }
+
+            // update customer
+            const updatedCustomer = await Customer.findByIdAndUpdate(
+                customerId,
+                { $set: updates },
+                {
+                    new: true,
+                    runValidators: true,
+                },
+            );
+            if (!updatedCustomer) {
+                return next(createError("Customer not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Customer updated successfully",
+                updatedCustomer,
+            });
+        } catch (err) {
+            if (err.code === 11000 && err.keyPattern?.phoneNumber) {
+                return next(createError("Phone number already exists", 409));
+            }
+
+            next(createError(err.message, 500));
+        }
+    },
+
     // function to delete a specific customer
     deleteCustomer: async (req, res, next) => {
         try {
