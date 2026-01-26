@@ -56,6 +56,15 @@ const productSchema = new mongoose.Schema(
             enum: Object.values(PRODUCT_STATUS),
             default: PRODUCT_STATUS.PENDING,
         },
+
+        deactivatedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+
+        deactivatedAt: {
+            type: Date,
+        },
     },
     {
         timestamps: true,
