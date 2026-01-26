@@ -51,6 +51,11 @@ const orderSchema = mongoose.Schema(
             required: true,
             min: 0,
         },
+        taxAmount: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
         total: {
             type: Number,
             required: true,
@@ -67,6 +72,10 @@ const orderSchema = mongoose.Schema(
             enum: Object.values(ORDER_STATUS),
             default: ORDER_STATUS.PENDING,
         },
+
+        notes: {
+            type: String,
+        },
         finalizedAt: {
             type: Date,
         },
@@ -80,9 +89,6 @@ const orderSchema = mongoose.Schema(
         cancelledByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-        },
-        notes: {
-            type: String,
         },
     },
     { timestamps: true },
