@@ -66,4 +66,11 @@ const notificationController = {
     },
 };
 
-module.exports = notificationController;
+const notificationService = {
+    // helper function to send a new notification (within a session)
+    sendNotification: async ({ receiverUserId, senderUserId, content }, session) => {
+        return await Notification.create({ receiverUserId, senderUserId, content }, { session });
+    },
+};
+
+module.exports = { notificationController, notificationService };
