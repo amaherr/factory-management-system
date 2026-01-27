@@ -3,7 +3,6 @@ const createError = require("../utils/errorFactory");
 
 const { PRODUCT_STATUS } = require("../enums/product.enums");
 const Inventory = require("../models/inventory.model");
-const { FACTORY_LOCATIONS } = require("../enums/inventory.enums");
 
 const productController = {
     createProduct: async (req, res, next) => {
@@ -105,8 +104,8 @@ const productController = {
             if (!existingInventory) {
                 const newInventory = new Inventory({
                     productId: id,
-                    quantityInStock: 0,
-                    locationInFactory: FACTORY_LOCATIONS.NO_STOCK,
+                    totalInStock: 0,
+                    locations: [],
                 });
                 await newInventory.save();
             }
