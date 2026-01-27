@@ -66,7 +66,7 @@ const productSchema = new mongoose.Schema(
             type: Date,
         },
 
-         activatedByUserId: {
+        activatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
         },
