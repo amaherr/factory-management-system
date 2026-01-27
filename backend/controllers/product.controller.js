@@ -100,6 +100,17 @@ const productController = {
                 return next(createError("Product not found", 404));
             }
 
+            // Create inventory if it doesn't exist
+            const existingInventory = await Inventory.findOne({ productId: id });
+            if (!existingInventory) {
+                const newInventory = new Inventory({
+                    productId: id,
+                    quantityInStock: 0,
+                    locationInFactory: FACTORY_LOCATIONS.NO_STOCK,
+                });
+                await newInventory.save();
+            }
+
             res.status(200).json({
                 success: true,
                 message: "Product activated successfully",
