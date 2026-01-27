@@ -53,7 +53,7 @@ const productSchema = new mongoose.Schema(
         status: {
             type: String,
             required: true,
-            enum: Object.values(PRODUCT_STATUS),
+            enum: Object.values(    ),
             default: PRODUCT_STATUS.PENDING,
         },
 
@@ -63,6 +63,15 @@ const productSchema = new mongoose.Schema(
         },
 
         deactivatedAt: {
+            type: Date,
+        },
+
+         activatedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+
+        activatedAt: {
             type: Date,
         },
     },
