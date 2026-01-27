@@ -150,6 +150,7 @@ const productController = {
             const products = await Product.find();
             res.status(200).json({
                 success: true,
+                data: products,
             });
         } catch (err) {
             next(createError(err.message, 500));
@@ -179,6 +180,7 @@ const productController = {
 
             res.status(200).json({
                 success: true,
+                data: product,
             });
         } catch (err) {
             next(createError(err.message, 500));
