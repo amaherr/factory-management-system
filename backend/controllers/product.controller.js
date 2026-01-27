@@ -1,6 +1,10 @@
 const Product = require("../models/product.model");
 const createError = require("../utils/errorFactory");
 
+const { PRODUCT_STATUS } = require("../enums/product.enums");
+const Inventory = require("../models/inventory.model");
+const { FACTORY_LOCATIONS } = require("../enums/inventory.enums");
+
 const productController = {
     createProduct: async (req, res, next) => {
         try {
@@ -30,6 +34,152 @@ const productController = {
             res.status(201).json({
                 success: true,
                 message: "Product created successfully",
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    deleteProduct: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const product = await Product.findByIdAndDelete(id);
+
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Product deleted successfully",
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    updateProduct: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const updates = req.body;
+
+            // Prevent updating code
+            if (updates.code) {
+                return next(createError("Product code cannot be updated", 400));
+            }
+
+            const product = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Product updated successfully",
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    activateProduct: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const product = await Product.findByIdAndUpdate(
+                id,
+                {
+                    status: PRODUCT_STATUS.ACTIVE,
+                    activatedByUserId: req.user.id,
+                    activatedAt: Date.now(),
+                },
+                { new: true }
+            );
+
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            // Create inventory if it doesn't exist
+            const existingInventory = await Inventory.findOne({ productId: id });
+            if (!existingInventory) {
+                const newInventory = new Inventory({
+                    productId: id,
+                    quantityInStock: 0,
+                    locationInFactory: FACTORY_LOCATIONS.NO_STOCK,
+                });
+                await newInventory.save();
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Product activated successfully",
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    deactivateProduct: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const product = await Product.findByIdAndUpdate(
+                id,
+                {
+                    status: PRODUCT_STATUS.DEACTIVE, // or DEACTIVE based on enum
+                    deactivatedByUserId: req.user.id,
+                    deactivatedAt: Date.now(),
+                },
+                { new: true }
+            );
+
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Product deactivated successfully",
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    getAllProducts: async (req, res, next) => {
+        try {
+            const products = await Product.find();
+            res.status(200).json({
+                success: true,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    getAllActiveProducts: async (req, res, next) => {
+        try {
+            const products = await Product.find({ status: PRODUCT_STATUS.ACTIVE });
+            res.status(200).json({
+                success: true,
+                data: products,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    getProductById: async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const product = await Product.findById(id);
+
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
             });
         } catch (err) {
             next(createError(err.message, 500));
