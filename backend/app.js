@@ -10,6 +10,7 @@ const customerRoutes = require("./routes/customer.routes");
 const issueRoutes = require("./routes/issue.routes");
 const productRoutes = require("./routes/product.routes");
 const notificationRoutes = require("./routes/notification.routes");
+const inventoryRoutes = require("./routes/inventory.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");
@@ -31,6 +32,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/issues", issueRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/inventory", inventoryRoutes);
 
 // mount error handler
 app.use(errorHandler);

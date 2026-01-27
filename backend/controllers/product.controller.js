@@ -7,7 +7,7 @@ const Inventory = require("../models/inventory.model");
 const productController = {
     createProduct: async (req, res, next) => {
         try {
-            const { code, name, description, color, defaultImage, sku, costPrice, salePrice, status } = req.body;
+            const { code, name, description, color, defaultImage, sku, costPrice, salePrice, status, season } = req.body;
 
             const existingProduct = await Product.findOne({ code });
             if (existingProduct) {
@@ -24,6 +24,7 @@ const productController = {
                 costPrice,
                 salePrice,
                 status,
+                season,
                 activatedByUserId: req.user.id,
                 activatedAt: Date.now(),
             });

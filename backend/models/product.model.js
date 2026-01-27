@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { COLORS, PRODUCT_STATUS } = require("../enums/product.enums");
+const { COLORS, PRODUCT_STATUS, SEASONS } = require("../enums/product.enums");
 
 const productSchema = new mongoose.Schema(
     {
@@ -27,6 +27,12 @@ const productSchema = new mongoose.Schema(
             required: true,
         },
 
+        season: {
+            type: String,
+            enum: Object.values(SEASONS),
+        },
+
+     
         defaultImage: {
             type: String,
             trim: true,

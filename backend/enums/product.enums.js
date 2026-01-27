@@ -20,4 +20,11 @@ const PRODUCT_STATUS = Object.freeze({
     DEACTIVE: "deactive",
 });
 
-module.exports = { COLORS, PRODUCT_STATUS };
+const SEASONS = Object.freeze({
+    SPRING: "spring",
+    SUMMER: "summer",
+    AUTUMN: "autumn",
+    WINTER: "winter",
+});
+
+module.exports = { COLORS, PRODUCT_STATUS, SEASONS };
