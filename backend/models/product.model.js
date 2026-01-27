@@ -53,7 +53,7 @@ const productSchema = new mongoose.Schema(
         status: {
             type: String,
             required: true,
-            enum: Object.values(    ),
+            enum: Object.values(PRODUCT_STATUS),
             default: PRODUCT_STATUS.PENDING,
         },
 
