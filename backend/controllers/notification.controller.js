@@ -1,4 +1,5 @@
 const Notification = require("../models/notification.model");
+const { NOTIFICATION_STATUS } = require("../enums/notification.enums");
 const createError = require("../utils/errorFactory");
 
 const notificationController = {
@@ -32,6 +33,32 @@ const notificationController = {
                 success: true,
                 message: "Notifications retrieved successfully",
                 notifications,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
+
+    // function to change the status of a notification for the current user
+    changeNotificationStatus: async (req, res, next) => {
+        try {
+            const notificationId = req.params.notificationId;
+            const userId = req.user.id;
+
+            // update notification
+            const updatedNotification = await Notification.findByIdAndUpdate(
+                { _id: notificationId, receiverUserId: userId },
+                { status: NOTIFICATION_STATUS.READ },
+                { new: true, runValidators: true },
+            );
+            if (!updatedNotification) {
+                return next(createError("Notification not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Notification status updated successfully",
+                updatedNotification,
             });
         } catch (err) {
             next(createError(err.message, 500));
