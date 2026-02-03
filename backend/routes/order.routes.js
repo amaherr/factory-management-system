@@ -16,4 +16,7 @@ router.get(
     orderController.getOrders,
 );
 
+// route to get orders made by user
+router.get("/me", authorizor([ROLES.ADMIN, ROLES.SALES]), orderController.getUserOrders);
+
 module.exports = router;

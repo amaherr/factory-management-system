@@ -209,6 +209,23 @@ const orderController = {
             next(createError(err.message, 500));
         }
     },
+
+    // function to get the orders made by the current user
+    getUserOrders: async (req, res, next) => {
+        try {
+            const userId = req.user.id;
+
+            const orders = await Order.find({ createdByUserId: userId }).sort("-createdAt");
+
+            res.status(200).json({
+                success: true,
+                message: "Order retrieved successfully",
+                data: orders,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
 };
 
 module.exports = orderController;
