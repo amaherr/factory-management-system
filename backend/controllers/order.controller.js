@@ -1,25 +1,13 @@
 const Order = require("../models/order.model");
-const Counter = require("../models/counter.model");
 const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
 
 const { ORDER_TYPE } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
+const { COUNTERS } = require("../enums/counter.enums");
+
 const createError = require("../utils/errorFactory");
-
-// ------------------------ Helpers ------------------------
-async function getNextOrderNumber(session) {
-    const doc = await Counter.findOneAndUpdate(
-        { name: "orderNumber" },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true, session },
-    );
-    return doc.seq;
-}
-
-function isPositiveNumber(n) {
-    return typeof n === "number" && Number.isFinite(n) && n >= 0;
-}
+const { getNextDocumentNumber, isPositiveNumber } = require("../utils/helpers");
 
 const orderController = {
     createOrder: async (req, res, next) => {
@@ -138,7 +126,7 @@ const orderController = {
                 }
 
                 // generate order number atomically
-                const orderNumber = await getNextOrderNumber(session);
+                const orderNumber = await getNextDocumentNumber(COUNTERS.ORDER_NUMBER, session);
 
                 // create order
                 const created = await Order.create(
