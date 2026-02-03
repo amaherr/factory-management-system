@@ -10,6 +10,7 @@ const createError = require("../utils/errorFactory");
 const { getNextDocumentNumber, isPositiveNumber } = require("../utils/helpers");
 
 const orderController = {
+    // function to create a new order
     createOrder: async (req, res, next) => {
         const session = await Order.startSession();
 
@@ -160,6 +161,52 @@ const orderController = {
             return next(createError(err.message, 500));
         } finally {
             session.endSession();
+        }
+    },
+
+    // function to get orders (filtered)
+    getOrders: async (req, res, next) => {
+        try {
+            const {
+                createdByUserId,
+                customerId,
+                orderType,
+                status,
+                from, // date filter
+                to, // date filter
+                q, // search by order number
+            } = req.query;
+
+            // build the filter object
+            const filter = {};
+            if (createdByUserId) filter.createdByUserId = createdByUserId;
+            if (customerId) filter.customerId = customerId;
+            if (orderType) filter.orderType = orderType;
+            if (status) filter.status = status;
+
+            // date range
+            if (from || to) {
+                filter.createdAt = {};
+                if (from) filter.createdAt.$gte = new Date(from);
+                if (to) filter.createdAt.$lte = new Date(to);
+            }
+
+            // search query
+            if (q) {
+                const num = Number(q);
+                if (!Number.isNaN(num)) filter.orderNumber = num;
+            }
+
+            // get filtered orders
+            const orders = await Order.find(filter).sort("-createdAt");
+
+            res.status(200).json({
+                success: true,
+                messgae: "Orders retrieved successfully",
+                data: orders,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
         }
     },
 };
