@@ -1,3 +1,5 @@
+const Notification = require("../models/notification.model");
+const StockMovement = require("../models/stockMovement.model");
 const Counter = require("../models/counter.model");
 
 // gets the next number of a document
@@ -20,4 +22,15 @@ async function sendNotification({ receiverUserId, senderUserId, content }, sessi
     return await Notification.create({ receiverUserId, senderUserId, content }, { session });
 }
 
-module.exports = { getNextDocumentNumber, isPositiveNumber, sendNotification };
+// creates new stock movement
+async function createStockMovement(
+    { productId, quantityChange, movementType, notes, userId },
+    session,
+) {
+    return await StockMovement.create(
+        { productId, quantityChange, movementType, notes, userId },
+        { session },
+    );
+}
+
+module.exports = { getNextDocumentNumber, isPositiveNumber, sendNotification, createStockMovement };
