@@ -7,6 +7,6 @@ const { ROLES } = require("../enums/user.enums");
 const router = express.Router();
 
 // route to create a new order
-router.post("/", authorizor([ROLES.SALES]), orderController.createOrder);
+router.post("/", authorizor([ROLES.ADMIN, ROLES.SALES]), orderController.createOrder);
 
 module.exports = router;

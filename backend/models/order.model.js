@@ -70,7 +70,7 @@ const orderSchema = mongoose.Schema(
             type: String,
             required: true,
             enum: Object.values(ORDER_STATUS),
-            default: ORDER_STATUS.PENDING,
+            default: ORDER_STATUS.DRAFT,
         },
         notes: {
             type: String,
