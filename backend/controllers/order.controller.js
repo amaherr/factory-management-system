@@ -226,6 +226,27 @@ const orderController = {
             next(createError(err.message, 500));
         }
     },
+
+    // function to get a specific order
+    getOrder: async (req, res, next) => {
+        try {
+            const orderId = req.params.orderId;
+
+            // get order
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return next(createError("Order not found", 404));
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Order retrieved successfully",
+                data: order,
+            });
+        } catch (err) {
+            next(createError(err.message, 500));
+        }
+    },
 };
 
 module.exports = orderController;
