@@ -1,4 +1,6 @@
 const Customer = require("../models/customer.model");
+
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
 const customerController = {
@@ -14,11 +16,7 @@ const customerController = {
             // create new customer
             const customer = await Customer.create(req.body);
 
-            res.status(201).json({
-                success: true,
-                message: "Successfully created a new customer",
-                customer,
-            });
+            res.status(201).json(response("Successfully created a new customer", customer));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -29,11 +27,7 @@ const customerController = {
         try {
             const customers = await Customer.find();
 
-            res.status(200).json({
-                success: true,
-                message: "Customers retrieved successfully",
-                customers,
-            });
+            res.status(200).json(response("Customers retrieved successfully", customers));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -49,11 +43,7 @@ const customerController = {
                 return next(createError("Customer not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Customer retrieved successfully",
-                customer,
-            });
+            res.status(200).json(response("Customer retrieved successfully", customer));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -93,11 +83,7 @@ const customerController = {
                 return next(createError("Customer not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Customer updated successfully",
-                updatedCustomer,
-            });
+            res.status(200).json(response("Customer updated successfully", updatedCustomer));
         } catch (err) {
             if (err.code === 11000 && err.keyPattern?.phoneNumber) {
                 return next(createError("Phone number already exists", 409));
@@ -118,11 +104,7 @@ const customerController = {
                 return next(createError("Customer not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Successfully deleted customer",
-                deletedCustomer,
-            });
+            res.status(200).json(response("Successfully deleted customer", deletedCustomer));
         } catch (err) {
             next(createError(err.message, 500));
         }
