@@ -68,4 +68,11 @@ router.patch(
     inventoryController.sellInventory
 );
 
+// Manual Adjustment (Admin, Inventory)
+router.patch(
+    "/:id/manual-adjustment",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    inventoryController.manualAdjustment
+);
+
 module.exports = router;
