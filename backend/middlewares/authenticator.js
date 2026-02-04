@@ -4,7 +4,7 @@ const createError = require("../utils/errorFactory");
 const User = require("../models/user.model");
 
 // define public paths
-PUBLIC_PATHS = ["/api/user/login"];
+PUBLIC_PATHS = ["/api/users/login"];
 
 // function that authenticates the token of the user
 const authenticator = async (req, res, next) => {

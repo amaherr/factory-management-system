@@ -7,7 +7,17 @@ const Inventory = require("../models/inventory.model");
 const productController = {
     createProduct: async (req, res, next) => {
         try {
-            const { code, name, description, color, defaultImage, sku, costPrice, salePrice, status, season } = req.body;
+            const {
+                code,
+                name,
+                description,
+                color,
+                defaultImage,
+                sku,
+                costPrice,
+                salePrice,
+                season,
+            } = req.body;
 
             const existingProduct = await Product.findOne({ code });
             if (existingProduct) {
@@ -23,7 +33,6 @@ const productController = {
                 sku,
                 costPrice,
                 salePrice,
-                status,
                 season,
                 activatedByUserId: req.user.id,
                 activatedAt: Date.now(),
@@ -68,7 +77,10 @@ const productController = {
                 return next(createError("Product code cannot be updated", 400));
             }
 
-            const product = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
+            const product = await Product.findByIdAndUpdate(id, updates, {
+                new: true,
+                runValidators: true,
+            });
 
             if (!product) {
                 return next(createError("Product not found", 404));
@@ -93,7 +105,7 @@ const productController = {
                     activatedByUserId: req.user.id,
                     activatedAt: Date.now(),
                 },
-                { new: true }
+                { new: true },
             );
 
             if (!product) {
@@ -130,7 +142,7 @@ const productController = {
                     deactivatedByUserId: req.user.id,
                     deactivatedAt: Date.now(),
                 },
-                { new: true }
+                { new: true },
             );
 
             if (!product) {

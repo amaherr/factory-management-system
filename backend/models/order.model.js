@@ -61,16 +61,11 @@ const orderSchema = mongoose.Schema(
             required: true,
             min: 0,
         },
-        orderDate: {
-            type: Date,
-            required: true,
-            default: Date.now,
-        },
         status: {
             type: String,
             required: true,
             enum: Object.values(ORDER_STATUS),
-            default: ORDER_STATUS.PENDING,
+            default: ORDER_STATUS.DRAFT,
         },
         notes: {
             type: String,
