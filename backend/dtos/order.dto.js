@@ -14,7 +14,7 @@ const orderDtos = {
             .items(
                 Joi.object({
                     productId: objectId.required(),
-                    quantity: Joi.number().integer().min(0).required(),
+                    quantity: Joi.number().integer().min(1).required(),
                 }),
             )
             .min(1)

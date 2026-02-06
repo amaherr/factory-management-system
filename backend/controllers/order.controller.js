@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const Order = require("../models/order.model");
 const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
@@ -5,61 +7,32 @@ const Product = require("../models/product.model");
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
 const { COUNTERS } = require("../enums/counter.enums");
+const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const { getNextDocumentNumber, isPositiveNumber } = require("../utils/helpers");
+const {
+    getNextDocumentNumber,
+    createStockMovement,
+    isPositiveNumber,
+} = require("../utils/helpers");
 
 const orderController = {
     // function to create a new order
     createOrder: async (req, res, next) => {
-        const session = await Order.startSession();
+        const session = await mongoose.startSession();
 
         try {
             const userId = req.user.id;
-
-            const {
-                customerId,
-                orderType,
-                items,
-                discountAmount = 0,
-                taxAmount = 0,
-                notes,
-            } = req.body;
-
-            // request validation
-            if (!customerId) return next(createError("customerId is required", 400));
-            if (!orderType) return next(createError("orderType is required", 400));
-
-            if (![ORDER_TYPE.ON_SHELF, ORDER_TYPE.ON_DEMAND].includes(orderType)) {
-                return next(createError("Invalid orderType", 400));
-            }
-
-            if (!Array.isArray(items) || items.length === 0) {
-                return next(createError("items must be a non-empty array", 400));
-            }
-
-            if (!isPositiveNumber(discountAmount)) {
-                return next(createError("discountAmount must be >= 0", 400));
-            }
-            if (!isPositiveNumber(taxAmount)) {
-                return next(createError("taxAmount must be >= 0", 400));
-            }
-
-            // validate each item
-            for (const [idx, it] of items.entries()) {
-                if (!it?.productId)
-                    return next(createError(`items[${idx}].productId is required`, 400));
-                if (!isPositiveNumber(it.quantity) || it.quantity === 0) {
-                    return next(createError(`items[${idx}].quantity must be > 0`, 400));
-                }
-            }
+            const { customerId, orderType, items, discountAmount, taxAmount, notes } = req.body;
 
             // transactional part
-            let createdOrder;
-            await session.withTransaction(async () => {
-                const productIds = items.map((it) => it.productId);
+            const { createdOrder, stockMovements } = await session.withTransaction(async () => {
+                // generate order number atomically
+                const orderNumber = await getNextDocumentNumber(COUNTERS.ORDER_NUMBER, session);
 
                 // fetch products once
+                const productIds = items.map((item) => item.productId);
                 const products = await Product.find(
                     { _id: { $in: productIds } },
                     { _id: 1, status: 1, salePrice: 1 }, // keep it light
@@ -73,13 +46,8 @@ const orderController = {
                     if (!product) {
                         throw createError(`Product ${it.productId} not found`, 404);
                     }
-
                     if (product.status !== PRODUCT_STATUS.ACTIVE) {
                         throw createError(`Product ${it.productId} is not activated`, 409);
-                    }
-
-                    if (!isPositiveNumber(product.salePrice)) {
-                        throw createError(`Product ${it.productId} has invalid sale price`, 500);
                     }
 
                     return {
@@ -91,7 +59,7 @@ const orderController = {
 
                 // compute totals from pricedItems
                 const subTotal = pricedItems.reduce(
-                    (acc, it) => acc + it.unitPrice * it.quantity,
+                    (acc, item) => acc + item.unitPrice * item.quantity,
                     0,
                 );
 
@@ -100,7 +68,8 @@ const orderController = {
                     throw createError("Total cannot be negative (check discount/tax)", 400);
                 }
 
-                // if ON_SHELF, check inventory stock
+                // if ON_SHELF, check inventory stock and reserve stock
+                let stockMovements = [];
                 if (orderType === ORDER_TYPE.ON_SHELF) {
                     const inventoryDocs = await Inventory.find({
                         productId: { $in: productIds },
@@ -110,24 +79,35 @@ const orderController = {
                         inventoryDocs.map((inv) => [String(inv.productId), inv]),
                     );
 
-                    for (const it of pricedItems) {
-                        const inv = invMap.get(String(it.productId));
+                    // check for out of stock
+                    for (const item of pricedItems) {
+                        const inv = invMap.get(String(item.productId));
                         if (!inv) {
                             throw createError(
-                                `Inventory not found for product ${it.productId}`,
+                                `Inventory not found for product ${item.productId}`,
                                 404,
                             );
                         }
-                        if (inv.totalInStock < it.quantity) {
-                            throw createError(`Product ${it.productId} is out of stock`, 409);
+                        if (inv.totalInStock < item.quantity) {
+                            throw createError(`Product ${item.productId} is out of stock`, 409);
                         }
                     }
 
-                    // reserve stock (still needs to be made)
+                    // reserve stock
+                    for (const item of pricedItems) {
+                        const stockMovement = await createStockMovement(
+                            {
+                                productId: item.productId,
+                                quantityChange: item.quantity,
+                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
+                                userId,
+                            },
+                            session,
+                        );
+                        stockMovements.push(stockMovement);
+                    }
                 }
-
-                // generate order number atomically
-                const orderNumber = await getNextDocumentNumber(COUNTERS.ORDER_NUMBER, session);
 
                 // create order
                 const created = await Order.create(
@@ -148,19 +128,16 @@ const orderController = {
                     { session },
                 );
 
-                // attach created order to outer scope (first doc)
-                createdOrder = created[0];
+                return { createdOrder: created[0], stockMovements };
             });
 
-            return res.status(201).json({
-                success: true,
-                message: "Order created successfully",
-                order: createdOrder,
-            });
+            return res
+                .status(201)
+                .json(response("Order created successfully", { createdOrder, stockMovements }));
         } catch (err) {
-            return next(createError(err.message, 500));
+            return next(err);
         } finally {
-            session.endSession();
+            await session.endSession();
         }
     },
 

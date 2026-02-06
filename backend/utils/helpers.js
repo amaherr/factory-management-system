@@ -2,6 +2,11 @@ const Notification = require("../models/notification.model");
 const StockMovement = require("../models/stockMovement.model");
 const Counter = require("../models/counter.model");
 
+// checks if a number is positive
+function isPositiveNumber(n) {
+    return typeof n === "number" && Number.isFinite(n) && n >= 0;
+}
+
 // gets the next number of a document
 async function getNextDocumentNumber(name, session) {
     const doc = await Counter.findOneAndUpdate(
@@ -12,14 +17,9 @@ async function getNextDocumentNumber(name, session) {
     return doc.seq;
 }
 
-// checks if a number is positive
-function isPositiveNumber(n) {
-    return typeof n === "number" && Number.isFinite(n) && n >= 0;
-}
-
 // sends a new notification (within a session)
 async function sendNotification({ receiverUserId, senderUserId, content }, session) {
-    return await Notification.create({ receiverUserId, senderUserId, content }, { session });
+    return await Notification.create([{ receiverUserId, senderUserId, content }], { session });
 }
 
 // creates new stock movement
@@ -28,9 +28,9 @@ async function createStockMovement(
     session,
 ) {
     return await StockMovement.create(
-        { productId, quantityChange, movementType, notes, userId },
+        [{ productId, quantityChange, movementType, notes, userId }],
         { session },
     );
 }
 
-module.exports = { getNextDocumentNumber, isPositiveNumber, sendNotification, createStockMovement };
+module.exports = { isPositiveNumber, getNextDocumentNumber, sendNotification, createStockMovement };
