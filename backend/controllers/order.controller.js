@@ -71,30 +71,23 @@ const orderController = {
                 // if ON_SHELF, check inventory stock and reserve stock
                 let stockMovements = [];
                 if (orderType === ORDER_TYPE.ON_SHELF) {
-                    const inventoryDocs = await Inventory.find({
-                        productId: { $in: productIds },
-                    }).session(session);
-
-                    const invMap = new Map(
-                        inventoryDocs.map((inv) => [String(inv.productId), inv]),
-                    );
-
-                    // check for out of stock
                     for (const item of pricedItems) {
-                        const inv = invMap.get(String(item.productId));
-                        if (!inv) {
-                            throw createError(
-                                `Inventory not found for product ${item.productId}`,
-                                404,
-                            );
-                        }
-                        if (inv.totalInStock < item.quantity) {
+                        // check if item is out of stock (reserve and decrement from stock if not)
+                        const r = await Inventory.updateOne(
+                            { productId: item.productId, totalInStock: { $gte: item.quantity } },
+                            {
+                                $inc: {
+                                    totalInStock: -item.quantity,
+                                    totalReserved: +item.quantity,
+                                },
+                            },
+                            { session },
+                        );
+                        if (r.modifiedCount !== 1) {
                             throw createError(`Product ${item.productId} is out of stock`, 409);
                         }
-                    }
 
-                    // reserve stock
-                    for (const item of pricedItems) {
+                        // create stock movement for the item
                         const stockMovement = await createStockMovement(
                             {
                                 productId: item.productId,
