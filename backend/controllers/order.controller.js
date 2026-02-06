@@ -2,7 +2,7 @@ const Order = require("../models/order.model");
 const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
 
-const { ORDER_TYPE } = require("../enums/order.enums");
+const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
 const { COUNTERS } = require("../enums/counter.enums");
 
@@ -246,6 +246,33 @@ const orderController = {
         } catch (err) {
             next(createError(err.message, 500));
         }
+    },
+
+    // function to delete an order
+    deleteOrder: async (req, res, next) => {
+        try {
+            const orderId = req.params.orderId;
+
+            // validate the order
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return next(createError("Order not found", 404));
+            }
+            if (order.status === ORDER_STATUS.FINALIZED) {
+                return next(createError("Cannot delete a finalized order", 409));
+            }
+
+            const deletedOrder = await Order.findByIdAndDelete(orderId);
+            // return reserved products to stock
+            if (deletedOrder.status === ORDER_STATUS.DRAFT) {
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Order deleted successflly",
+                data: deletedOrder,
+            });
+        } catch (err) {}
     },
 };
 

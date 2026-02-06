@@ -1,5 +1,7 @@
 const Notification = require("../models/notification.model");
 const { NOTIFICATION_STATUS } = require("../enums/notification.enums");
+
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
 const notificationController = {
@@ -11,11 +13,7 @@ const notificationController = {
             // get all notifications with receiver = user id
             const notifications = await Notification.find({ receiverUserId: userId });
 
-            res.status(200).json({
-                success: true,
-                message: "Notifications retrieved successfully",
-                notifications,
-            });
+            res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -29,11 +27,7 @@ const notificationController = {
             // get all notifications with sender = user id
             const notifications = await Notification.find({ senderUserId: userId });
 
-            res.status(200).json({
-                success: true,
-                message: "Notifications retrieved successfully",
-                notifications,
-            });
+            res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -55,11 +49,9 @@ const notificationController = {
                 return next(createError("Notification not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Notification status updated successfully",
-                updatedNotification,
-            });
+            res.status(200).json(
+                response("Notification status updated successfully", updatedNotification),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }

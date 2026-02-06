@@ -1,12 +1,14 @@
 const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
 const StockMovement = require("../models/stockMovement.model");
-const createError = require("../utils/errorFactory");
+
 const { FACTORY_LOCATIONS } = require("../enums/inventory.enums");
-const STOCK_MOVEMENT_TYPE = require("../enums/stockMovement.enums");
+const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+
+const response = require("../utils/responseFactory");
+const createError = require("../utils/errorFactory");
 
 const inventoryController = {
-
     // 1. Create inventory instance (admin, inventory)
     createInventory: async (req, res, next) => {
         try {
@@ -33,11 +35,7 @@ const inventoryController = {
 
             await newInventory.save();
 
-            res.status(201).json({
-                success: true,
-                message: "Inventory created successfully",
-                data: newInventory,
-            });
+            res.status(201).json(response("Inventory created successfully", newInventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -63,11 +61,7 @@ const inventoryController = {
                 return next(createError("Inventory not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Inventory updated successfully",
-                data: inventory,
-            });
+            res.status(200).json(response("Inventory updated successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -83,10 +77,7 @@ const inventoryController = {
                 return next(createError("Inventory not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Inventory deleted successfully",
-            });
+            res.status(200).json(response("Inventory deleted successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -97,10 +88,7 @@ const inventoryController = {
         try {
             const inventory = await Inventory.find().populate("productId");
 
-            res.status(200).json({
-                success: true,
-                data: inventory,
-            });
+            res.status(200).json(response("Inventory retrieved successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -109,12 +97,13 @@ const inventoryController = {
     // 5. Get all inventory items that has stock (authenticated user any role)
     getAllInventoryWithStock: async (req, res, next) => {
         try {
-            const inventory = await Inventory.find({ totalInStock: { $gt: 0 } }).populate("productId");
+            const inventory = await Inventory.find({ totalInStock: { $gt: 0 } }).populate(
+                "productId",
+            );
 
-            res.status(200).json({
-                success: true,
-                data: inventory,
-            });
+            res.status(200).json(
+                response("Inventory with stock retrieved successfully", inventory),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -148,10 +137,9 @@ const inventoryController = {
                 };
             });
 
-            res.status(200).json({
-                success: true,
-                data: filteredInventory,
-            });
+            res.status(200).json(
+                response("Inventory for location retrieved successfully", filteredInventory),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -164,7 +152,9 @@ const inventoryController = {
             const { fromLocation, toLocation, quantity } = req.body;
 
             if (!fromLocation || !toLocation || !quantity) {
-                return next(createError("fromLocation, toLocation, and quantity are required", 400));
+                return next(
+                    createError("fromLocation, toLocation, and quantity are required", 400),
+                );
             }
 
             if (quantity <= 0) {
@@ -191,7 +181,9 @@ const inventoryController = {
             // Find source location
             const fromLoc = inventory.locations.find((loc) => loc.location === fromLocation);
             if (!fromLoc) {
-                return next(createError(`Source location ${fromLocation} not found in inventory`, 404));
+                return next(
+                    createError(`Source location ${fromLocation} not found in inventory`, 404),
+                );
             }
 
             if (fromLoc.quantityInStock < quantity) {
@@ -214,11 +206,7 @@ const inventoryController = {
 
             await inventory.save();
 
-            res.status(200).json({
-                success: true,
-                message: "Inventory transferred successfully",
-                data: inventory,
-            });
+            res.status(200).json(response("Inventory transferred successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -264,11 +252,7 @@ const inventoryController = {
 
             await inventory.save();
 
-            res.status(200).json({
-                success: true,
-                message: "Stock added successfully",
-                data: inventory,
-            });
+            res.status(200).json(response("Stock added successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -319,11 +303,7 @@ const inventoryController = {
 
             await inventory.save();
 
-            res.status(200).json({
-                success: true,
-                message: "Sale processed successfully",
-                data: inventory,
-            });
+            res.status(200).json(response("Sale processed successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -340,95 +320,88 @@ const inventoryController = {
                 return next(createError("Inventory not found for this product", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                data: inventory,
-            });
+            res.status(200).json(response("Inventory retrieved successfully", inventory));
         } catch (err) {
             next(createError(err.message, 500));
         }
     },
-        // 11. Manual stock adjustment (Admin, Inventory)
+    // 11. Manual stock adjustment (Admin, Inventory)
     manualAdjustment: async (req, res, next) => {
         try {
             const { id } = req.params;
             const { location, adjustmentType, quantity, notes } = req.body;
 
             if (!location || !adjustmentType || !quantity) {
-                 return next(createError("Location, adjustmentType, and quantity are required", 400));
+                return next(
+                    createError("Location, adjustmentType, and quantity are required", 400),
+                );
             }
 
-            if (!['add', 'subtract'].includes(adjustmentType)) {
-                 return next(createError("Adjustment type must be 'add' or 'subtract'", 400));
+            if (!["add", "subtract"].includes(adjustmentType)) {
+                return next(createError("Adjustment type must be 'add' or 'subtract'", 400));
             }
-             
+
             if (quantity <= 0) {
-                 return next(createError("Quantity must be greater than 0", 400));
+                return next(createError("Quantity must be greater than 0", 400));
             }
 
-             // Validate location
-             if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
-                 return next(createError("Invalid location", 400));
-             }
+            // Validate location
+            if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
+                return next(createError("Invalid location", 400));
+            }
 
-             const inventory = await Inventory.findById(id);
-             if (!inventory) {
-                 return next(createError("Inventory not found", 404));
-             }
+            const inventory = await Inventory.findById(id);
+            if (!inventory) {
+                return next(createError("Inventory not found", 404));
+            }
 
-             // Find or create location (for 'add' we might need to create it)
-             let loc = inventory.locations.find((l) => l.location === location);
-             
-             if (!loc) {
-                 if (adjustmentType === 'subtract') {
-                     return next(createError(`Location ${location} not found in inventory`, 404));
-                 }
-                 // If 'add', create the location
-                 inventory.locations.push({
-                     location: location,
-                     quantityInStock: 0,
-                 });
-                 loc = inventory.locations[inventory.locations.length - 1];
-             }
+            // Find or create location (for 'add' we might need to create it)
+            let loc = inventory.locations.find((l) => l.location === location);
 
-             let quantityChange = 0;
+            if (!loc) {
+                if (adjustmentType === "subtract") {
+                    return next(createError(`Location ${location} not found in inventory`, 404));
+                }
+                // If 'add', create the location
+                inventory.locations.push({
+                    location: location,
+                    quantityInStock: 0,
+                });
+                loc = inventory.locations[inventory.locations.length - 1];
+            }
 
-             if (adjustmentType === 'add') {
-                 loc.quantityInStock += quantity;
-                 inventory.totalInStock += quantity;
-                 quantityChange = quantity;
-             } else if (adjustmentType === 'subtract') {
-                 if (loc.quantityInStock < quantity) {
-                     return next(createError("Insufficient stock in location", 400));
-                 }
-                 loc.quantityInStock -= quantity;
-                 inventory.totalInStock -= quantity;
-                 quantityChange = -quantity;
-             }
+            let quantityChange = 0;
 
-             await inventory.save();
+            if (adjustmentType === "add") {
+                loc.quantityInStock += quantity;
+                inventory.totalInStock += quantity;
+                quantityChange = quantity;
+            } else if (adjustmentType === "subtract") {
+                if (loc.quantityInStock < quantity) {
+                    return next(createError("Insufficient stock in location", 400));
+                }
+                loc.quantityInStock -= quantity;
+                inventory.totalInStock -= quantity;
+                quantityChange = -quantity;
+            }
 
-             // Create Stock Movement
-             const stockMovement = new StockMovement({
-                 productId: inventory.productId,
-                 quantityChange: quantityChange,
-                 movementType: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
-                 movementTime: Date.now(),
-                 notes: notes || `Manual adjustment: ${adjustmentType} ${quantity} at ${location}`,
-                 userId: req.user.id
-             });
-             
-             await stockMovement.save();
+            await inventory.save();
 
-             res.status(200).json({
-                 success: true,
-                 message: "Inventory adjusted manually successfully",
-                 data: {
-                     inventory,
-                     stockMovement
-                 },
-             });
+            // Create Stock Movement
+            const stockMovement = new StockMovement({
+                productId: inventory.productId,
+                quantityChange: quantityChange,
+                movementType: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
+                movementTime: Date.now(),
+                notes: notes || `Manual adjustment: ${adjustmentType} ${quantity} at ${location}`,
+                userId: req.user.id,
+            });
 
+            await stockMovement.save();
+
+            res.status(200).json(
+                response("Inventory adjusted manually successfully", { inventory, stockMovement }),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }

@@ -2,6 +2,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 const User = require("../models/user.model");
+
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
 const userController = {
@@ -56,11 +58,7 @@ const userController = {
                     secure: isProduction,
                     sameSite: isProduction ? "none" : "lax",
                 })
-                .json({
-                    success: true,
-                    message: "User logged in successfully",
-                    user: userObj,
-                });
+                .json(response("User logged in successfully", userObj));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -89,11 +87,7 @@ const userController = {
                 phoneNumber,
             });
 
-            res.status(201).json({
-                success: true,
-                message: "User created successfully",
-                user,
-            });
+            res.status(201).json(response("User created successfully", user));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -104,11 +98,7 @@ const userController = {
         try {
             const users = await User.find();
 
-            res.status(200).json({
-                success: true,
-                message: "Users retieved successfully",
-                users,
-            });
+            res.status(200).json(response("Users retieved successfully", users));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -124,11 +114,7 @@ const userController = {
                 return next(createError("User not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "User retieved successfully",
-                user,
-            });
+            res.status(200).json(response("User retieved successfully", user));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -160,11 +146,7 @@ const userController = {
                 return next(createError("User not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "User updated successfully",
-                updatedUser,
-            });
+            res.status(200).json(response("User updated successfully", updatedUser));
         } catch (err) {
             // if new phone number already exists
             if (err.code === 11000 && err.keyPattern?.phoneNumber) {
@@ -191,11 +173,7 @@ const userController = {
                 return next(createError("User not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "User roles updated successfully",
-                user,
-            });
+            res.status(200).json(response("User roles updated successfully", user));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -221,11 +199,7 @@ const userController = {
                 return next(createError("User not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Changed user activation status successfully",
-                user,
-            });
+            res.status(200).json(response("Changed user activation status successfully", user));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -242,11 +216,7 @@ const userController = {
                 return next(createError("User not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Successfully deleted user",
-                deletedUser,
-            });
+            res.status(200).json(response("Successfully deleted user", deletedUser));
         } catch (err) {
             next(createError(err.message, 500));
         }

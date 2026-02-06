@@ -1,8 +1,9 @@
 const Product = require("../models/product.model");
-const createError = require("../utils/errorFactory");
-
-const { PRODUCT_STATUS } = require("../enums/product.enums");
 const Inventory = require("../models/inventory.model");
+const { PRODUCT_STATUS } = require("../enums/product.enums");
+
+const response = require("../utils/responseFactory");
+const createError = require("../utils/errorFactory");
 
 const productController = {
     createProduct: async (req, res, next) => {
@@ -40,10 +41,7 @@ const productController = {
 
             await newProduct.save();
 
-            res.status(201).json({
-                success: true,
-                message: "Product created successfully",
-            });
+            res.status(201).json(response("Product created successfully", newProduct));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -58,10 +56,7 @@ const productController = {
                 return next(createError("Product not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Product deleted successfully",
-            });
+            res.status(200).json(response("Product deleted successfully", product));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -86,10 +81,7 @@ const productController = {
                 return next(createError("Product not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Product updated successfully",
-            });
+            res.status(200).json(response("Product updated successfully", product));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -105,7 +97,7 @@ const productController = {
                     activatedByUserId: req.user.id,
                     activatedAt: Date.now(),
                 },
-                { new: true },
+                { new: true, runValidators: true },
             );
 
             if (!product) {
@@ -123,10 +115,7 @@ const productController = {
                 await newInventory.save();
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Product activated successfully",
-            });
+            res.status(200).json(response("Product activated successfully", product));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -149,10 +138,7 @@ const productController = {
                 return next(createError("Product not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Product deactivated successfully",
-            });
+            res.status(200).json(response("Product deactivated successfully", product));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -161,10 +147,7 @@ const productController = {
     getAllProducts: async (req, res, next) => {
         try {
             const products = await Product.find();
-            res.status(200).json({
-                success: true,
-                data: products,
-            });
+            res.status(200).json(response("Products retrieved successfully", products));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -173,10 +156,7 @@ const productController = {
     getAllActiveProducts: async (req, res, next) => {
         try {
             const products = await Product.find({ status: PRODUCT_STATUS.ACTIVE });
-            res.status(200).json({
-                success: true,
-                data: products,
-            });
+            res.status(200).json(response("Active products retrieved successfully", products));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -191,10 +171,7 @@ const productController = {
                 return next(createError("Product not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                data: product,
-            });
+            res.status(200).json(response("Product retrieved successfully", product));
         } catch (err) {
             next(createError(err.message, 500));
         }

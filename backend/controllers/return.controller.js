@@ -1,7 +1,9 @@
 const Return = require("../models/return.model");
 const StockMovement = require("../models/stockMovement.model");
+const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const STOCK_MOVEMENT_TYPE = require("../enums/stockMovement.enums");
 
 const returnController = {
     // 1. Create return - creates return record and stock movement
@@ -41,14 +43,9 @@ const returnController = {
                 stockMovements.push(stockMovement);
             }
 
-            res.status(201).json({
-                success: true,
-                message: "Return created successfully",
-                data: {
-                    return: newReturn,
-                    stockMovements,
-                },
-            });
+            res.status(201).json(
+                response("Return created successfully", { newReturn, stockMovements }),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -62,10 +59,7 @@ const returnController = {
                 .populate("userId")
                 .populate("items.productId");
 
-            res.status(200).json({
-                success: true,
-                data: returns,
-            });
+            res.status(200).json(response("Returns retrieved successfully", returns));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -83,10 +77,7 @@ const returnController = {
                 .populate("userId")
                 .populate("items.productId");
 
-            res.status(200).json({
-                success: true,
-                data: returns,
-            });
+            res.status(200).json(response("Product returns retrieved successfully", returns));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -114,9 +105,9 @@ const returnController = {
                 // but relying on the same logic as before for consistency in this refactor.
                 // To be safer, we could filter by userId and maybe timestamp proximity, but here we trust the pattern.
                 userId: existingReturn.userId,
-                 // NOTE: Using the productId list from the *old* items to find movements to delete
+                // NOTE: Using the productId list from the *old* items to find movements to delete
                 productId: { $in: existingReturn.items.map((item) => item.productId) },
-                 // Adding notes filter or other identifiers if possible would be better, but we stick to previous logic structure
+                // Adding notes filter or other identifiers if possible would be better, but we stick to previous logic structure
             });
 
             // Step 2: Update the return document
@@ -144,14 +135,9 @@ const returnController = {
                 stockMovements.push(stockMovement);
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Return updated successfully",
-                data: {
-                    return: existingReturn,
-                    stockMovements,
-                },
-            });
+            res.status(200).json(
+                response("Return updated successfully", { existingReturn, stockMovements }),
+            );
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -179,10 +165,7 @@ const returnController = {
             // Step 2: Delete the return
             await Return.findByIdAndDelete(id);
 
-            res.status(200).json({
-                success: true,
-                message: "Return deleted successfully",
-            });
+            res.status(200).json(response("Return deleted successfully", returnDoc));
         } catch (err) {
             next(createError(err.message, 500));
         }

@@ -1,5 +1,7 @@
 const Issue = require("../models/issue.model");
 const { ISSUE_STATUS } = require("../enums/issue.enums");
+
+const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
 const issueController = {
@@ -12,11 +14,7 @@ const issueController = {
             // create new issue
             const issue = await Issue.create({ createdByUserId: userId, issueType, description });
 
-            res.status(201).json({
-                success: true,
-                message: "Issue created successfully",
-                issue,
-            });
+            res.status(201).json(response("Issue created successfully", issue));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -29,11 +27,7 @@ const issueController = {
                 "createdByUserId resolvedByUserId cancelledByUserId",
             );
 
-            res.status(200).json({
-                success: true,
-                message: "Issues retrieved successfully",
-                issues,
-            });
+            res.status(200).json(response("Issues retrieved successfully", issues));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -51,11 +45,7 @@ const issueController = {
                 return next("Issue not found", 404);
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Issue retrieved successfully",
-                issue,
-            });
+            res.status(200).json(response("Issue retrieved successfully", issue));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -69,11 +59,7 @@ const issueController = {
             // get issues
             const userIssues = await Issue.find({ createdByUserId: userId });
 
-            res.status(200).json({
-                success: true,
-                message: "User issues retrieved successfully",
-                userIssues,
-            });
+            res.status(200).json(response("User issues retrieved successfully", userIssues));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -101,11 +87,7 @@ const issueController = {
                 return next(createError("Issue not found or cannot be editted", 403));
             }
 
-            res.status(200).json({
-                success: true,
-                messsage: "Issue updated successfully",
-                updatedIssue,
-            });
+            res.status(200).json(response("Issue updated successfully", updatedIssue));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -144,11 +126,7 @@ const issueController = {
                 return next(createError("Issue not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Issue status updated successfully",
-                updatedIssue,
-            });
+            res.status(200).json(response("Issue status updated successfully", updatedIssue));
         } catch (err) {
             next(createError(err.message, 500));
         }
@@ -165,11 +143,7 @@ const issueController = {
                 return next(createError("Issue not found", 404));
             }
 
-            res.status(200).json({
-                success: true,
-                message: "Issue deleted successfully",
-                deletedIssue,
-            });
+            res.status(200).json(response("Issue deleted successfully", deletedIssue));
         } catch (err) {
             next(createError(err.message, 500));
         }

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const STOCK_MOVEMENT_TYPE = require("../enums/stockMovement.enums");
+const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const stockMovementSchema = new mongoose.Schema(
     {
