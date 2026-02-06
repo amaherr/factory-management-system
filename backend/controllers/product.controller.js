@@ -43,7 +43,7 @@ const productController = {
 
             res.status(201).json(response("Product created successfully", newProduct));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -58,7 +58,7 @@ const productController = {
 
             res.status(200).json(response("Product deleted successfully", product));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -83,7 +83,7 @@ const productController = {
 
             res.status(200).json(response("Product updated successfully", product));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -117,7 +117,7 @@ const productController = {
 
             res.status(200).json(response("Product activated successfully", product));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -140,7 +140,7 @@ const productController = {
 
             res.status(200).json(response("Product deactivated successfully", product));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -149,7 +149,7 @@ const productController = {
             const products = await Product.find();
             res.status(200).json(response("Products retrieved successfully", products));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -158,7 +158,7 @@ const productController = {
             const products = await Product.find({ status: PRODUCT_STATUS.ACTIVE });
             res.status(200).json(response("Active products retrieved successfully", products));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -173,7 +173,7 @@ const productController = {
 
             res.status(200).json(response("Product retrieved successfully", product));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };

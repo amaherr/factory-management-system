@@ -15,7 +15,7 @@ const notificationController = {
 
             res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -29,7 +29,7 @@ const notificationController = {
 
             res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -53,7 +53,7 @@ const notificationController = {
                 response("Notification status updated successfully", updatedNotification),
             );
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };

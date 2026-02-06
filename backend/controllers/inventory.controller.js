@@ -37,7 +37,7 @@ const inventoryController = {
 
             res.status(201).json(response("Inventory created successfully", newInventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -63,7 +63,7 @@ const inventoryController = {
 
             res.status(200).json(response("Inventory updated successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -79,7 +79,7 @@ const inventoryController = {
 
             res.status(200).json(response("Inventory deleted successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -90,7 +90,7 @@ const inventoryController = {
 
             res.status(200).json(response("Inventory retrieved successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -105,7 +105,7 @@ const inventoryController = {
                 response("Inventory with stock retrieved successfully", inventory),
             );
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -141,7 +141,7 @@ const inventoryController = {
                 response("Inventory for location retrieved successfully", filteredInventory),
             );
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -208,7 +208,7 @@ const inventoryController = {
 
             res.status(200).json(response("Inventory transferred successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -254,7 +254,7 @@ const inventoryController = {
 
             res.status(200).json(response("Stock added successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -305,7 +305,7 @@ const inventoryController = {
 
             res.status(200).json(response("Sale processed successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -322,7 +322,7 @@ const inventoryController = {
 
             res.status(200).json(response("Inventory retrieved successfully", inventory));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
     // 11. Manual stock adjustment (Admin, Inventory)
@@ -403,7 +403,7 @@ const inventoryController = {
                 response("Inventory adjusted manually successfully", { inventory, stockMovement }),
             );
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };

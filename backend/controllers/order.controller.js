@@ -183,7 +183,7 @@ const orderController = {
                 data: orders,
             });
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -200,7 +200,7 @@ const orderController = {
                 data: orders,
             });
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -221,7 +221,7 @@ const orderController = {
                 data: order,
             });
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 

@@ -16,7 +16,7 @@ const issueController = {
 
             res.status(201).json(response("Issue created successfully", issue));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -29,7 +29,7 @@ const issueController = {
 
             res.status(200).json(response("Issues retrieved successfully", issues));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -38,7 +38,7 @@ const issueController = {
         try {
             const issueId = req.params.issueId;
 
-            const issue = await Issue.findById(issueId).populate(
+            const issue = await Issues.findById(issueId).populate(
                 "createdByUserId resolvedByUserId cancelledByUserId",
             );
             if (!issue) {
@@ -47,7 +47,7 @@ const issueController = {
 
             res.status(200).json(response("Issue retrieved successfully", issue));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -61,7 +61,7 @@ const issueController = {
 
             res.status(200).json(response("User issues retrieved successfully", userIssues));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -89,7 +89,7 @@ const issueController = {
 
             res.status(200).json(response("Issue updated successfully", updatedIssue));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -128,7 +128,7 @@ const issueController = {
 
             res.status(200).json(response("Issue status updated successfully", updatedIssue));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -145,7 +145,7 @@ const issueController = {
 
             res.status(200).json(response("Issue deleted successfully", deletedIssue));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };

@@ -18,7 +18,7 @@ const customerController = {
 
             res.status(201).json(response("Successfully created a new customer", customer));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -29,7 +29,7 @@ const customerController = {
 
             res.status(200).json(response("Customers retrieved successfully", customers));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -45,7 +45,7 @@ const customerController = {
 
             res.status(200).json(response("Customer retrieved successfully", customer));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -106,7 +106,7 @@ const customerController = {
 
             res.status(200).json(response("Successfully deleted customer", deletedCustomer));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };

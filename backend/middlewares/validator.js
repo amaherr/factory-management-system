@@ -31,7 +31,7 @@ const validator =
 
             next();
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     };
 

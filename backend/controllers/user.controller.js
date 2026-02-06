@@ -60,7 +60,7 @@ const userController = {
                 })
                 .json(response("User logged in successfully", userObj));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -89,7 +89,7 @@ const userController = {
 
             res.status(201).json(response("User created successfully", user));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -100,7 +100,7 @@ const userController = {
 
             res.status(200).json(response("Users retieved successfully", users));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -116,7 +116,7 @@ const userController = {
 
             res.status(200).json(response("User retieved successfully", user));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -175,7 +175,7 @@ const userController = {
 
             res.status(200).json(response("User roles updated successfully", user));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -201,7 +201,7 @@ const userController = {
 
             res.status(200).json(response("Changed user activation status successfully", user));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 
@@ -218,7 +218,7 @@ const userController = {
 
             res.status(200).json(response("Successfully deleted user", deletedUser));
         } catch (err) {
-            next(createError(err.message, 500));
+            next(err);
         }
     },
 };
