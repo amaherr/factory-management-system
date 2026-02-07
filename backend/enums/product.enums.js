@@ -27,4 +27,10 @@ const SEASONS = Object.freeze({
     WINTER: "winter",
 });
 
-module.exports = { COLORS, PRODUCT_STATUS, SEASONS };
+const FACTORY_LOCATIONS = Object.freeze({
+    SHOWROOM: "showroom",
+    WAREHOUSE_A: "warehouse a",
+    WAREHOUSE_B: "warehouse b",
+});
+
+module.exports = { COLORS, PRODUCT_STATUS, SEASONS, FACTORY_LOCATIONS };

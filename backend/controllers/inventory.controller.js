@@ -2,7 +2,7 @@ const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
 const StockMovement = require("../models/stockMovement.model");
 
-const { FACTORY_LOCATIONS } = require("../enums/inventory.enums");
+const { FACTORY_LOCATIONS } = require("../enums/product.enums");
 const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");

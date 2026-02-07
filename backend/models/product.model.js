@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { COLORS, PRODUCT_STATUS, SEASONS } = require("../enums/product.enums");
+const { COLORS, PRODUCT_STATUS, SEASONS, FACTORY_LOCATIONS } = require("../enums/product.enums");
 
 const productSchema = new mongoose.Schema(
     {
@@ -32,7 +32,6 @@ const productSchema = new mongoose.Schema(
             enum: Object.values(SEASONS),
         },
 
-     
         defaultImage: {
             type: String,
             trim: true,
@@ -62,6 +61,49 @@ const productSchema = new mongoose.Schema(
             enum: Object.values(PRODUCT_STATUS),
             default: PRODUCT_STATUS.PENDING,
         },
+
+        // Global (product-level) totals
+        totalTheoreticalStock: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+        totalPhysicalStock: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+        totalReserved: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+        totalSold: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+
+        // Location-level stock
+        locations: [
+            {
+                location: {
+                    type: String,
+                    enum: Object.values(FACTORY_LOCATIONS),
+                    required: true,
+                },
+                quantityInStock: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                    default: 0,
+                },
+            },
+        ],
 
         deactivatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,

@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const Order = require("../models/order.model");
-const Inventory = require("../models/inventory.model");
 const Product = require("../models/product.model");
 
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
@@ -11,11 +10,7 @@ const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const {
-    getNextDocumentNumber,
-    createStockMovement,
-    isPositiveNumber,
-} = require("../utils/helpers");
+const { getNextDocumentNumber, createStockMovement } = require("../utils/helpers");
 
 const orderController = {
     // function to create a new order
@@ -35,7 +30,14 @@ const orderController = {
                 const productIds = items.map((item) => item.productId);
                 const products = await Product.find(
                     { _id: { $in: productIds } },
-                    { _id: 1, status: 1, salePrice: 1 }, // keep it light
+                    {
+                        _id: 1,
+                        status: 1,
+                        salePrice: 1,
+                        totalTheoreticalStock: 1,
+                        totalReserved: 1,
+                        locations: 1,
+                    },
                 ).session(session);
 
                 const productMap = new Map(products.map((p) => [String(p._id), p]));
@@ -43,6 +45,7 @@ const orderController = {
                 // validate products exist and activated + build pricedItems (snapshot)
                 const pricedItems = items.map((it) => {
                     const product = productMap.get(String(it.productId));
+
                     if (!product) {
                         throw createError(`Product ${it.productId} not found`, 404);
                     }
@@ -73,16 +76,22 @@ const orderController = {
                 if (orderType === ORDER_TYPE.ON_SHELF) {
                     for (const item of pricedItems) {
                         // check if item is out of stock (reserve and decrement from stock if not)
-                        const r = await Inventory.updateOne(
-                            { productId: item.productId, totalInStock: { $gte: item.quantity } },
+                        // atomic check + reserve (prevents race conditions)
+                        const r = await Product.updateOne(
+                            {
+                                _id: item.productId,
+                                totalTheoreticalStock: { $gte: item.quantity },
+                                status: PRODUCT_STATUS.ACTIVE,
+                            },
                             {
                                 $inc: {
-                                    totalInStock: -item.quantity,
+                                    totalTheoreticalStock: -item.quantity,
                                     totalReserved: +item.quantity,
                                 },
                             },
                             { session },
                         );
+
                         if (r.modifiedCount !== 1) {
                             throw createError(`Product ${item.productId} is out of stock`, 409);
                         }
@@ -168,13 +177,9 @@ const orderController = {
             }
 
             // get filtered orders
-            const orders = await Order.find(filter).sort("-createdAt");
+            const orders = await Order.find(filter).sort({ createdAt: -1 });
 
-            res.status(200).json({
-                success: true,
-                messgae: "Orders retrieved successfully",
-                data: orders,
-            });
+            res.status(200).json(response("Orders retrieved successfully", orders));
         } catch (err) {
             next(err);
         }

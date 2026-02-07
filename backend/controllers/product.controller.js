@@ -1,5 +1,4 @@
 const Product = require("../models/product.model");
-const Inventory = require("../models/inventory.model");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
 
 const response = require("../utils/responseFactory");
@@ -102,17 +101,6 @@ const productController = {
 
             if (!product) {
                 return next(createError("Product not found", 404));
-            }
-
-            // Create inventory if it doesn't exist
-            const existingInventory = await Inventory.findOne({ productId: id });
-            if (!existingInventory) {
-                const newInventory = new Inventory({
-                    productId: id,
-                    totalInStock: 0,
-                    locations: [],
-                });
-                await newInventory.save();
             }
 
             res.status(200).json(response("Product activated successfully", product));
