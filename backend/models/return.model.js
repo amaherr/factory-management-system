@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const returnSchema = new mongoose.Schema(
     {
+        returnNumber: {
+            type: Number,
+            required: true,
+        },
+
         orderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",

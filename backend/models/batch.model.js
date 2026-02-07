@@ -4,11 +4,9 @@ const { BATCH_STATUS } = require("../enums/batch.enums");
 
 const batchSchema = mongoose.Schema(
     {
-        code: {
-            type: String,
+        batchNumber: {
+            type: Number,
             required: true,
-            unique: true,
-            trim: true,
         },
         productId: {
             type: mongoose.Schema.Types.ObjectId,

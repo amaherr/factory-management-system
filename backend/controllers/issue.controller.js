@@ -23,9 +23,7 @@ const issueController = {
     // function to get all issues
     getAllIssues: async (req, res, next) => {
         try {
-            const issues = await Issue.find().populate(
-                "createdByUserId resolvedByUserId cancelledByUserId",
-            );
+            const issues = await Issue.find();
 
             res.status(200).json(response("Issues retrieved successfully", issues));
         } catch (err) {

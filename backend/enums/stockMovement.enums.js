@@ -1,9 +1,10 @@
 const STOCK_MOVEMENT_TYPE = Object.freeze({
-    INVENTORY: "inventory",
-    UNRESERVE: "unreserve",
-    BATCH: "batch",
+    // orders
     RESERVE: "reserve",
+    UNRESERVE: "unreserve",
     SALES: "sales",
+
+    BATCH: "batch",
     RETURN: "return",
     MANUAL_ADJUSTMENT: "manual_adjustment",
 });

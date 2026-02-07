@@ -3,6 +3,21 @@ const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const stockMovementSchema = new mongoose.Schema(
     {
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order",
+            required: true,
+        },
+        returnId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Return",
+            required: true,
+        },
+        batchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Batch",
+            required: true,
+        },
         productId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Product",

@@ -76,7 +76,6 @@ const orderController = {
                 if (orderType === ORDER_TYPE.ON_SHELF) {
                     for (const item of pricedItems) {
                         // check if item is out of stock (reserve and decrement from stock if not)
-                        // atomic check + reserve (prevents race conditions)
                         const r = await Product.updateOne(
                             {
                                 _id: item.productId,
@@ -233,6 +232,14 @@ const orderController = {
             }
 
             res.status(200).json(reponse("Order retrieved successfully", order));
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // function to change the status of an order
+    changeStatus: async (req, res, next) => {
+        try {
         } catch (err) {
             return next(err);
         }
