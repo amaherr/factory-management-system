@@ -190,7 +190,28 @@ const orderController = {
         try {
             const userId = req.user.id;
 
-            const orders = await Order.find({ createdByUserId: userId }).sort("-createdAt");
+            const {
+                customerId,
+                orderType,
+                status,
+                q, // search by order number
+            } = req.query;
+
+            // build the filter object
+            const filter = {};
+            if (customerId) filter.customerId = customerId;
+            if (orderType) filter.orderType = orderType;
+            if (status) filter.status = status;
+
+            // search query
+            if (q) {
+                const num = Number(q);
+                if (!Number.isNaN(num)) filter.orderNumber = num;
+            }
+
+            const orders = await Order.find({ ...filter, createdByUserId: userId }).sort(
+                "-createdAt",
+            );
 
             res.status(200).json(response("Order retrieved successfully", orders));
         } catch (err) {

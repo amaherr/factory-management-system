@@ -21,11 +21,17 @@ router.post(
 router.get(
     "/",
     authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
+    validator({ querySchema: orderDtos.getOrdersQuerySchema }),
     orderController.getOrders,
 );
 
 // route to get orders made by user
-router.get("/me", authorizor([ROLES.ADMIN, ROLES.SALES]), orderController.getUserOrders);
+router.get(
+    "/me",
+    validator({ querySchema: orderDtos.getOrderQuerySchema }),
+    authorizor([ROLES.ADMIN, ROLES.SALES]),
+    orderController.getUserOrders,
+);
 
 // route to get a specific order
 router.get(

@@ -23,6 +23,26 @@ const orderDtos = {
         taxAmount: Joi.number().min(0).required(),
         notes: Joi.string().max(500).optional(),
     }),
+
+    getOrdersQuerySchema: Joi.object({
+        createdByUserId: objectId.optional(),
+        customerId: objectId.optional(),
+        orderType: Joi.string().trim().optional(),
+        status: Joi.string().trim().optional(),
+        from: Joi.date().iso().optional(),
+        to: Joi.date()
+            .iso()
+            .min(Joi.ref("from")) // ensures to >= from if both exist
+            .optional(),
+        q: Joi.string().trim().optional(),
+    }),
+
+    getOrderQuerySchema: Joi.object({
+        customerId: objectId.optional(),
+        orderType: Joi.string().trim().optional(),
+        status: Joi.string().trim().optional(),
+        q: Joi.string().trim().optional(),
+    }),
 };
 
 module.exports = orderDtos;
