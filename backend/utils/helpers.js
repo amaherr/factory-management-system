@@ -17,15 +17,4 @@ async function sendNotification({ receiverUserId, senderUserId, content }, sessi
     return await Notification.create([{ receiverUserId, senderUserId, content }], { session });
 }
 
-// creates new stock movement
-async function createStockMovement(
-    { productId, quantityChange, movementType, notes, userId },
-    session,
-) {
-    return await StockMovement.create(
-        [{ productId, quantityChange, movementType, notes, userId }],
-        { session },
-    );
-}
-
-module.exports = { getNextDocumentNumber, sendNotification, createStockMovement };
+module.exports = { getNextDocumentNumber, sendNotification };

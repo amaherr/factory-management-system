@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const Order = require("../models/order.model");
 const Product = require("../models/product.model");
+const StockMovement = require("../models/stockMovement.model");
 
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
@@ -10,7 +11,7 @@ const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const { getNextDocumentNumber, createStockMovement } = require("../utils/helpers");
+const { getNextDocumentNumber } = require("../utils/helpers");
 
 const orderController = {
     // function to create a new order
@@ -71,6 +72,25 @@ const orderController = {
                     throw createError("Total cannot be negative (check discount/tax)", 400);
                 }
 
+                // create order
+                const created = await Order.create(
+                    [
+                        {
+                            orderNumber,
+                            createdByUserId: userId,
+                            customerId,
+                            orderType,
+                            items: pricedItems,
+                            subTotal,
+                            discountAmount,
+                            taxAmount,
+                            total,
+                            notes,
+                        },
+                    ],
+                    { session },
+                );
+
                 // if ON_SHELF, check inventory stock and reserve stock
                 let stockMovements = [];
                 if (orderType === ORDER_TYPE.ON_SHELF) {
@@ -96,38 +116,22 @@ const orderController = {
                         }
 
                         // create stock movement for the item
-                        const stockMovement = await createStockMovement(
-                            {
-                                productId: item.productId,
-                                quantityChange: item.quantity,
-                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
-                                notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
-                                userId,
-                            },
-                            session,
+                        const stockMovement = await StockMovement.create(
+                            [
+                                {
+                                    orderId: created[0]._id,
+                                    productId: item.productId,
+                                    quantityChange: item.quantity,
+                                    movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                    notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
+                                    userId,
+                                },
+                            ],
+                            { session },
                         );
                         stockMovements.push(stockMovement);
                     }
                 }
-
-                // create order
-                const created = await Order.create(
-                    [
-                        {
-                            orderNumber,
-                            createdByUserId: userId,
-                            customerId,
-                            orderType,
-                            items: pricedItems,
-                            subTotal,
-                            discountAmount,
-                            taxAmount,
-                            total,
-                            notes,
-                        },
-                    ],
-                    { session },
-                );
 
                 return { createdOrder: created[0], stockMovements };
             });
@@ -178,7 +182,9 @@ const orderController = {
             // get filtered orders
             const orders = await Order.find(filter).sort({ createdAt: -1 });
 
-            res.status(200).json(response("Orders retrieved successfully", orders));
+            res.status(200).json(
+                response("Orders retrieved successfully", { count: orders.length, orders }),
+            );
         } catch (err) {
             return next(err);
         }
@@ -297,15 +303,18 @@ const orderController = {
                         }
 
                         // create stock movement
-                        const stockMovement = await createStockMovement(
-                            {
-                                productId: item.productId,
-                                quantityChange: item.quantity,
-                                movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
-                                notes: `Order ${deletedOrder.orderNumber} deleted (unreserve)`,
-                                userId,
-                            },
-                            session,
+                        const stockMovement = await StockMovement.create(
+                            [
+                                {
+                                    orderId: deletedOrder._id,
+                                    productId: item.productId,
+                                    quantityChange: item.quantity,
+                                    movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
+                                    notes: `Order ${deletedOrder.orderNumber} deleted (unreserve)`,
+                                    userId,
+                                },
+                            ],
+                            { session },
                         );
                         stockMovements.push(stockMovement);
                     }
