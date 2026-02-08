@@ -43,6 +43,10 @@ const orderDtos = {
         status: Joi.string().trim().optional(),
         q: Joi.string().trim().optional(),
     }),
+
+    changeOrderStatusSchema: Joi.object({
+        status: Joi.string().valid(ORDER_STATUS.FINALIZED, ORDER_STATUS.CANCELLED).required(),
+    }),
 };
 
 module.exports = orderDtos;

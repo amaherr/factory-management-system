@@ -6,17 +6,14 @@ const stockMovementSchema = new mongoose.Schema(
         orderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",
-            required: true,
         },
         returnId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Return",
-            required: true,
         },
         batchId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Batch",
-            required: true,
         },
         productId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -33,11 +30,6 @@ const stockMovementSchema = new mongoose.Schema(
             type: String,
             enum: Object.values(STOCK_MOVEMENT_TYPE),
             required: true,
-        },
-
-        movementTime: {
-            type: Date,
-            default: Date.now, // business time when stock actually changed
         },
 
         notes: {

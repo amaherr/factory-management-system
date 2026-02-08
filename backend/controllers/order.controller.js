@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const Order = require("../models/order.model");
 const Product = require("../models/product.model");
-const StockMovement = require("../models/stockMovement.model");
 
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
@@ -11,7 +10,7 @@ const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const { getNextDocumentNumber } = require("../utils/helpers");
+const { getNextDocumentNumber, createStockMovement } = require("../utils/helpers");
 
 const orderController = {
     // function to create a new order
@@ -116,20 +115,18 @@ const orderController = {
                         }
 
                         // create stock movement for the item
-                        const stockMovement = await StockMovement.create(
-                            [
-                                {
-                                    orderId: created[0]._id,
-                                    productId: item.productId,
-                                    quantityChange: item.quantity,
-                                    movementType: STOCK_MOVEMENT_TYPE.RESERVE,
-                                    notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
-                                    userId,
-                                },
-                            ],
-                            { session },
+                        const sm = await createStockMovement(
+                            {
+                                orderId: created[0]._id,
+                                productId: item.productId,
+                                quantityChange: item.quantity,
+                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
+                                userId,
+                            },
+                            session,
                         );
-                        stockMovements.push(stockMovement);
+                        stockMovements.push(sm);
                     }
                 }
 
@@ -245,9 +242,125 @@ const orderController = {
 
     // function to change the status of an order
     changeStatus: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
         try {
+            const orderId = req.params.orderId;
+            const userId = req.user.id;
+            const { status } = req.body;
+
+            const { updatedOrder, stockMovements } = await session.withTransaction(async () => {
+                // fetch first to distinguish 404 vs 409 and to know orderType
+                const order = await Order.findById(orderId).session(session);
+                if (!order) throw createError("Order not found", 404);
+                if (order.status !== ORDER_STATUS.DRAFT) {
+                    throw createError("Only draft orders can change status", 409);
+                }
+
+                // update status
+                const updatedOrder = await Order.findOneAndUpdate(
+                    { _id: orderId, status: ORDER_STATUS.DRAFT },
+                    { status },
+                    { new: true, session },
+                );
+
+                if (!updatedOrder) {
+                    throw createError("Order not found or cannot change status", 409);
+                }
+
+                const stockMovements = [];
+
+                // only ON_SHELF has reservations in the system
+                if (updatedOrder.orderType === ORDER_TYPE.ON_SHELF) {
+                    // move from reserved to sold
+                    if (status === ORDER_STATUS.FINALIZED) {
+                        for (const item of updatedOrder.items) {
+                            // check and move stock
+                            const r = await Product.updateOne(
+                                { _id: item.productId, totalReserved: { $gte: item.quantity } },
+                                {
+                                    $inc: {
+                                        totalSold: +item.quantity,
+                                        totalReserved: -item.quantity,
+                                    },
+                                },
+                                { session },
+                            );
+
+                            if (r.modifiedCount !== 1) {
+                                throw createError(
+                                    `Cannot finalize: reserved mismatch for product ${item.productId}`,
+                                    409,
+                                );
+                            }
+
+                            // create stock movement
+                            const sm = await createStockMovement(
+                                {
+                                    orderId: updatedOrder._id,
+                                    productId: item.productId,
+                                    quantityChange: item.quantity,
+                                    movementType: STOCK_MOVEMENT_TYPE.SALES,
+                                    notes: `Order ${updatedOrder.orderNumber} finalized (sold)`,
+                                    userId,
+                                },
+                                session,
+                            );
+                            stockMovements.push(sm);
+                        }
+                    }
+
+                    // move from reserved to theoretical stock
+                    if (status === ORDER_STATUS.CANCELLED) {
+                        for (const item of updatedOrder.items) {
+                            // check and move stock
+                            const r = await Product.updateOne(
+                                { _id: item.productId, totalReserved: { $gte: item.quantity } },
+                                {
+                                    $inc: {
+                                        totalTheoreticalStock: +item.quantity,
+                                        totalReserved: -item.quantity,
+                                    },
+                                },
+                                { session },
+                            );
+
+                            if (r.modifiedCount !== 1) {
+                                throw createError(
+                                    `Cannot cancel: reserved mismatch for product ${item.productId}`,
+                                    409,
+                                );
+                            }
+
+                            // create stock movement
+                            const sm = await createStockMovement(
+                                {
+                                    orderId: updatedOrder._id,
+                                    productId: item.productId,
+                                    quantityChange: item.quantity,
+                                    movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
+                                    notes: `Order ${updatedOrder.orderNumber} cancelled (unreserved)`,
+                                    userId,
+                                },
+                                session,
+                            );
+                            stockMovements.push(sm);
+                        }
+                    }
+                }
+
+                return { updatedOrder, stockMovements };
+            });
+
+            return res
+                .status(200)
+                .json(
+                    response("Order status updated successfully", { updatedOrder, stockMovements }),
+                );
         } catch (err) {
             return next(err);
+        } finally {
+            await session.endSession();
         }
     },
 
@@ -297,26 +410,24 @@ const orderController = {
                         if (r.modifiedCount !== 1) {
                             // This indicates your reserved totals are out of sync.
                             throw createError(
-                                `Cannot unreserve product ${item.productId} (reserved stock mismatch)`,
+                                `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
                                 409,
                             );
                         }
 
                         // create stock movement
-                        const stockMovement = await StockMovement.create(
-                            [
-                                {
-                                    orderId: deletedOrder._id,
-                                    productId: item.productId,
-                                    quantityChange: item.quantity,
-                                    movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
-                                    notes: `Order ${deletedOrder.orderNumber} deleted (unreserve)`,
-                                    userId,
-                                },
-                            ],
-                            { session },
+                        const sm = await createStockMovement(
+                            {
+                                orderId: deletedOrder._id,
+                                productId: item.productId,
+                                quantityChange: item.quantity,
+                                movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
+                                notes: `Order ${deletedOrder.orderNumber} deleted (unreserve)`,
+                                userId,
+                            },
+                            session,
                         );
-                        stockMovements.push(stockMovement);
+                        stockMovements.push(sm);
                     }
                 }
                 return { deletedOrder, stockMovements };

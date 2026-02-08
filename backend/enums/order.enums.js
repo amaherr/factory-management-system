@@ -7,7 +7,6 @@ const ORDER_STATUS = Object.freeze({
     DRAFT: "draft",
     FINALIZED: "finalized",
     CANCELLED: "cancelled",
-    RETURNED: "returned",
 });
 
 module.exports = { ORDER_TYPE, ORDER_STATUS };

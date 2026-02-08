@@ -40,6 +40,14 @@ router.get(
     orderController.getOrder,
 );
 
+// route to change the status of a specific order
+router.patch(
+    "/change-status/:orderId",
+    authorizor([ROLES.ADMIN, ROLES.ACCOUNTING]),
+    validator({ bodySchema: orderDtos.changeOrderStatusSchema }),
+    orderController.changeStatus,
+);
+
 // route to delete a order
 router.delete("/:orderId", authorizor([ROLES.ADMIN]), orderController.deleteOrder);
 
