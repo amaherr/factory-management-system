@@ -48,6 +48,14 @@ router.patch(
     orderController.changeStatus,
 );
 
+// route to edit a specific order
+router.patch(
+    "/edit/:orderId",
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
+    validator({ bodySchema: orderDtos.editOrderSchema }),
+    orderController.editOrder,
+);
+
 // route to delete a order
 router.delete("/:orderId", authorizor([ROLES.ADMIN]), orderController.deleteOrder);
 

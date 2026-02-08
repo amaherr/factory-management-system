@@ -15,13 +15,13 @@ const orderDtos = {
                 Joi.object({
                     productId: objectId.required(),
                     quantity: Joi.number().integer().min(1).required(),
-                }),
+                }).unknown(false),
             )
             .min(1)
             .required(),
         discountAmount: Joi.number().min(0).required(),
         taxAmount: Joi.number().min(0).required(),
-        notes: Joi.string().max(500).optional(),
+        notes: Joi.string().max(200).optional(),
     }),
 
     getOrdersQuerySchema: Joi.object({
@@ -47,6 +47,22 @@ const orderDtos = {
     changeOrderStatusSchema: Joi.object({
         status: Joi.string().valid(ORDER_STATUS.FINALIZED, ORDER_STATUS.CANCELLED).required(),
     }),
+
+    editOrderSchema: Joi.object({
+        customerId: objectId.optional(),
+        items: Joi.array()
+            .items(
+                Joi.object({
+                    productId: objectId.required(),
+                    quantity: Joi.number().integer().min(1).required(),
+                }).unknown(false),
+            )
+            .min(1)
+            .optional(),
+        discountAmount: Joi.number().min(0).optional(),
+        taxAmount: Joi.number().min(0).optional(),
+        notes: Joi.string().max(200).optional(),
+    }).min(1), // require at least one field to be present
 };
 
 module.exports = orderDtos;

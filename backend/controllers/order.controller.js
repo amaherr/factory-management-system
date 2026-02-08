@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const Order = require("../models/order.model");
 const Product = require("../models/product.model");
+const StockMovement = require("../models/stockMovement.model");
 
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
@@ -257,10 +258,24 @@ const orderController = {
                     throw createError("Only draft orders can change status", 409);
                 }
 
-                // update status
+                // build update payload
+                const update = { status };
+                const now = new Date();
+
+                if (status === ORDER_STATUS.FINALIZED) {
+                    update.finalizedAt = now;
+                    update.finalizedByUserId = userId;
+                }
+
+                if (status === ORDER_STATUS.CANCELLED) {
+                    update.cancelledAt = now;
+                    update.cancelledByUserId = userId;
+                }
+
+                // update order
                 const updatedOrder = await Order.findOneAndUpdate(
                     { _id: orderId, status: ORDER_STATUS.DRAFT },
-                    { status },
+                    update,
                     { new: true, session },
                 );
 
@@ -359,6 +374,208 @@ const orderController = {
                 );
         } catch (err) {
             return next(err);
+        } finally {
+            await session.endSession();
+        }
+    },
+
+    // function to edit the details of an order
+    editOrder: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
+        try {
+            const userId = req.user.id;
+            const orderId = req.params.orderId;
+            const { customerId, items, discountAmount, taxAmount, notes } = req.body;
+
+            const { updatedOrder, stockMovements } = await session.withTransaction(async () => {
+                // validate the order
+                const order = await Order.findById(orderId).session(session);
+                if (!order) {
+                    throw createError("Order not found", 404);
+                }
+                if (order.status === ORDER_STATUS.FINALIZED) {
+                    throw createError("Cannot delete a finalized order", 409);
+                }
+
+                // prepare updated fields (fallback to existing)
+                const nextCustomerId = customerId ?? order.customerId;
+                const nextDiscountAmount =
+                    discountAmount !== undefined
+                        ? Number(discountAmount)
+                        : Number(order.discountAmount);
+                const nextTaxAmount =
+                    taxAmount !== undefined ? Number(taxAmount) : Number(order.taxAmount);
+                const nextNotes = notes !== undefined ? notes : order.notes;
+                const nextRawItems =
+                    items ??
+                    order.items.map((it) => ({
+                        productId: it.productId,
+                        quantity: it.quantity,
+                    }));
+
+                // helper to compare old vs new (by productId and quantity)
+                const toQtyMap = (arr) => {
+                    const m = new Map();
+                    for (const it of arr) m.set(String(it.productId), Number(it.quantity));
+                    return m;
+                };
+
+                // create hash maos for each items
+                const oldQtyMap = toQtyMap(order.items);
+                const newQtyMap = toQtyMap(nextRawItems);
+
+                // check if the items changed
+                const itemsProvided = items !== undefined;
+                const itemsChanged = (() => {
+                    if (!itemsProvided) return false;
+                    if (oldQtyMap.size !== newQtyMap.size) return true;
+                    for (const [pid, qty] of newQtyMap) {
+                        if (oldQtyMap.get(pid) !== qty) return true;
+                    }
+                    return false;
+                })();
+
+                // here we rebuild items snapshot if itemsProvided; otherwise keep current pricedItems from order
+                let pricedItems = order.items;
+                if (itemsProvided) {
+                    // fetch all products
+                    const productIds = nextRawItems.map((it) => it.productId);
+                    const products = await Product.find(
+                        { _id: { $in: productIds } },
+                        {
+                            _id: 1,
+                            status: 1,
+                            salePrice: 1,
+                            totalTheoreticalStock: 1,
+                            totalReserved: 1,
+                        },
+                    ).session(session);
+
+                    // create new items snapshot
+                    const productMap = new Map(products.map((p) => [String(p._id), p]));
+                    pricedItems = nextRawItems.map((it) => {
+                        const product = productMap.get(String(it.productId));
+                        if (!product) throw createError(`Product ${it.productId} not found`, 404);
+                        if (product.status !== PRODUCT_STATUS.ACTIVE) {
+                            throw createError(`Product ${it.productId} is not activated`, 409);
+                        }
+
+                        return {
+                            productId: it.productId,
+                            quantity: Number(it.quantity),
+                            unitPrice: product.salePrice, // snapshot
+                        };
+                    });
+                }
+
+                // recompute totals (based on pricedItems + nextDiscountAmount/nextTaxAmount)
+                const subTotal = pricedItems.reduce(
+                    (acc, it) => acc + Number(it.unitPrice) * Number(it.quantity),
+                    0,
+                );
+
+                const total = subTotal + nextTaxAmount - nextDiscountAmount;
+                if (total < 0) {
+                    throw createError("Total cannot be negative (check discount/tax)", 400);
+                }
+
+                // stock logic + movements (ONLY for ON_SHELF and ONLY if items changed)
+                const stockMovements = [];
+                if (order.orderType === ORDER_TYPE.ON_SHELF && itemsChanged) {
+                    // undo old reservations (unreserve everything from the old order)
+                    for (const oldItem of order.items) {
+                        const r = await Product.updateOne(
+                            { _id: oldItem.productId, totalReserved: { $gte: oldItem.quantity } },
+                            {
+                                $inc: {
+                                    totalTheoreticalStock: +oldItem.quantity,
+                                    totalReserved: -oldItem.quantity,
+                                },
+                            },
+                            { session },
+                        );
+
+                        if (r.modifiedCount !== 1) {
+                            throw createError(
+                                `Cannot rollback reservation for product ${oldItem.productId} (reserved mismatch)`,
+                                409,
+                            );
+                        }
+                    }
+
+                    // delete previous reservation-related movements for this order
+                    await StockMovement.deleteMany(
+                        {
+                            orderId: order._id,
+                        },
+                        { session },
+                    );
+
+                    // reserve new items + create new RESERVE movements
+                    for (const newItem of pricedItems) {
+                        const r = await Product.updateOne(
+                            {
+                                _id: newItem.productId,
+                                status: PRODUCT_STATUS.ACTIVE,
+                                totalTheoreticalStock: { $gte: newItem.quantity },
+                            },
+                            {
+                                $inc: {
+                                    totalTheoreticalStock: -newItem.quantity,
+                                    totalReserved: +newItem.quantity,
+                                },
+                            },
+                            { session },
+                        );
+
+                        if (r.modifiedCount !== 1) {
+                            throw createError(`Product ${newItem.productId} is out of stock`, 409);
+                        }
+
+                        const sm = await createStockMovement(
+                            {
+                                orderId: order._id,
+                                productId: newItem.productId,
+                                quantityChange: newItem.quantity,
+                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                notes: `Order ${order.orderNumber} edited (reserve updated)`,
+                                userId,
+                            },
+                            session,
+                        );
+
+                        stockMovements.push(sm);
+                    }
+                }
+
+                // update the order
+                const update = {
+                    customerId: nextCustomerId,
+                    discountAmount: nextDiscountAmount,
+                    taxAmount: nextTaxAmount,
+                    notes: nextNotes,
+                    subTotal,
+                    total,
+                };
+
+                if (itemsProvided) {
+                    update.items = pricedItems;
+                }
+
+                const updatedOrder = await Order.findByIdAndUpdate(order._id, update, {
+                    new: true,
+                    session,
+                });
+
+                return { updatedOrder, stockMovements };
+            });
+
+            return res
+                .status(200)
+                .json(response("Order updated successfully", { updatedOrder, stockMovements }));
+        } catch (err) {
+            next(err);
         } finally {
             await session.endSession();
         }
