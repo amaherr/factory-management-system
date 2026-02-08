@@ -5,6 +5,7 @@ const returnSchema = new mongoose.Schema(
         returnNumber: {
             type: Number,
             required: true,
+            unique: true,
         },
 
         orderId: {

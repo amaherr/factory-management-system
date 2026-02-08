@@ -1,3 +1,10 @@
+/* Invariants:
+   - ON_SHELF draft reserves stock (theoretical--, reserved++)
+   - ON_SHELF finalize: reserved--, sold++
+   - ON_SHELF cancel/delete draft: reserved--, theoretical++
+   - ON_DEMAND stock doesn't change
+*/
+
 const mongoose = require("mongoose");
 
 const Order = require("../models/order.model");
@@ -37,7 +44,6 @@ const orderController = {
                         salePrice: 1,
                         totalTheoreticalStock: 1,
                         totalReserved: 1,
-                        locations: 1,
                     },
                 ).session(session);
 
@@ -67,7 +73,11 @@ const orderController = {
                     0,
                 );
 
-                const total = subTotal + taxAmount - discountAmount;
+                // normalize values
+                const discount = Number(discountAmount || 0);
+                const tax = Number(taxAmount || 0);
+
+                const total = subTotal + tax - discount;
                 if (total < 0) {
                     throw createError("Total cannot be negative (check discount/tax)", 400);
                 }
@@ -82,8 +92,8 @@ const orderController = {
                             orderType,
                             items: pricedItems,
                             subTotal,
-                            discountAmount,
-                            taxAmount,
+                            discountAmount: discount,
+                            taxAmount: tax,
                             total,
                             notes,
                         },
@@ -235,7 +245,7 @@ const orderController = {
                 return next(createError("Order not found", 404));
             }
 
-            res.status(200).json(reponse("Order retrieved successfully", order));
+            res.status(200).json(response("Order retrieved successfully", order));
         } catch (err) {
             return next(err);
         }
@@ -265,11 +275,19 @@ const orderController = {
                 if (status === ORDER_STATUS.FINALIZED) {
                     update.finalizedAt = now;
                     update.finalizedByUserId = userId;
+
+                    // clear cancellation metadata
+                    update.cancelledAt = null;
+                    update.cancelledByUserId = null;
                 }
 
                 if (status === ORDER_STATUS.CANCELLED) {
                     update.cancelledAt = now;
                     update.cancelledByUserId = userId;
+
+                    // clear finalization metadata
+                    update.finalizedAt = null;
+                    update.finalizedByUserId = null;
                 }
 
                 // update order
@@ -394,8 +412,8 @@ const orderController = {
                 if (!order) {
                     throw createError("Order not found", 404);
                 }
-                if (order.status === ORDER_STATUS.FINALIZED) {
-                    throw createError("Cannot delete a finalized order", 409);
+                if (order.status !== ORDER_STATUS.DRAFT) {
+                    throw createError("Only draft orders can be edited", 409);
                 }
 
                 // prepare updated fields (fallback to existing)
@@ -421,7 +439,7 @@ const orderController = {
                     return m;
                 };
 
-                // create hash maos for each items
+                // create hash maps for each items
                 const oldQtyMap = toQtyMap(order.items);
                 const newQtyMap = toQtyMap(nextRawItems);
 
@@ -508,6 +526,9 @@ const orderController = {
                     await StockMovement.deleteMany(
                         {
                             orderId: order._id,
+                            movementType: {
+                                $in: [STOCK_MOVEMENT_TYPE.RESERVE, STOCK_MOVEMENT_TYPE.UNRESERVE],
+                            },
                         },
                         { session },
                     );
@@ -586,72 +607,64 @@ const orderController = {
         const session = await mongoose.startSession();
 
         try {
-            const userId = req.user.id;
             const orderId = req.params.orderId;
 
-            const { deletedOrder, stockMovements } = await session.withTransaction(async () => {
-                // validate the order
-                const order = await Order.findById(orderId).session(session);
-                if (!order) {
-                    throw createError("Order not found", 404);
-                }
-                if (order.status === ORDER_STATUS.FINALIZED) {
-                    throw createError("Cannot delete a finalized order", 409);
-                }
-
-                const deletedOrder = await Order.findByIdAndDelete(orderId).session(session);
-
-                // return reserved products to stock
-                let stockMovements = [];
-                if (
-                    deletedOrder.orderType === ORDER_TYPE.ON_SHELF &&
-                    deletedOrder.status === ORDER_STATUS.DRAFT
-                ) {
-                    // return product amount to stock
-                    for (const item of deletedOrder.items) {
-                        // add reserved to stock
-                        const r = await Product.updateOne(
-                            {
-                                _id: item.productId,
-                                totalReserved: { $gte: item.quantity },
-                            },
-                            {
-                                $inc: {
-                                    totalTheoreticalStock: +item.quantity,
-                                    totalReserved: -item.quantity,
-                                },
-                            },
-                            { session },
-                        );
-
-                        if (r.modifiedCount !== 1) {
-                            // This indicates your reserved totals are out of sync.
-                            throw createError(
-                                `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
-                                409,
-                            );
-                        }
-
-                        // create stock movement
-                        const sm = await createStockMovement(
-                            {
-                                orderId: deletedOrder._id,
-                                productId: item.productId,
-                                quantityChange: item.quantity,
-                                movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
-                                notes: `Order ${deletedOrder.orderNumber} deleted (unreserve)`,
-                                userId,
-                            },
-                            session,
-                        );
-                        stockMovements.push(sm);
+            const { deletedOrder, deletedMovementsCount } = await session.withTransaction(
+                async () => {
+                    // validate the order
+                    const order = await Order.findById(orderId).session(session);
+                    if (!order) {
+                        throw createError("Order not found", 404);
                     }
-                }
-                return { deletedOrder, stockMovements };
-            });
+                    if (order.status === ORDER_STATUS.FINALIZED) {
+                        throw createError("Cannot delete a finalized order", 409);
+                    }
+
+                    const deletedOrder = await Order.findByIdAndDelete(orderId).session(session);
+
+                    // return reserved products to stock (only if ON_SHELF draft reserved stock)
+                    if (
+                        deletedOrder.orderType === ORDER_TYPE.ON_SHELF &&
+                        deletedOrder.status === ORDER_STATUS.DRAFT
+                    ) {
+                        // return product amount to stock
+                        for (const item of deletedOrder.items) {
+                            // add reserved to stock
+                            const r = await Product.updateOne(
+                                {
+                                    _id: item.productId,
+                                    totalReserved: { $gte: item.quantity },
+                                },
+                                {
+                                    $inc: {
+                                        totalTheoreticalStock: +item.quantity,
+                                        totalReserved: -item.quantity,
+                                    },
+                                },
+                                { session },
+                            );
+
+                            if (r.modifiedCount !== 1) {
+                                // This indicates your reserved totals are out of sync.
+                                throw createError(
+                                    `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
+                                    409,
+                                );
+                            }
+                        }
+                    }
+                    // delete all stock movements related to the order
+                    const delRes = await StockMovement.deleteMany(
+                        { orderId: deletedOrder._id },
+                        { session },
+                    );
+
+                    return { deletedOrder, deletedMovementsCount: delRes.deletedCount || 0 };
+                },
+            );
 
             res.status(200).json(
-                response("Order deleted successflly", { deletedOrder, stockMovements }),
+                response("Order deleted successflly", { deletedOrder, deletedMovementsCount }),
             );
         } catch (err) {
             return next(err);
