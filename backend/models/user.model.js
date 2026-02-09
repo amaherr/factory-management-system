@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
+            minLength: 1,
+            maxLength: 35,
         },
 
         password: {
@@ -31,6 +33,8 @@ const userSchema = new mongoose.Schema(
             required: true,
             unique: true,
             trim: true,
+            minLength: 1,
+            maxLength: 20,
         },
 
         lastLoginAt: {

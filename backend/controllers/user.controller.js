@@ -184,7 +184,6 @@ const userController = {
         try {
             const userId = req.params.userId;
             const { isActive } = req.body;
-            console.log(isActive);
 
             // change user activation status
             const user = await User.findByIdAndUpdate(
