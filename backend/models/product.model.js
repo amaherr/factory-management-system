@@ -115,23 +115,19 @@ const productSchema = new mongoose.Schema(
         deactivatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            default: null,
         },
 
         deactivatedAt: {
             type: Date,
-            default: null,
         },
 
         activatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            default: null,
         },
 
         activatedAt: {
             type: Date,
-            default: null,
         },
     },
     {

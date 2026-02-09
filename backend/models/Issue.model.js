@@ -27,20 +27,16 @@ const issueSchema = mongoose.Schema({
     resolvedByUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        default: null,
     },
     resolvedAt: {
         type: Date,
-        default: null,
     },
     cancelledByUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        default: null,
     },
     cancelledAt: {
         type: Date,
-        default: null,
     },
 });
 
