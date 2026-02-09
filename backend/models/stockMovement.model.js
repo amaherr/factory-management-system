@@ -6,14 +6,17 @@ const stockMovementSchema = new mongoose.Schema(
         orderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",
+            default: null,
         },
         returnId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Return",
+            default: null,
         },
         batchId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Batch",
+            default: null,
         },
         productId: {
             type: mongoose.Schema.Types.ObjectId,

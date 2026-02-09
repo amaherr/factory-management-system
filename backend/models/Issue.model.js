@@ -16,12 +16,13 @@ const issueSchema = mongoose.Schema({
     description: {
         type: String,
         required: true,
+        maxLength: 200,
     },
     status: {
         type: String,
         required: true,
         enum: Object.values(ISSUE_STATUS),
-        default: "open",
+        default: ISSUE_STATUS.OPEN,
     },
     resolvedByUserId: {
         type: mongoose.Schema.Types.ObjectId,
