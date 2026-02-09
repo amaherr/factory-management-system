@@ -9,15 +9,22 @@ const router = express.Router();
 // Get all returns (Admin, Inventory, Sales)
 router.get(
     "/",
-    authorizor([ROLES.ADMIN, ROLES.INVENTORY, ROLES.SALES]),
+    authorizor([ROLES.ADMIN, ROLES.SALES]),
     returnController.getAllReturns
 );
 
 // Get returns by product ID (Admin, Inventory, Sales)
 router.get(
     "/product/:productId",
-    authorizor([ROLES.ADMIN, ROLES.INVENTORY, ROLES.SALES]),
+    authorizor([ROLES.ADMIN, ROLES.SALES]),
     returnController.getReturnsByProductId
+);
+
+// Get returns by order ID (Admin, Inventory, Sales)
+router.get(
+    "/order/:orderId",
+    authorizor([ROLES.ADMIN, ROLES.SALES]),
+    returnController.getReturnsByOrderId
 );
 
 // Create return (Admin, Sales)

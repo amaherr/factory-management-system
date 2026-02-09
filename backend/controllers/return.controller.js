@@ -1,4 +1,5 @@
 const Return = require("../models/return.model");
+const Product = require("../models/product.model");
 const StockMovement = require("../models/stockMovement.model");
 const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
@@ -32,6 +33,7 @@ const returnController = {
                 // Create stock movement record
                 const stockMovement = new StockMovement({
                     productId: item.productId,
+                    returnId: newReturn._id,
                     quantityChange: item.quantity,
                     movementType: STOCK_MOVEMENT_TYPE.RETURN,
                     movementTime: returnDate || Date.now(),
@@ -41,6 +43,11 @@ const returnController = {
 
                 await stockMovement.save();
                 stockMovements.push(stockMovement);
+
+                // Update product theoretical stock
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { totalTheoreticalStock: item.quantity },
+                });
             }
 
             res.status(201).json(
@@ -83,7 +90,23 @@ const returnController = {
         }
     },
 
-    // 4. Update return - updates return record and creates new stock movements
+    // 4. Get returns by order ID
+    getReturnsByOrderId: async (req, res, next) => {
+        try {
+            const { orderId } = req.params;
+
+            const returns = await Return.find({ orderId })
+                .populate("orderId")
+                .populate("userId")
+                .populate("items.productId");
+
+            res.status(200).json(response("Order returns retrieved successfully", returns));
+        } catch (err) {
+            next(err);
+        }
+    },
+
+    // 5. Update return - updates return record and creates new stock movements
     updateReturn: async (req, res, next) => {
         try {
             const { id } = req.params;
@@ -98,17 +121,15 @@ const returnController = {
             // Step 1: Delete old stock movement records
             // Find stock movements created for this return
             await StockMovement.deleteMany({
-                movementType: STOCK_MOVEMENT_TYPE.RETURN,
-                movementTime: existingReturn.returnDate,
-                // We use a query that matches these specific characteristics to identify 'linked' movements
-                // Note: ideally we would store stockMovementIds on the Return or vice-versa for tighter coupling
-                // but relying on the same logic as before for consistency in this refactor.
-                // To be safer, we could filter by userId and maybe timestamp proximity, but here we trust the pattern.
-                userId: existingReturn.userId,
-                // NOTE: Using the productId list from the *old* items to find movements to delete
-                productId: { $in: existingReturn.items.map((item) => item.productId) },
-                // Adding notes filter or other identifiers if possible would be better, but we stick to previous logic structure
+                returnId: existingReturn._id,
             });
+
+            // Revert theoretical stock for old items
+            for (const item of existingReturn.items) {
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { totalTheoreticalStock: -item.quantity },
+                });
+            }
 
             // Step 2: Update the return document
             existingReturn.orderId = orderId || existingReturn.orderId;
@@ -124,6 +145,7 @@ const returnController = {
                 // Create new stock movement record
                 const stockMovement = new StockMovement({
                     productId: item.productId,
+                    returnId: existingReturn._id,
                     quantityChange: item.quantity,
                     movementType: STOCK_MOVEMENT_TYPE.RETURN,
                     movementTime: existingReturn.returnDate,
@@ -133,6 +155,11 @@ const returnController = {
 
                 await stockMovement.save();
                 stockMovements.push(stockMovement);
+
+                // Update product theoretical stock
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { totalTheoreticalStock: item.quantity },
+                });
             }
 
             res.status(200).json(
@@ -143,7 +170,7 @@ const returnController = {
         }
     },
 
-    // 5. Delete return - deletes return and associated stock movements
+    // 6. Delete return - deletes return and associated stock movements
     deleteReturn: async (req, res, next) => {
         try {
             const { id } = req.params;
@@ -156,11 +183,15 @@ const returnController = {
 
             // Step 1: Delete stock movement records
             await StockMovement.deleteMany({
-                movementType: STOCK_MOVEMENT_TYPE.RETURN,
-                userId: returnDoc.userId,
-                movementTime: returnDoc.returnDate,
-                productId: { $in: returnDoc.items.map((item) => item.productId) },
+                returnId: returnDoc._id,
             });
+
+            // Revert theoretical stock (decrease as return is cancelled/deleted)
+            for (const item of returnDoc.items) {
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { totalTheoreticalStock: -item.quantity },
+                });
+            }
 
             // Step 2: Delete the return
             await Return.findByIdAndDelete(id);
