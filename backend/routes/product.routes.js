@@ -26,6 +26,19 @@ router.post(
     productController.createProduct
 );
 
+// Get products in stock (Authenticated)
+router.get(
+    "/in-stock",
+    productController.getProductsWithStock
+);
+
+// Get products by location (Admin, Inventory)
+router.get(
+    "/location/:location",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productController.getProductsByLocation
+);
+
 // Get product by id (Public/Authenticated)
 router.get(
     "/:id",
@@ -58,6 +71,34 @@ router.patch(
     "/:id/deactive",
     authorizor([ROLES.ADMIN, ROLES.PLANNER]),
     productController.deactivateProduct
+);
+
+// Inventory - Transfer stock (Admin, Inventory)
+router.patch(
+    "/:id/transfer",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productController.transferProductStock
+);
+
+// Inventory - Add stock (Admin, Inventory)
+router.patch(
+    "/:id/add-stock",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productController.addProductStock
+);
+
+// Inventory - Sell stock (Admin, Inventory)
+router.patch(
+    "/:id/sell",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productController.sellProduct
+);
+
+// Inventory - Manual Adjustment (Admin, Inventory)
+router.patch(
+    "/:id/manual-adjustment",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productController.manualStockAdjustment
 );
 
 module.exports = router;
