@@ -6,6 +6,8 @@ const addressSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
+        minLength: 1,
+        maxLength: 35,
     },
 
     // should be an enum of governates inside the country
@@ -13,18 +15,23 @@ const addressSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
+        minLength: 1,
+        maxLength: 35,
     },
 
     city: {
         type: String,
         required: true,
         trim: true,
+        minLength: 1,
+        maxLength: 35,
     },
 
     street: {
         type: String,
         required: true,
         trim: true,
+        minLength: 1,
     },
 });
 
@@ -34,11 +41,14 @@ const customerSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
+            minLength: 1,
+            maxLength: 35,
         },
 
         company: {
             type: String,
             trim: true,
+            minLength: 1,
         },
 
         phoneNumber: {
@@ -46,10 +56,13 @@ const customerSchema = new mongoose.Schema(
             required: true,
             unique: true,
             trim: true,
+            minLength: 1,
+            maxLength: 20,
         },
 
         address: {
             type: addressSchema,
+            required: true,
         },
     },
     {

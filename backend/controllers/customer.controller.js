@@ -54,26 +54,10 @@ const customerController = {
         try {
             const customerId = req.params.customerId;
 
-            // white-list fields to get updated
-            const allowedFields = ["name", "phoneNumber", "email", "notes"];
-            const updates = {};
-
-            // normal top-level fields
-            for (const key of allowedFields) {
-                if (req.body[key] !== undefined) updates[key] = req.body[key];
-            }
-
-            // partial nested address update
-            if (req.body.address && typeof req.body.address === "object") {
-                for (const [k, v] of Object.entries(req.body.address)) {
-                    if (v !== undefined) updates[`address.${k}`] = v;
-                }
-            }
-
             // update customer
             const updatedCustomer = await Customer.findByIdAndUpdate(
                 customerId,
-                { $set: updates },
+                { $set: req.body },
                 {
                     new: true,
                     runValidators: true,

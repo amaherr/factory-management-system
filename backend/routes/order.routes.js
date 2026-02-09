@@ -1,7 +1,7 @@
 const express = require("express");
 
 const orderController = require("../controllers/order.controller");
-const orderDtos = require("../dtos/order.dto");
+const orderDtos = require("../dtos/order.dtos");
 
 const validator = require("../middlewares/validator");
 const authorizor = require("../middlewares/authorizor");
