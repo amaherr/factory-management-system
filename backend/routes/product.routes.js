@@ -18,7 +18,7 @@ router.get("/all", authorizor([ROLES.ADMIN, ROLES.PLANNER]), productController.g
 // Create product (Admin, Planner)
 router.post(
     "/",
-    validator(productDtos.createProductSchema),
+    validator({ bodySchema: productDtos.createProductSchema }),
     authorizor([ROLES.ADMIN, ROLES.PLANNER]),
     productController.createProduct,
 );
@@ -40,32 +40,32 @@ router.get("/:id", productController.getProductById);
 router.delete("/:id", authorizor([ROLES.ADMIN, ROLES.PLANNER]), productController.deleteProduct);
 
 // Update product (Admin, Planner)
-router.put("/:id", authorizor([ROLES.ADMIN, ROLES.PLANNER]), productController.updateProduct);
-
-// Activate product (Admin, Planner)
-router.patch(
-    "/:id/active",
+router.put(
+    "/:id",
+    validator({ bodySchema: productDtos.createProductSchema }),
     authorizor([ROLES.ADMIN, ROLES.PLANNER]),
-    productController.activateProduct,
+    productController.updateProduct,
 );
 
-// Deactivate product (Admin, Planner)
+// Change product activation (Admin, Planner)
 router.patch(
-    "/:id/deactive",
+    "/:productId/change-activation",
+    validator({ bodySchema: productDtos.changeProductActivationSchema }),
     authorizor([ROLES.ADMIN, ROLES.PLANNER]),
-    productController.deactivateProduct,
+    productController.changeProductActivation,
 );
 
 // Inventory - Transfer stock (Admin, Inventory)
 router.patch(
-    "/:id/transfer",
+    "/:productId/transfer",
+    validator({ bodySchema: productDtos.transferProductStockSchema }),
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     productController.transferProductStock,
 );
 
 // Inventory - Add stock (Admin, Inventory)
 router.patch(
-    "/:id/add-stock",
+    "/:productId/add-stock",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     productController.addProductStock,
 );
@@ -79,8 +79,9 @@ router.patch(
 
 // Inventory - Manual Adjustment (Admin, Inventory)
 router.patch(
-    "/:id/manual-adjustment",
+    "/:productId/manual-adjustment",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    validator({ bodySchema: productDtos.manualStockAdjustmentSchema }),
     productController.manualStockAdjustment,
 );
 

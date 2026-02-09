@@ -1,7 +1,5 @@
 const Product = require("../models/product.model");
-const StockMovement = require("../models/stockMovement.model");
 const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../enums/product.enums");
-const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
@@ -68,67 +66,64 @@ const productController = {
             const { id } = req.params;
             const updates = req.body;
 
-            // Prevent updating code
-            if (updates.code) {
-                return next(createError("Product code cannot be updated", 400));
+            // query product to validate
+            const product = await Product.findById(id);
+
+            // validate product
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+            if (updates.code && product.status !== PRODUCT_STATUS.PENDING) {
+                return next(createError("Product code cannot be updated for this product", 409));
             }
 
-            const product = await Product.findByIdAndUpdate(id, updates, {
+            const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
                 new: true,
                 runValidators: true,
             });
 
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
-
-            res.status(200).json(response("Product updated successfully", product));
+            res.status(200).json(response("Product updated successfully", updatedProduct));
         } catch (err) {
             return next(err);
         }
     },
 
-    activateProduct: async (req, res, next) => {
+    changeProductActivation: async (req, res, next) => {
         try {
-            const { id } = req.params;
-            const product = await Product.findByIdAndUpdate(
-                id,
-                {
-                    status: PRODUCT_STATUS.ACTIVE,
-                    activatedByUserId: req.user.id,
-                    activatedAt: Date.now(),
-                },
-                { new: true, runValidators: true },
-            );
+            const { productId } = req.params;
+            const { status } = req.body;
+            const userId = req.user.id;
 
+            // build updates object
+            const now = new Date();
+            const update = { status };
+
+            if (status === PRODUCT_STATUS.DEACTIVE) {
+                update.deactivatedByUserId = userId;
+                update.deactivatedAt = Date.now();
+
+                // clear activation metadata
+                update.activatedAt = null;
+                update.activatedByUserId = null;
+            } else if (status === PRODUCT_STATUS.ACTIVE) {
+                update.activatedByUserId = userId;
+                update.activatedAt = Date.now();
+
+                // clear deactivation metadata
+                update.deactivatedAt = null;
+                update.deactivatedByUserId = null;
+            }
+
+            // change product activation status
+            const product = await Product.findByIdAndUpdate(productId, update, {
+                new: true,
+                runValidators: true,
+            });
             if (!product) {
                 return next(createError("Product not found", 404));
             }
 
-            res.status(200).json(response("Product activated successfully", product));
-        } catch (err) {
-            return next(err);
-        }
-    },
-
-    deactivateProduct: async (req, res, next) => {
-        try {
-            const { id } = req.params;
-            const product = await Product.findByIdAndUpdate(
-                id,
-                {
-                    status: PRODUCT_STATUS.DEACTIVE, // or DEACTIVE based on enum
-                    deactivatedByUserId: req.user.id,
-                    deactivatedAt: Date.now(),
-                },
-                { new: true },
-            );
-
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
-
-            res.status(200).json(response("Product deactivated successfully", product));
+            res.status(200).json(response("Changed product status successfully", product));
         } catch (err) {
             return next(err);
         }
@@ -209,32 +204,10 @@ const productController = {
     // Transfer stock between locations
     transferProductStock: async (req, res, next) => {
         try {
-            const { id } = req.params; // Product ID
+            const { productId } = req.params;
             const { fromLocation, toLocation, quantity } = req.body;
 
-            if (!fromLocation || !toLocation || !quantity) {
-                return next(
-                    createError("fromLocation, toLocation, and quantity are required", 400),
-                );
-            }
-
-            if (quantity <= 0) {
-                return next(createError("Quantity must be greater than 0", 400));
-            }
-
-            // Validate locations
-            if (
-                !Object.values(FACTORY_LOCATIONS).includes(fromLocation) ||
-                !Object.values(FACTORY_LOCATIONS).includes(toLocation)
-            ) {
-                return next(createError("Invalid location", 400));
-            }
-
-            if (fromLocation === toLocation) {
-                return next(createError("Cannot transfer to the same location", 400));
-            }
-
-            const product = await Product.findById(id);
+            const product = await Product.findById(productId);
             if (!product) {
                 return next(createError("Product not found", 404));
             }
@@ -276,23 +249,10 @@ const productController = {
     // Add stock to a location
     addProductStock: async (req, res, next) => {
         try {
-            const { id } = req.params; // Product ID
+            const { productId } = req.params;
             const { location, quantity } = req.body;
 
-            if (!location || !quantity) {
-                return next(createError("location and quantity are required", 400));
-            }
-
-            if (quantity <= 0) {
-                return next(createError("Quantity must be greater than 0", 400));
-            }
-
-            // Validate location
-            if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
-                return next(createError("Invalid location", 400));
-            }
-
-            const product = await Product.findById(id);
+            const product = await Product.findById(productId);
             if (!product) {
                 return next(createError("Product not found", 404));
             }
@@ -373,29 +333,10 @@ const productController = {
     // Manual Stock Adjustment
     manualStockAdjustment: async (req, res, next) => {
         try {
-            const { id } = req.params;
+            const { productId } = req.params;
             const { location, adjustmentType, quantity, notes } = req.body;
 
-            if (!location || !adjustmentType || !quantity) {
-                return next(
-                    createError("Location, adjustmentType, and quantity are required", 400),
-                );
-            }
-
-            if (!["add", "subtract"].includes(adjustmentType)) {
-                return next(createError("Adjustment type must be 'add' or 'subtract'", 400));
-            }
-
-            if (quantity <= 0) {
-                return next(createError("Quantity must be greater than 0", 400));
-            }
-
-            // Validate location
-            if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
-                return next(createError("Invalid location", 400));
-            }
-
-            const product = await Product.findById(id);
+            const product = await Product.findById(productId);
             if (!product) {
                 return next(createError("Product not found", 404));
             }
@@ -432,24 +373,7 @@ const productController = {
 
             await product.save();
 
-            // Create Stock Movement
-            const stockMovement = new StockMovement({
-                productId: product._id,
-                quantityChange: quantityChange,
-                movementType: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
-                movementTime: Date.now(),
-                notes: notes || `Manual adjustment: ${adjustmentType} ${quantity} at ${location}`,
-                userId: req.user.id,
-            });
-
-            await stockMovement.save();
-
-            res.status(200).json(
-                response("Product stock adjusted manually successfully", {
-                    product,
-                    stockMovement,
-                }),
-            );
+            res.status(200).json(response("Product stock adjusted manually successfully", product));
         } catch (err) {
             return next(err);
         }
