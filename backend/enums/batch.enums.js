@@ -1,8 +1,7 @@
 const BATCH_STATUS = Object.freeze({
     DONE: "done",
     PLANNING: "planning",
-    PRODUCTOON: "production",
-    INVENTORY: "inventory",
+    PRODUCTION: "production",
 });
 
 module.exports = { BATCH_STATUS };

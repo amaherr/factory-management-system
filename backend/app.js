@@ -12,6 +12,7 @@ const productRoutes = require("./routes/product.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const orderRoutes = require("./routes/order.routes");
 const returnRoutes = require("./routes/return.routes");
+const batchRoutes = require("./routes/batch.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");
@@ -35,6 +36,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/returns", returnRoutes);
+app.use("/api/batches", batchRoutes);
 
 // mount error handler
 app.use(errorHandler);
