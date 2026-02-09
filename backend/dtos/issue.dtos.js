@@ -18,7 +18,7 @@ const issueDtos = {
         description: Joi.string().trim().min(1).max(200).optional(),
     }).min(1),
 
-    changeIssueStatus: oi.object({
+    changeIssueStatus: Joi.object({
         status: Joi.string().valid(ISSUE_STATUS.CANCELLED, ISSUE_STATUS.RESOLVED).required(),
     }),
 };

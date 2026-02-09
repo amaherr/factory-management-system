@@ -3,7 +3,7 @@ const Joi = require("joi");
 const { ROLES } = require("../enums/user.enums");
 
 const userDtos = {
-    loginSchema: oi.object({
+    loginSchema: Joi.object({
         phoneNumber: Joi.string().trim().min(5).max(20).required(),
         password: Joi.string().min(6).required(),
     }),
