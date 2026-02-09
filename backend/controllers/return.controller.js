@@ -54,7 +54,7 @@ const returnController = {
                 response("Return created successfully", { newReturn, stockMovements }),
             );
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -68,7 +68,7 @@ const returnController = {
 
             res.status(200).json(response("Returns retrieved successfully", returns));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -86,7 +86,7 @@ const returnController = {
 
             res.status(200).json(response("Product returns retrieved successfully", returns));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -102,7 +102,7 @@ const returnController = {
 
             res.status(200).json(response("Order returns retrieved successfully", returns));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -166,7 +166,7 @@ const returnController = {
                 response("Return updated successfully", { existingReturn, stockMovements }),
             );
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -198,7 +198,7 @@ const returnController = {
 
             res.status(200).json(response("Return deleted successfully", returnDoc));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 };

@@ -16,13 +16,7 @@ const batchController = {
         const session = await mongoose.startSession();
         session.startTransaction();
         try {
-            const {
-                batchNumber,
-                productId,
-                orderId,
-                plannedQuantity,
-                startDate,
-            } = req.body;
+            const { batchNumber, productId, orderId, plannedQuantity, startDate } = req.body;
 
             // Check if batch number exists
             const existingBatch = await Batch.findOne({ batchNumber }).session(session);
@@ -54,7 +48,7 @@ const batchController = {
 
             await session.commitTransaction();
             res.status(201).json(
-                response("Batch created successfully", { batch: newBatch, event: newEvent })
+                response("Batch created successfully", { batch: newBatch, event: newEvent }),
             );
         } catch (err) {
             await session.abortTransaction();
@@ -72,7 +66,7 @@ const batchController = {
                 .populate("orderId", "orderNumber");
             res.status(200).json(response("Batches retrieved successfully", batches));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -83,18 +77,16 @@ const batchController = {
             const batch = await Batch.findById(id)
                 .populate("productId", "name code")
                 .populate("orderId", "orderNumber");
-            
+
             if (!batch) {
                 return next(createError("Batch not found", 404));
             }
 
             const events = await BatchEvent.find({ batchId: id });
 
-            res.status(200).json(
-                response("Batch retrieved successfully", { batch, events })
-            );
+            res.status(200).json(response("Batch retrieved successfully", { batch, events }));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -115,7 +107,7 @@ const batchController = {
 
             res.status(200).json(response("Batch updated successfully", batch));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -192,7 +184,10 @@ const batchController = {
 
             await session.commitTransaction();
             res.status(200).json(
-                response("Planning finalized, batch moved to production", { batch, productionEvent })
+                response("Planning finalized, batch moved to production", {
+                    batch,
+                    productionEvent,
+                }),
             );
         } catch (err) {
             await session.abortTransaction();
@@ -229,8 +224,7 @@ const batchController = {
             batch.endDate = endDate || Date.now();
             await batch.save({ session });
 
-           
-            const loss =batch.plannedQuantity - producedQuantity;
+            const loss = batch.plannedQuantity - producedQuantity;
 
             // Finalize Production Event
             const productionEvent = await BatchEvent.findOne({
@@ -247,8 +241,6 @@ const batchController = {
 
             // *** Stock Integration Logic ***
             const stockUpdate = {};
-
-           
 
             if (batch.orderId) {
                 // If there is an order, the produced items are reserved for it
@@ -278,7 +270,7 @@ const batchController = {
 
             await session.commitTransaction();
             res.status(200).json(
-                response("Production finalized, batch completed", { batch, stockMovement })
+                response("Production finalized, batch completed", { batch, stockMovement }),
             );
         } catch (err) {
             await session.abortTransaction();

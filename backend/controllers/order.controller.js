@@ -596,7 +596,7 @@ const orderController = {
                 .status(200)
                 .json(response("Order updated successfully", { updatedOrder, stockMovements }));
         } catch (err) {
-            next(err);
+            return next(err);
         } finally {
             await session.endSession();
         }

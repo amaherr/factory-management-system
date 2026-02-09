@@ -18,7 +18,7 @@ const customerController = {
 
             res.status(201).json(response("Successfully created a new customer", customer));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -29,7 +29,7 @@ const customerController = {
 
             res.status(200).json(response("Customers retrieved successfully", customers));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -45,7 +45,7 @@ const customerController = {
 
             res.status(200).json(response("Customer retrieved successfully", customer));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -73,7 +73,7 @@ const customerController = {
                 return next(createError("Phone number already exists", 409));
             }
 
-            next(createError(err.message, 500));
+            return next(err);
         }
     },
 
@@ -90,7 +90,7 @@ const customerController = {
 
             res.status(200).json(response("Successfully deleted customer", deletedCustomer));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 };

@@ -44,7 +44,7 @@ const productController = {
 
             res.status(201).json(response("Product created successfully", newProduct));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -59,7 +59,7 @@ const productController = {
 
             res.status(200).json(response("Product deleted successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -84,7 +84,7 @@ const productController = {
 
             res.status(200).json(response("Product updated successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -107,7 +107,7 @@ const productController = {
 
             res.status(200).json(response("Product activated successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -130,7 +130,7 @@ const productController = {
 
             res.status(200).json(response("Product deactivated successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -139,7 +139,7 @@ const productController = {
             const products = await Product.find();
             res.status(200).json(response("Products retrieved successfully", products));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -148,7 +148,7 @@ const productController = {
             const products = await Product.find({ status: PRODUCT_STATUS.ACTIVE });
             res.status(200).json(response("Active products retrieved successfully", products));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -163,7 +163,7 @@ const productController = {
 
             res.status(200).json(response("Product retrieved successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -173,11 +173,9 @@ const productController = {
     getProductsWithStock: async (req, res, next) => {
         try {
             const products = await Product.find({ totalPhysicalStock: { $gt: 0 } });
-            res.status(200).json(
-                response("Products with stock retrieved successfully", products),
-            );
+            res.status(200).json(response("Products with stock retrieved successfully", products));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -204,7 +202,7 @@ const productController = {
                 response("Products for location retrieved successfully", products),
             );
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -271,7 +269,7 @@ const productController = {
 
             res.status(200).json(response("Stock transferred successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -315,10 +313,9 @@ const productController = {
 
             await product.save();
 
-    
             res.status(200).json(response("Stock added successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -369,7 +366,7 @@ const productController = {
 
             res.status(200).json(response("Sale processed successfully", product));
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
 
@@ -448,13 +445,15 @@ const productController = {
             await stockMovement.save();
 
             res.status(200).json(
-                response("Product stock adjusted manually successfully", { product, stockMovement }),
+                response("Product stock adjusted manually successfully", {
+                    product,
+                    stockMovement,
+                }),
             );
         } catch (err) {
-            next(err);
+            return next(err);
         }
     },
-
 };
 
 module.exports = productController;

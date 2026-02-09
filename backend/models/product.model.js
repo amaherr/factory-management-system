@@ -9,16 +9,23 @@ const productSchema = new mongoose.Schema(
             required: true,
             unique: true,
             trim: true,
+            minLength: 1,
+            maxLength: 50,
         },
 
         name: {
             type: String,
             required: true,
             trim: true,
+            minLength: 1,
+            maxLength: 200,
         },
 
         description: {
             type: String,
+            trim: true,
+            minLength: 1,
+            maxLength: 2000,
         },
 
         color: {
@@ -41,7 +48,7 @@ const productSchema = new mongoose.Schema(
         sku: {
             type: Number,
             required: true,
-            min: 0,
+            min: 1,
         },
 
         costPrice: {
@@ -108,19 +115,23 @@ const productSchema = new mongoose.Schema(
         deactivatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
+            default: null,
         },
 
         deactivatedAt: {
             type: Date,
+            default: null,
         },
 
         activatedByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
+            default: null,
         },
 
         activatedAt: {
             type: Date,
+            default: null,
         },
     },
     {
