@@ -1,64 +1,87 @@
 const mongoose = require("mongoose");
+
 const Batch = require("../models/batch.model");
 const BatchEvent = require("../models/batchEvent.model");
 const Product = require("../models/product.model");
+const Order = require("../models/order.model");
 const StockMovement = require("../models/stockMovement.model");
+
 const { BATCH_STATUS } = require("../enums/batch.enums");
 const { BATCH_EVENT_STAGES } = require("../enums/batchEvent.enums");
 const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+const { COUNTERS } = require("../enums/counter.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
+const { createStockMovement, getNextDocumentNumber } = require("../utils/helpers");
 
 const batchController = {
-    // 1. Create Batch (Planning)
+    // Create Batch (Planning)
     createBatch: async (req, res, next) => {
         const session = await mongoose.startSession();
-        session.startTransaction();
+
         try {
-            const { batchNumber, productId, orderId, plannedQuantity, startDate } = req.body;
+            const { productId, orderId, plannedQuantity, startDate } = req.body;
 
-            // Check if batch number exists
-            const existingBatch = await Batch.findOne({ batchNumber }).session(session);
-            if (existingBatch) {
-                throw createError("Batch number already exists", 409);
-            }
+            const { newBatch, newEvent } = await session.withTransaction(async () => {
+                // validate order and product ids
+                if (orderId) {
+                    const order = await Order.findById(orderId).session(session);
+                    if (!order) {
+                        throw createError("Order not found", 404);
+                    }
+                }
+                const product = await Product.findById(productId).session(session);
+                if (!product) {
+                    throw createError("Product not found", 404);
+                }
 
-            // Create Batch
-            const newBatch = new Batch({
-                batchNumber,
-                productId,
-                orderId,
-                plannedQuantity,
-                startDate: startDate || Date.now(),
-                status: BATCH_STATUS.PLANNING,
+                // Get next batch number
+                const batchNumber = await getNextDocumentNumber(COUNTERS.BATCH_NUMBER, session);
+
+                // Create Batch
+                const [newBatch] = await Batch.create(
+                    [
+                        {
+                            batchNumber,
+                            productId,
+                            orderId,
+                            plannedQuantity,
+                            startDate: startDate || Date.now(),
+                            status: BATCH_STATUS.PLANNING,
+                        },
+                    ],
+                    { session },
+                );
+
+                // Create Initial Batch Event (Planning)
+                const [newEvent] = await BatchEvent.create(
+                    [
+                        {
+                            code: `EVT-${batchNumber}-PLAN`, // Simple code generation logic
+                            batchId: newBatch._id,
+                            stage: BATCH_EVENT_STAGES.PLANNING,
+                            loss: 0,
+                            startDate: startDate || Date.now(),
+                        },
+                    ],
+                    { session },
+                );
+
+                return { newBatch, newEvent };
             });
-            await newBatch.save({ session });
 
-            // Create Initial Batch Event (Planning)
-            const newEvent = new BatchEvent({
-                code: `EVT-${batchNumber}-PLAN`, // Simple code generation logic
-                batchId: newBatch._id,
-                stage: BATCH_EVENT_STAGES.PLANNING,
-                loss: 0,
-                startDate: startDate || Date.now(),
-                // finalizedByUserId is null initially
-            });
-            await newEvent.save({ session });
-
-            await session.commitTransaction();
             res.status(201).json(
                 response("Batch created successfully", { batch: newBatch, event: newEvent }),
             );
         } catch (err) {
-            await session.abortTransaction();
-            next(err);
+            return next(err);
         } finally {
-            session.endSession();
+            await session.endSession();
         }
     },
 
-    // 2. Read All Batches
+    // Read All Batches
     getAllBatches: async (req, res, next) => {
         try {
             const batches = await Batch.find()
@@ -70,7 +93,7 @@ const batchController = {
         }
     },
 
-    // 3. Read Single Batch
+    // Read Single Batch
     getBatchById: async (req, res, next) => {
         try {
             const { id } = req.params;
@@ -90,28 +113,83 @@ const batchController = {
         }
     },
 
-    // 4. Update Batch (Planner)
+    // Update Batch (Planner)
     updateBatch: async (req, res, next) => {
-        try {
-            const { id } = req.params;
-            const updates = req.body;
+        const session = await mongoose.startSession();
 
-            const batch = await Batch.findByIdAndUpdate(id, updates, {
-                new: true,
-                runValidators: true,
+        try {
+            const batchId = req.params.batchId;
+            const { productId, orderId, plannedQuantity, startDate } = req.body;
+
+            const { updatedBatch, updatedEvent } = await session.withTransaction(async () => {
+                // 1) Load batch + enforce PLANNING only
+                const batch = await Batch.findById(batchId).session(session);
+                if (!batch) throw createError("Batch not found", 404);
+                if (batch.status !== BATCH_STATUS.PLANNING) {
+                    throw createError("Only planning batches can be edited", 409);
+                }
+
+                // 2) Build allowed updates only
+                const update = {};
+
+                if (productId !== undefined) update.productId = productId;
+
+                // allow clearing orderId by sending null
+                if (orderId !== undefined) update.orderId = orderId;
+
+                if (plannedQuantity !== undefined) {
+                    const pq = Number(plannedQuantity);
+                    update.plannedQuantity = pq;
+                }
+
+                let newStartDate;
+                if (startDate !== undefined) {
+                    newStartDate = new Date(startDate);
+                    update.startDate = newStartDate;
+                }
+
+                // 3) Update batch (still enforcing status PLANNING in query)
+                const updatedBatch = await Batch.findOneAndUpdate(
+                    { _id: batchId, status: BATCH_STATUS.PLANNING },
+                    update,
+                    { new: true, runValidators: true, session },
+                );
+
+                if (!updatedBatch) {
+                    throw createError("Batch not found or cannot be edited", 409);
+                }
+
+                // 4) Keep the planning event in sync when startDate changes
+                let updatedEvent = null;
+                if (newStartDate) {
+                    updatedEvent = await BatchEvent.findOneAndUpdate(
+                        { batchId: updatedBatch._id, stage: BATCH_EVENT_STAGES.PLANNING },
+                        { startDate: newStartDate },
+                        { new: true, session },
+                    );
+
+                    if (!updatedEvent) {
+                        throw createError("Planning batch event not found", 404);
+                    }
+                }
+
+                return { updatedBatch, updatedEvent };
             });
 
-            if (!batch) {
-                return next(createError("Batch not found", 404));
-            }
-
-            res.status(200).json(response("Batch updated successfully", batch));
+            return res.status(200).json(
+                response("Batch updated successfully", {
+                    batch: updatedBatch,
+                    event: updatedEvent,
+                }),
+            );
         } catch (err) {
             return next(err);
+        } finally {
+            await session.endSession();
         }
     },
 
-    // 5. Delete Batch (Admin)
+    // Delete Batch (Admin)
     deleteBatch: async (req, res, next) => {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -139,7 +217,7 @@ const batchController = {
         }
     },
 
-    // 6. Finalize Planning -> Transition to Production
+    // Finalize Planning -> Transition to Production
     finalizePlanning: async (req, res, next) => {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -197,7 +275,7 @@ const batchController = {
         }
     },
 
-    // 7. Finalize Production -> Transition to Done
+    // Finalize Production -> Transition to Done
     finalizeProduction: async (req, res, next) => {
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -257,16 +335,17 @@ const batchController = {
             }
 
             // Create Stock Movement
-            const stockMovement = new StockMovement({
-                productId: batch.productId,
-                batchId: batch._id,
-                quantityChange: producedQuantity,
-                movementType: STOCK_MOVEMENT_TYPE.BATCH,
-                movementTime: Date.now(),
-                notes: `Batch ${batch.batchNumber} production finalized`,
-                userId: req.user.id,
-            });
-            await stockMovement.save({ session });
+            const stockMovement = await createStockMovement(
+                {
+                    productId: batch.productId,
+                    batchId: batch._id,
+                    quantityChange: producedQuantity,
+                    movementType: STOCK_MOVEMENT_TYPE.BATCH,
+                    notes: `Batch ${batch.batchNumber} production finalized`,
+                    userId: req.user.id,
+                },
+                session,
+            );
 
             await session.commitTransaction();
             res.status(200).json(

@@ -8,7 +8,7 @@ const returnItemSchema = Joi.object({
     unitPrice: Joi.number().min(0).required(),
 }).unknown(false);
 
-const orderDtos = {
+const returnDtos = {
     createReturnSchema: Joi.object({
         orderId: objectId.required(),
         note: Joi.string().trim().max(500).optional(),
@@ -23,4 +23,4 @@ const orderDtos = {
     }).min(1),
 };
 
-module.exports = orderDtos;
+module.exports = returnDtos;

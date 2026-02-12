@@ -30,7 +30,7 @@ const batchSchema = mongoose.Schema(
         },
         producedQuantity: {
             type: Number,
-            min: 0,
+            min: 1,
         },
         startDate: {
             type: Date,
