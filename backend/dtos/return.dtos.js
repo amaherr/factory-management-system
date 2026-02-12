@@ -17,8 +17,7 @@ const orderDtos = {
     }),
 
     updateReturnSchema: Joi.object({
-        orderId: objectId.optional(),
-        note: Joi.string().trim().max(500).optional(),
+        note: Joi.string().trim().max(200).optional(),
         returnDate: Joi.date().iso().optional(),
         items: Joi.array().items(returnItemSchema).min(1).optional(),
     }).min(1),

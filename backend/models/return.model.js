@@ -23,6 +23,7 @@ const returnSchema = new mongoose.Schema(
         note: {
             type: String,
             trim: true,
+            maxLength: 200,
         },
 
         returnDate: {
@@ -54,6 +55,9 @@ const returnSchema = new mongoose.Schema(
         timestamps: true, // createdAt & updatedAt
     },
 );
+
+returnSchema.index({ orderId: 1 });
+returnSchema.index({ orderId: 1, "items.productId": 1 });
 
 const Return = mongoose.model("Return", returnSchema);
 module.exports = Return;

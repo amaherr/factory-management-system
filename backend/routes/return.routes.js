@@ -34,15 +34,15 @@ router.post(
     returnController.createReturn,
 );
 
-// Update return (Admin, Sales)
+// Edit return (Admin, Sales)
 router.put(
-    "/:id",
+    "/:returnId",
     authorizor([ROLES.ADMIN, ROLES.SALES]),
     validator({ bodySchema: returnDtos.updateReturnSchema }),
-    returnController.updateReturn,
+    returnController.editReturn,
 );
 
 // Delete return (Admin only)
-router.delete("/:id", authorizor([ROLES.ADMIN]), returnController.deleteReturn);
+router.delete("/:returnId", authorizor([ROLES.ADMIN]), returnController.deleteReturn);
 
 module.exports = router;

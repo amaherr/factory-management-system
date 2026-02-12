@@ -19,82 +19,140 @@ const returnController = {
         const session = await mongoose.startSession();
 
         try {
+            const userId = req.user.id;
             const { orderId, note, returnDate, items } = req.body;
 
-            if (!items || items.length === 0) {
-                return next(createError("Return must have at least one item", 400));
-            }
+            const movementTime = returnDate ? new Date(returnDate) : new Date();
 
             const { newReturn, stockMovements } = await session.withTransaction(async () => {
-                // Check order status
+                // 1) Load & validate order
                 const order = await Order.findById(orderId).session(session);
-                if (!order) {
-                    throw createError("Order not found", 404);
-                }
+                if (!order) throw createError("Order not found", 404);
                 if (order.status !== ORDER_STATUS.FINALIZED) {
                     throw createError("Order is not finalized", 409);
                 }
 
-                // Get next return number
+                // 2) Build map of order sold items: productId -> { quantity, unitPrice }
+                const orderItemMap = new Map(order.items.map((it) => [String(it.productId), it]));
+
+                // 3) Aggregate already-returned quantities for this order (across ALL returns)
+                const returnedAgg = await Return.aggregate([
+                    { $match: { orderId: new mongoose.Types.ObjectId(orderId) } },
+                    { $unwind: "$items" },
+                    {
+                        $group: {
+                            _id: "$items.productId",
+                            returnedQty: { $sum: "$items.quantity" },
+                        },
+                    },
+                ]).session(session);
+
+                const alreadyReturnedMap = new Map(
+                    returnedAgg.map((r) => [String(r._id), Number(r.returnedQty)]),
+                );
+
+                // 4) Normalize request items: merge duplicates by productId
+                const requestedMap = new Map(); // productIdStr -> qty
+                for (const it of items) {
+                    const pid = String(it.productId);
+                    const qty = Number(it.quantity);
+
+                    if (!Number.isInteger(qty) || qty < 1) {
+                        throw createError("Return item quantity must be an integer >= 1", 400);
+                    }
+
+                    requestedMap.set(pid, (requestedMap.get(pid) || 0) + qty);
+                }
+
+                // 5) Build Return items snapshot with unitPrice from order + validate remaining returnable
+                const returnItems = [];
+                for (const [pid, qty] of requestedMap) {
+                    const sold = orderItemMap.get(pid);
+                    if (!sold) {
+                        throw createError(`Product ${pid} was not in the order`, 409);
+                    }
+
+                    const alreadyReturned = alreadyReturnedMap.get(pid) || 0;
+                    const maxReturnable = Number(sold.quantity) - alreadyReturned;
+
+                    if (maxReturnable <= 0) {
+                        throw createError(
+                            `No remaining returnable quantity for product ${pid}`,
+                            409,
+                        );
+                    }
+
+                    if (qty > maxReturnable) {
+                        throw createError(
+                            `Cannot return ${qty} for product ${pid}. Remaining returnable: ${maxReturnable}`,
+                            409,
+                        );
+                    }
+
+                    returnItems.push({
+                        productId: sold.productId, // keep ObjectId
+                        quantity: qty,
+                        unitPrice: sold.unitPrice, // snapshot from order
+                    });
+                }
+
+                // 6) Get next return number and create return doc
                 const returnNumber = await getNextDocumentNumber(COUNTERS.RETURN_NUMBER, session);
 
-                // Create the return
                 const [newReturn] = await Return.create(
                     [
                         {
                             returnNumber,
                             orderId,
-                            userId: req.user.id,
+                            userId,
                             note,
-                            returnDate: returnDate ? new Date(returnDate) : new Date(),
-                            items,
+                            returnDate: movementTime,
+                            items: returnItems,
                         },
                     ],
                     { session },
                 );
 
-                // Process each item: create stock movement
+                // 7) Create movements + update product totals
                 const stockMovements = [];
-                for (const item of items) {
-                    // Create stock movement record
+                for (const item of returnItems) {
                     const sm = await createStockMovement(
                         {
                             productId: item.productId,
                             returnId: newReturn._id,
                             quantityChange: item.quantity,
                             movementType: STOCK_MOVEMENT_TYPE.RETURN,
-                            notes: `Return from order ${orderId} - ${note || ""}`,
-                            userId: req.user.id,
+                            movementTime,
+                            notes: `Return from order ${orderId} - ${note || ""}`.trim(),
+                            userId,
                         },
                         session,
                     );
-
                     stockMovements.push(sm);
 
-                    // Update product theoretical stock
+                    // Reverse sale effect: sold-- and theoretical++
                     const r = await Product.updateOne(
-                        {
-                            _id: item.productId,
-                            totalSold: { $gte: item.quantity },
-                        },
+                        { _id: item.productId, totalSold: { $gte: item.quantity } },
                         {
                             $inc: {
                                 totalSold: -item.quantity,
-                                totalTheoreticalStock: item.quantity,
+                                totalTheoreticalStock: +item.quantity,
                             },
                         },
                         { session },
                     );
+
                     if (r.modifiedCount !== 1) {
                         throw createError(`Product ${item.productId} cannot be returned`, 409);
                     }
                 }
+
                 return { newReturn, stockMovements };
             });
 
-            res.status(201).json(
-                response("Return created successfully", { newReturn, stockMovements }),
-            );
+            return res
+                .status(201)
+                .json(response("Return created successfully", { newReturn, stockMovements }));
         } catch (err) {
             return next(err);
         } finally {
@@ -151,87 +209,178 @@ const returnController = {
     },
 
     // Update return - updates return record and creates new stock movements
-    updateReturn: async (req, res, next) => {
+    editReturn: async (req, res, next) => {
         const session = await mongoose.startSession();
 
         try {
-            const { id } = req.params;
-            const { orderId, note, returnDate, items } = req.body;
+            const userId = req.user.id;
+            const returnId = req.params.returnId;
+            const { items, note, returnDate } = req.body;
 
-            const { existingReturn, stockMovements } = await session.withTransaction(async () => {
-                // Find the existing return
-                const existingReturn = await Return.findById(id).session(session);
-                if (!existingReturn) {
-                    throw createError("Return not found", 404);
+            const movementTime = returnDate ? new Date(returnDate) : new Date();
+
+            const { updatedReturn, stockMovements } = await session.withTransaction(async () => {
+                // 1) Load the return
+                const existingReturn = await Return.findById(returnId).session(session);
+                if (!existingReturn) throw createError("Return not found", 404);
+
+                const orderId = existingReturn.orderId;
+
+                // 2) Load the order (source of unitPrice snapshot)
+                const order = await Order.findById(orderId).session(session);
+                if (!order) throw createError("Order not found", 404);
+                if (order.status !== ORDER_STATUS.FINALIZED) {
+                    throw createError("Order is not finalized", 409);
                 }
 
-                // Step 1: Delete old stock movement records
-                // Find stock movements created for this return
-                await StockMovement.deleteMany(
+                // 3) Build order map (productId -> { quantity, unitPrice })
+                const orderItemMap = new Map(order.items.map((it) => [String(it.productId), it]));
+
+                // 4) Aggregate already-returned quantities for this order EXCLUDING this return
+                const returnedAgg = await Return.aggregate([
                     {
-                        returnId: existingReturn._id,
+                        $match: {
+                            orderId: new mongoose.Types.ObjectId(orderId),
+                            _id: { $ne: new mongoose.Types.ObjectId(returnId) },
+                        },
                     },
-                    { session },
+                    { $unwind: "$items" },
+                    {
+                        $group: {
+                            _id: "$items.productId",
+                            returnedQty: { $sum: "$items.quantity" },
+                        },
+                    },
+                ]).session(session);
+
+                const alreadyReturnedByOthers = new Map(
+                    returnedAgg.map((r) => [String(r._id), Number(r.returnedQty)]),
                 );
 
-                // Revert theoretical stock for old items
-                for (const item of existingReturn.items) {
-                    await Product.findByIdAndUpdate(
-                        item.productId,
+                // 5) Normalize incoming items (merge duplicates by productId)
+                const requestedMap = new Map(); // pidStr -> qty
+                for (const it of items) {
+                    const pid = String(it.productId);
+                    const qty = Number(it.quantity);
+
+                    if (!mongoose.Types.ObjectId.isValid(pid)) {
+                        throw createError(`Invalid productId: ${pid}`, 400);
+                    }
+                    if (!Number.isInteger(qty) || qty < 1) {
+                        throw createError("Each item.quantity must be an integer >= 1", 400);
+                    }
+
+                    requestedMap.set(pid, (requestedMap.get(pid) || 0) + qty);
+                }
+
+                // 6) Build new snapshot items + enforce multi-return rule
+                const newItemsSnapshot = [];
+                for (const [pid, qty] of requestedMap) {
+                    const sold = orderItemMap.get(pid);
+                    if (!sold) {
+                        throw createError(`Product ${pid} was not sold in this order`, 409);
+                    }
+
+                    const otherReturned = alreadyReturnedByOthers.get(pid) || 0;
+                    const maxReturnable = Number(sold.quantity) - otherReturned;
+
+                    if (maxReturnable <= 0) {
+                        throw createError(
+                            `No remaining returnable quantity for product ${pid}`,
+                            409,
+                        );
+                    }
+                    if (qty > maxReturnable) {
+                        throw createError(
+                            `Cannot set return qty ${qty} for product ${pid}. Remaining returnable: ${maxReturnable}`,
+                            409,
+                        );
+                    }
+
+                    newItemsSnapshot.push({
+                        productId: sold.productId, // keep ObjectId
+                        quantity: qty,
+                        unitPrice: sold.unitPrice, // snapshot from order
+                    });
+                }
+
+                // 7) Rollback old stock effects (undo this return’s previous impact)
+                for (const oldItem of existingReturn.items) {
+                    const r = await Product.updateOne(
+                        {
+                            _id: oldItem.productId,
+                            totalTheoreticalStock: { $gte: oldItem.quantity }, // prevent negative
+                        },
                         {
                             $inc: {
-                                totalTheoreticalStock: -item.quantity,
-                                totalSold: item.quantity,
+                                totalSold: +oldItem.quantity,
+                                totalTheoreticalStock: -oldItem.quantity,
                             },
                         },
                         { session },
                     );
+
+                    if (r.modifiedCount !== 1) {
+                        throw createError(
+                            `Cannot rollback previous return for product ${oldItem.productId} (stock mismatch)`,
+                            409,
+                        );
+                    }
                 }
 
-                // Step 2: Update the return document
-                existingReturn.orderId = orderId || existingReturn.orderId;
-                existingReturn.note = note !== undefined ? note : existingReturn.note;
-                existingReturn.returnDate = returnDate || existingReturn.returnDate;
-                existingReturn.items = items || existingReturn.items;
+                // 8) Delete all old stock movements for this return
+                await StockMovement.deleteMany({ returnId: existingReturn._id }, { session });
 
-                await existingReturn.save({ session });
-
-                // Step 3: Create new stock movement records for the updated items
+                // 9) Apply new stock effects + recreate movements
                 const stockMovements = [];
-                for (const item of existingReturn.items) {
-                    // Create new stock movement record
+                for (const item of newItemsSnapshot) {
+                    const r = await Product.updateOne(
+                        {
+                            _id: item.productId,
+                            totalSold: { $gte: item.quantity }, // can’t return more than sold globally
+                        },
+                        {
+                            $inc: {
+                                totalSold: -item.quantity,
+                                totalTheoreticalStock: +item.quantity,
+                            },
+                        },
+                        { session },
+                    );
+
+                    if (r.modifiedCount !== 1) {
+                        throw createError(`Product ${item.productId} cannot be returned`, 409);
+                    }
+
                     const sm = await createStockMovement(
                         {
                             productId: item.productId,
                             returnId: existingReturn._id,
                             quantityChange: item.quantity,
                             movementType: STOCK_MOVEMENT_TYPE.RETURN,
-                            notes: `Updated return from order ${existingReturn.orderId} - ${existingReturn.note || ""}`,
-                            userId: req.user.id,
+                            movementTime,
+                            notes: `Return edited for order ${orderId} - ${note || existingReturn.note || ""}`.trim(),
+                            userId,
                         },
                         session,
                     );
-                    stockMovements.push(sm);
 
-                    // Update product theoretical stock
-                    await Product.findByIdAndUpdate(
-                        item.productId,
-                        {
-                            $inc: {
-                                totalSold: -item.quantity,
-                                totalTheoreticalStock: item.quantity,
-                            },
-                        },
-                        { session },
-                    );
+                    stockMovements.push(sm);
                 }
 
-                return { existingReturn, stockMovements };
+                // 10) Update the return document
+                existingReturn.items = newItemsSnapshot;
+                if (note !== undefined) existingReturn.note = note;
+                if (returnDate !== undefined) existingReturn.returnDate = movementTime;
+
+                await existingReturn.save({ session });
+
+                return { updatedReturn: existingReturn, stockMovements };
             });
 
-            res.status(200).json(
-                response("Return updated successfully", { existingReturn, stockMovements }),
-            );
+            return res
+                .status(200)
+                .json(response("Return updated successfully", { updatedReturn, stockMovements }));
         } catch (err) {
             return next(err);
         } finally {
@@ -244,53 +393,49 @@ const returnController = {
         const session = await mongoose.startSession();
 
         try {
-            const { id } = req.params;
+            const returnId = req.params.returnId;
 
-            const returnDoc = await session.withTransaction(async () => {
-                // Find the return
-                const returnDoc = await Return.findById(id).session(session);
+            const deletedReturn = await session.withTransaction(async () => {
+                // 1) Load the return
+                const returnDoc = await Return.findById(returnId).session(session);
                 if (!returnDoc) {
                     throw createError("Return not found", 404);
                 }
 
-                // Step 1: Delete stock movement records
-                await StockMovement.deleteMany(
-                    {
-                        returnId: returnDoc._id,
-                    },
-                    { session },
-                );
-
-                // Revert theoretical stock (decrease as return is cancelled/deleted)
+                // 2) Undo stock effects (reverse what createReturn did)
                 for (const item of returnDoc.items) {
                     const r = await Product.updateOne(
                         {
                             _id: item.productId,
-                            totalTheoreticalStock: { $gte: item.quantity },
+                            totalTheoreticalStock: { $gte: item.quantity }, // prevent negative
                         },
                         {
                             $inc: {
+                                totalSold: +item.quantity,
                                 totalTheoreticalStock: -item.quantity,
-                                totalSold: item.quantity,
                             },
                         },
                         { session },
                     );
+
                     if (r.modifiedCount !== 1) {
                         throw createError(
-                            `Product ${item.productId} cannot delete its return`,
+                            `Cannot undo return for product ${item.productId} (stock mismatch)`,
                             409,
                         );
                     }
                 }
 
-                // Step 2: Delete the return
-                await Return.findByIdAndDelete(id, { session });
+                // 3) Delete all stock movements for this return
+                await StockMovement.deleteMany({ returnId: returnDoc._id }, { session });
+
+                // 4) Delete the return itself
+                await Return.deleteOne({ _id: returnDoc._id }, { session });
 
                 return returnDoc;
             });
 
-            res.status(200).json(response("Return deleted successfully", returnDoc));
+            return res.status(200).json(response("Return deleted successfully", { deletedReturn }));
         } catch (err) {
             return next(err);
         } finally {
