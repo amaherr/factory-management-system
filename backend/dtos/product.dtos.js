@@ -1,6 +1,7 @@
 const Joi = require("joi");
 
 const { COLORS, FACTORY_LOCATIONS, PRODUCT_STATUS, SEASONS } = require("../enums/product.enums");
+const { setPhysicalStock } = require("../controllers/product.controller");
 
 const objectId = Joi.string().hex().length(24);
 
@@ -55,7 +56,7 @@ const productDtos = {
             .required(),
     }),
 
-    manualStockAdjustmentSchema: Joi.object({
+    manualPhysicalStockAdjustmentSchema: Joi.object({
         location: Joi.string()
             .valid(...Object.values(FACTORY_LOCATIONS))
             .required(),
@@ -64,6 +65,13 @@ const productDtos = {
             .integer()
             .greater(0) // must be > 0
             .required(),
+    }),
+
+    setPhysicalStockSchema: Joi.object({
+        location: Joi.string()
+            .valid(...Object.values(FACTORY_LOCATIONS))
+            .required(),
+        newQuantity: Joi.number().integer().min(0).required(),
     }),
 };
 

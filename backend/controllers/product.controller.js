@@ -246,95 +246,11 @@ const productController = {
         }
     },
 
-    // Add stock to a location
-    addProductStock: async (req, res, next) => {
+    // Manual Physical Stock Adjustment
+    manualPhysicalStockAdjustment: async (req, res, next) => {
         try {
             const { productId } = req.params;
-            const { location, quantity } = req.body;
-
-            const product = await Product.findById(productId);
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
-
-            // Find or create location
-            let loc = product.locations.find((l) => l.location === location);
-            if (!loc) {
-                product.locations.push({
-                    location: location,
-                    quantityInStock: 0,
-                });
-                loc = product.locations[product.locations.length - 1];
-            }
-
-            // Increase stock
-            loc.quantityInStock += quantity;
-            product.totalPhysicalStock += quantity;
-
-            await product.save();
-
-            res.status(200).json(response("Stock added successfully", product));
-        } catch (err) {
-            return next(err);
-        }
-    },
-
-    // Sell product (direct sale)
-    sellProduct: async (req, res, next) => {
-        try {
-            const { id } = req.params;
-            const { location, quantity } = req.body;
-
-            if (!location || !quantity) {
-                return next(createError("location and quantity are required", 400));
-            }
-
-            if (quantity <= 0) {
-                return next(createError("Quantity must be greater than 0", 400));
-            }
-
-            // Validate location
-            if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
-                return next(createError("Invalid location", 400));
-            }
-
-            const product = await Product.findById(id);
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
-
-            // Find location
-            const loc = product.locations.find((l) => l.location === location);
-            if (!loc) {
-                return next(createError(`Location ${location} not found in product`, 404));
-            }
-
-            if (loc.quantityInStock < quantity) {
-                return next(createError("Insufficient stock in location", 400));
-            }
-
-            if (product.totalPhysicalStock < quantity) {
-                return next(createError("Insufficient total physical stock", 400));
-            }
-
-            // update stocks
-            // product.totalSold += quantity;
-            product.totalPhysicalStock -= quantity;
-            loc.quantityInStock -= quantity;
-
-            await product.save();
-
-            res.status(200).json(response("Sale processed successfully", product));
-        } catch (err) {
-            return next(err);
-        }
-    },
-
-    // Manual Stock Adjustment
-    manualStockAdjustment: async (req, res, next) => {
-        try {
-            const { productId } = req.params;
-            const { location, adjustmentType, quantity, notes } = req.body;
+            const { location, adjustmentType, quantity } = req.body;
 
             const product = await Product.findById(productId);
             if (!product) {
@@ -356,19 +272,15 @@ const productController = {
                 loc = product.locations[product.locations.length - 1];
             }
 
-            let quantityChange = 0;
-
             if (adjustmentType === "add") {
                 loc.quantityInStock += quantity;
                 product.totalPhysicalStock += quantity;
-                quantityChange = quantity;
             } else if (adjustmentType === "subtract") {
                 if (loc.quantityInStock < quantity) {
                     return next(createError("Insufficient stock in location", 400));
                 }
                 loc.quantityInStock -= quantity;
                 product.totalPhysicalStock -= quantity;
-                quantityChange = -quantity;
             }
 
             await product.save();
@@ -376,6 +288,59 @@ const productController = {
             res.status(200).json(response("Product stock adjusted manually successfully", product));
         } catch (err) {
             return next(err);
+        }
+    },
+
+    // function to set the phyiscal stock to a new number
+    setPhysicalStock: async (req, res, next) => {
+        try {
+            const productId = req.params.productId;
+            const { location, newQuantity } = req.body;
+
+            const qty = Number(newQuantity);
+
+            const product = await Product.findById(productId);
+            if (!product) {
+                return next(createError("Product not found", 404));
+            }
+
+            // find or create location
+            let loc = product.locations.find((l) => l.location === location);
+            if (!loc) {
+                product.locations.push({ location, quantityInStock: 0 });
+                loc = product.locations[product.locations.length - 1];
+            }
+
+            const prevQty = Number(loc.quantityInStock || 0);
+            const delta = qty - prevQty;
+
+            // apply updates
+            loc.quantityInStock = qty;
+
+            // update totalPhysicalStock based on delta
+            const nextTotalPhysical = Number(product.totalPhysicalStock || 0) + delta;
+            if (nextTotalPhysical < 0) {
+                // should never happen, but protects against corrupted data
+                return next(createError("totalPhysicalStock cannot become negative", 409));
+            }
+
+            product.totalPhysicalStock = nextTotalPhysical;
+
+            await product.save();
+
+            return res.status(200).json(
+                response("Physical stock updated successfully", {
+                    productId: product._id,
+                    location,
+                    previousQuantity: prevQty,
+                    newQuantity: qty,
+                    delta,
+                    totalPhysicalStock: product.totalPhysicalStock,
+                    locations: product.locations,
+                }),
+            );
+        } catch (err) {
+            next(err);
         }
     },
 };

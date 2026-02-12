@@ -63,26 +63,20 @@ router.patch(
     productController.transferProductStock,
 );
 
-// Inventory - Add stock (Admin, Inventory)
+// Inventory - Manual Phyisical Stock Adjustment (Admin, Inventory)
 router.patch(
-    "/:productId/add-stock",
+    "/:productId/manual-physical-adjustment",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
-    productController.addProductStock,
+    validator({ bodySchema: productDtos.manualPhysicalStockAdjustmentSchema }),
+    productController.manualPhysicalStockAdjustment,
 );
 
-// Inventory - Sell stock (Admin, Inventory)
+// Inventory - Set Physical Stock
 router.patch(
-    "/:id/sell",
-    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
-    productController.sellProduct,
-);
-
-// Inventory - Manual Adjustment (Admin, Inventory)
-router.patch(
-    "/:productId/manual-adjustment",
-    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
-    validator({ bodySchema: productDtos.manualStockAdjustmentSchema }),
-    productController.manualStockAdjustment,
+    "/:productId/set-physical-stock",
+    authorizor([ROLES.ADMIN]),
+    validator({ bodySchema: productDtos.setPhysicalStockSchema }),
+    productController.setPhysicalStock,
 );
 
 module.exports = router;
