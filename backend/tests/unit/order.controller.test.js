@@ -4,9 +4,24 @@
 const createError = require("http-errors"); // only if your code uses it directly; otherwise remove
 
 // --- MOCKS (adjust paths to match your imports) ---
-jest.mock("mongoose", () => ({
-    startSession: jest.fn(),
-}));
+jest.mock("mongoose", () => {
+    // Minimal Mongoose mock supporting Schema, Types, and model used by models
+    function MockSchema(definition, options) {
+        this.definition = definition;
+        this.options = options;
+        this._indexes = [];
+    }
+    MockSchema.prototype.index = function (spec) {
+        this._indexes.push(spec);
+    };
+    MockSchema.Types = { ObjectId: function ObjectId() {} };
+
+    return {
+        startSession: jest.fn(),
+        Schema: MockSchema,
+        model: jest.fn((name, schema) => ({ name, schema })),
+    };
+});
 
 jest.mock("../../models/product.model.js", () => ({
     find: jest.fn(),
@@ -17,9 +32,8 @@ jest.mock("../../models/order.model.js", () => ({
     create: jest.fn(),
 }));
 
-jest.mock("../../utils/helpers", () => jest.fn());
-
 jest.mock("../../utils/helpers", () => ({
+    getNextDocumentNumber: jest.fn(),
     createStockMovement: jest.fn(),
 }));
 
