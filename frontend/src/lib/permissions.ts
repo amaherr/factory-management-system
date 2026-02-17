@@ -1,4 +1,4 @@
-import type { UserRole } from '../contexts/AuthContext';
+import type { UserRole } from '../services/auth';
 
 export interface NavItem {
   label: string;
@@ -131,9 +131,9 @@ export function hasAccess(userRole: UserRole, allowedRoles: UserRole[]): boolean
 
 export function getFilteredNavigation(userRole: UserRole): NavItem[] {
   return navigationItems
-    .filter(item => hasAccess(userRole, item.roles))
-    .map(item => ({
+    .filter((item) => hasAccess(userRole, item.roles))
+    .map((item) => ({
       ...item,
-      children: item.children?.filter(child => hasAccess(userRole, child.roles)),
+      children: item.children?.filter((child) => hasAccess(userRole, child.roles)),
     }));
 }

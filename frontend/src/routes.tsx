@@ -19,9 +19,15 @@ import { UsersManagement } from './pages/admin/UsersManagement';
 import { SystemSettings } from './pages/admin/SystemSettings';
 import { ColorGuide } from './pages/admin/ColorGuide';
 
+import { useAuth } from './contexts/AuthContext';
+
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = !!localStorage.getItem('user');
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

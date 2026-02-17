@@ -1,91 +1,50 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export type UserRole = 'Admin' | 'Sales' | 'Inventory' | 'Accounting' | 'Planning';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  status: 'active' | 'inactive';
-  lastLogin?: string;
-}
+import { authService, type User } from '../services/auth';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (phone: string, pin: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const MOCK_USERS: Record<string, { password: string; user: User }> = {
-  'admin@factory.com': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      name: 'Admin User',
-      email: 'admin@factory.com',
-      role: 'Admin',
-      status: 'active',
-    },
-  },
-  'sales@factory.com': {
-    password: 'sales123',
-    user: {
-      id: '2',
-      name: 'Sales User',
-      email: 'sales@factory.com',
-      role: 'Sales',
-      status: 'active',
-    },
-  },
-  'inventory@factory.com': {
-    password: 'inventory123',
-    user: {
-      id: '3',
-      name: 'Inventory Manager',
-      email: 'inventory@factory.com',
-      role: 'Inventory',
-      status: 'active',
-    },
-  },
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored session
-    const storedUser = localStorage.getItem('user');
+    const storedUser = authService.getCurrentUser();
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
     }
+    setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
+  const login = async (phone: string, pin: string) => {
+    try {
+      const user = await authService.login(phone, pin);
+      
+      if (!user) {
+        throw new Error('Invalid response from server');
+      }
 
-    const mockUser = MOCK_USERS[email];
-    if (!mockUser || mockUser.password !== password) {
-      throw new Error('Invalid credentials');
+      setUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    const userWithLogin = {
-      ...mockUser.user,
-      lastLogin: new Date().toISOString(),
-    };
-
-    setUser(userWithLogin);
-    localStorage.setItem('user', JSON.stringify(userWithLogin));
   };
 
   const logout = () => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem('user');
+    toast.info('Logged out successfully');
   };
 
   return (
@@ -95,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         isAuthenticated: !!user,
+        loading,
       }}
     >
       {children}
