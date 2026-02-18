@@ -1,4 +1,5 @@
-import type { UserRole } from '../services/auth';
+import type { UserRole } from '../enums/user.enums';
+import { ROLES } from '../enums/user.enums';
 
 export interface NavItem {
   label: string;
@@ -13,43 +14,43 @@ export const navigationItems: NavItem[] = [
     label: 'Dashboard',
     path: '/',
     icon: 'LayoutDashboard',
-    roles: ['Admin', 'Sales', 'Inventory', 'Accounting', 'Planning'],
+    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
   },
   {
     label: 'Inventory',
     path: '/inventory',
     icon: 'Package',
-    roles: ['Admin', 'Inventory', 'Planning', 'Sales'],
+    roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING, ROLES.SALES],
     children: [
       {
         label: 'Products & Models',
         path: '/inventory/products',
         icon: 'Box',
-        roles: ['Admin', 'Inventory', 'Planning', 'Sales'],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING, ROLES.SALES],
       },
       {
         label: 'Stock Overview',
         path: '/inventory/stock',
         icon: 'Boxes',
-        roles: ['Admin', 'Inventory', 'Planning', 'Sales'],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING, ROLES.SALES],
       },
       {
         label: 'Transactions Log',
         path: '/inventory/transactions',
         icon: 'History',
-        roles: ['Admin', 'Inventory'],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY],
       },
       {
         label: 'Batches & Production',
         path: '/inventory/batches',
         icon: 'Factory',
-        roles: ['Admin', 'Inventory', 'Planning'],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING],
       },
       {
         label: 'Export',
         path: '/inventory/export',
         icon: 'Download',
-        roles: ['Admin', 'Inventory'],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY],
       },
     ],
   },
@@ -57,31 +58,31 @@ export const navigationItems: NavItem[] = [
     label: 'POS',
     path: '/pos',
     icon: 'ShoppingCart',
-    roles: ['Admin', 'Sales'],
+    roles: [ROLES.ADMIN, ROLES.SALES],
     children: [
       {
         label: 'New Sale',
         path: '/pos/new',
         icon: 'Plus',
-        roles: ['Admin', 'Sales'],
+        roles: [ROLES.ADMIN, ROLES.SALES],
       },
       {
         label: 'Orders',
         path: '/pos/orders',
         icon: 'FileText',
-        roles: ['Admin', 'Sales', 'Accounting'],
+        roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
       },
       {
         label: 'Invoices',
         path: '/pos/invoices',
         icon: 'Receipt',
-        roles: ['Admin', 'Sales', 'Accounting'],
+        roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
       },
       {
         label: 'Returns / Adjustments',
         path: '/pos/returns',
         icon: 'Undo',
-        roles: ['Admin', 'Sales', 'Inventory'],
+        roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY],
       },
     ],
   },
@@ -89,51 +90,51 @@ export const navigationItems: NavItem[] = [
     label: 'Customers',
     path: '/customers',
     icon: 'Users',
-    roles: ['Admin', 'Sales'],
+    roles: [ROLES.ADMIN, ROLES.SALES],
   },
   {
     label: 'Issues',
     path: '/issues',
     icon: 'AlertCircle',
-    roles: ['Admin', 'Sales', 'Inventory', 'Accounting', 'Planning'],
+    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
   },
   {
     label: 'Notifications',
     path: '/notifications',
     icon: 'Bell',
-    roles: ['Admin', 'Sales', 'Inventory', 'Accounting', 'Planning'],
+    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
   },
   {
     label: 'Admin',
     path: '/admin',
     icon: 'Settings',
-    roles: ['Admin'],
+    roles: [ROLES.ADMIN],
     children: [
       {
         label: 'Users & Roles',
         path: '/admin/users',
         icon: 'UserCog',
-        roles: ['Admin'],
+        roles: [ROLES.ADMIN],
       },
       {
         label: 'System Settings',
         path: '/admin/settings',
         icon: 'Sliders',
-        roles: ['Admin'],
+        roles: [ROLES.ADMIN],
       },
     ],
   },
 ];
 
-export function hasAccess(userRole: UserRole, allowedRoles: UserRole[]): boolean {
-  return allowedRoles.includes(userRole);
+export function hasAccess(userRoles: UserRole[], allowedRoles: UserRole[]): boolean {
+  return userRoles.some((role) => allowedRoles.includes(role));
 }
 
-export function getFilteredNavigation(userRole: UserRole): NavItem[] {
+export function getFilteredNavigation(userRoles: UserRole[]): NavItem[] {
   return navigationItems
-    .filter((item) => hasAccess(userRole, item.roles))
+    .filter((item) => hasAccess(userRoles, item.roles))
     .map((item) => ({
       ...item,
-      children: item.children?.filter((child) => hasAccess(userRole, child.roles)),
+      children: item.children?.filter((child) => hasAccess(userRoles, child.roles)),
     }));
 }

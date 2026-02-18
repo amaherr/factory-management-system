@@ -1,18 +1,16 @@
 import axios from 'axios';
-
-export type UserRole = 'Admin' | 'Sales' | 'Inventory' | 'Accounting' | 'Planning';
+import type { UserRole } from '../enums/user.enums';
 
 export interface User {
   id: string;
   name: string;
   phone: string;
   email?: string;
-  role: UserRole;
+  roles: UserRole[];
   status: 'active' | 'inactive';
   lastLogin?: string;
   token?: string;
 }
-
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -21,8 +19,8 @@ export const authService = {
     try {
       // Configure axios to include cookies
       axios.defaults.withCredentials = true;
-      
-      const response = await axios.post<{ message: string, data: User }>(`${API_URL}/users/login`, {
+
+      const response = await axios.post<{ message: string; data: User }>(`${API_URL}/users/login`, {
         phoneNumber: phone,
         password: pin,
       });
@@ -30,7 +28,7 @@ export const authService = {
       if (response.data && response.data.data) {
         return response.data.data;
       }
-      
+
       return response.data as unknown as User;
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Login failed';

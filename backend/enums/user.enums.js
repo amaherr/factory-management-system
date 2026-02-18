@@ -3,8 +3,8 @@ const ROLES = Object.freeze({
     SALES: "sales",
     INVENTORY: "inventory",
     ACCOUNTING: "accounting",
-    PLANNER: "planner",
-    PRODUCTION:"production",
+    PLANNING: "planning",
+    PRODUCTION: "production",
 });
 
 module.exports = { ROLES };

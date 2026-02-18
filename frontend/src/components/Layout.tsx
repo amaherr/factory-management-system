@@ -71,7 +71,7 @@ export function Layout() {
 
   if (!user) return null;
 
-  const navigation = getFilteredNavigation(user.role);
+  const navigation = getFilteredNavigation(user.roles);
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
@@ -161,12 +161,16 @@ export function Layout() {
                   >
                     {user.email}
                   </span>
-                  <Badge
-                    variant="secondary"
-                    className="mt-1 w-fit"
-                  >
-                    {user.role}
-                  </Badge>
+                  <div className="flex gap-1 flex-wrap mt-1">
+                    {user.roles.map((role) => (
+                      <Badge
+                        key={role}
+                        variant="secondary"
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

@@ -12,7 +12,7 @@ const router = express.Router();
 // Create Batch (Planner, Admin)
 router.post(
     "/",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN]),
     validator({ bodySchema: batchDtos.createBatchSchema }),
     batchController.createBatch,
 );
@@ -20,21 +20,21 @@ router.post(
 // Get All Batches (Planner, Admin, Inventory)
 router.get(
     "/",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN, ROLES.INVENTORY]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.INVENTORY]),
     batchController.getAllBatches,
 );
 
 // Get Batch by ID (Planner, Admin, Inventory)
 router.get(
     "/:id",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN, ROLES.INVENTORY]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.INVENTORY]),
     batchController.getBatchById,
 );
 
 // Update Batch (Planner, Admin)
 router.put(
     "/:id",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN]),
     validator({ bodySchema: batchDtos.updateBatchSchema }),
     batchController.updateBatch,
 );
@@ -45,14 +45,14 @@ router.delete("/:id", authorizor([ROLES.ADMIN]), batchController.deleteBatch);
 // Finalize Planning (Planner, Admin)
 router.patch(
     "/:id/finalize-planning",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN]),
     batchController.finalizePlanning,
 );
 
 // Finalize Production (Planner, Admin)
 router.patch(
     "/:id/finalize-production",
-    authorizor([ROLES.PLANNER, ROLES.ADMIN, ROLES.PRODUCTION]),
+    authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.PRODUCTION]),
     batchController.finalizeProduction,
 );
 

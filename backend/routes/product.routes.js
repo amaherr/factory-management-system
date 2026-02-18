@@ -13,13 +13,13 @@ const router = express.Router();
 router.get("/", productController.getAllActiveProducts);
 
 // Get all products (Admin, Planner)
-router.get("/all", authorizor([ROLES.ADMIN, ROLES.PLANNER]), productController.getAllProducts);
+router.get("/all", authorizor([ROLES.ADMIN, ROLES.PLANNING]), productController.getAllProducts);
 
 // Create product (Admin, Planner)
 router.post(
     "/",
     validator({ bodySchema: productDtos.createProductSchema }),
-    authorizor([ROLES.ADMIN, ROLES.PLANNER]),
+    authorizor([ROLES.ADMIN, ROLES.PLANNING]),
     productController.createProduct,
 );
 
@@ -37,13 +37,13 @@ router.get(
 router.get("/:id", productController.getProductById);
 
 // Delete product (Admin, Planner)
-router.delete("/:id", authorizor([ROLES.ADMIN, ROLES.PLANNER]), productController.deleteProduct);
+router.delete("/:id", authorizor([ROLES.ADMIN, ROLES.PLANNING]), productController.deleteProduct);
 
 // Update product (Admin, Planner)
 router.put(
     "/:id",
     validator({ bodySchema: productDtos.createProductSchema }),
-    authorizor([ROLES.ADMIN, ROLES.PLANNER]),
+    authorizor([ROLES.ADMIN, ROLES.PLANNING]),
     productController.updateProduct,
 );
 
@@ -51,7 +51,7 @@ router.put(
 router.patch(
     "/:productId/change-activation",
     validator({ bodySchema: productDtos.changeProductActivationSchema }),
-    authorizor([ROLES.ADMIN, ROLES.PLANNER]),
+    authorizor([ROLES.ADMIN, ROLES.PLANNING]),
     productController.changeProductActivation,
 );
 
