@@ -1,0 +1,17 @@
+{
+  "welcome": "Welcome",
+  "phone number": "Phone Number",
+  "pin code": "Pin Code",
+  "sign in": "Sign In",
+  "sign out": "Sign Out",
+  "save": "Save",
+  "cancel": "Cancel",
+  "search": "Search",
+  "loading": "Loading...",
+  "welcome back": "Welcome Back",
+  "enter your credentials": "Enter your phone number and PIN to access the system",
+  "signing in": "Signing in...",
+  "welcome back message": "Welcome back!",
+  "invalid credentials": "Invalid credentials. Please try again.",
+  "protected system": "Protected System • Authorized Personnel Only"
+}

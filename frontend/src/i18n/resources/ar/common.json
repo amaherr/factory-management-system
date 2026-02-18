@@ -1,0 +1,17 @@
+{
+  "welcome": "مرحبا",
+  "phone number": "رقم الهاتف",
+  "pin code": "رمز الدخول",
+  "sign in": "تسجيل الدخول",
+  "sign out": "تسجيل الخروج",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "search": "بحث",
+  "loading": "جاري التحميل...",
+  "welcome back": "أهلا وسهلا",
+  "enter your credentials": "أدخل رقم هاتفك ورمز الدخول للوصول إلى النظام",
+  "signing in": "جاري تسجيل الدخول...",
+  "welcome back message": "أهلا وسهلا!",
+  "invalid credentials": "بيانات اعتماد غير صحيحة. يرجى المحاولة مرة أخرى.",
+  "protected system": "نظام محمي • موظفون مخولون فقط"
+}

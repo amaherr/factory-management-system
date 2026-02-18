@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { toast } from 'sonner';
 import { Factory, Phone, Lock } from 'lucide-react';
 
@@ -14,6 +16,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +24,10 @@ export function Login() {
 
     try {
       await login(phone, pin);
-      toast.success('Welcome back!');
+      toast.success(t('welcome back message'));
       navigate('/');
     } catch (error) {
-      toast.error('Invalid credentials. Please try again.');
+      toast.error(t('invalid credentials'));
     } finally {
       setLoading(false);
     }
@@ -32,6 +35,9 @@ export function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-950">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md shadow-lg border-slate-200 dark:border-slate-800">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center mb-4">
@@ -39,8 +45,8 @@ export function Login() {
               <Factory className="size-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Enter your phone number and PIN to access the system</CardDescription>
+          <CardTitle className="text-2xl font-bold">{t('welcome back')}</CardTitle>
+          <CardDescription>{t('enter your credentials')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -48,7 +54,7 @@ export function Login() {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">{t('phone number')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -64,7 +70,7 @@ export function Login() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pin">PIN Code</Label>
+              <Label htmlFor="pin">{t('pin code')}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -84,12 +90,12 @@ export function Login() {
               className="w-full font-semibold shadow-sm hover:shadow-md transition-all duration-200"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? t('signing in') : t('sign in')}
             </Button>
           </form>
 
           <div className="mt-6 text-center text-xs text-muted-foreground">
-            <p>Protected System • Authorized Personnel Only</p>
+            <p>{t('protected system')}</p>
           </div>
         </CardContent>
       </Card>
