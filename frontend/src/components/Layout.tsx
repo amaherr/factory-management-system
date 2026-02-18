@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { getFilteredNavigation } from '../lib/permissions';
 import { Button } from './ui/button';
@@ -66,6 +67,7 @@ const iconMap: Record<string, any> = {
 export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -113,7 +115,7 @@ export function Layout() {
             />
             <Input
               type="text"
-              placeholder="Search products, orders, invoices, batches, customers..."
+              placeholder={t('search')}
               className="pl-10 border-[--border-default]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -174,12 +176,12 @@ export function Layout() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Change Password</DropdownMenuItem>
+              <DropdownMenuItem>{t('profile')}</DropdownMenuItem>
+              <DropdownMenuItem>{t('change password')}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="size-4 mr-2" />
-                Logout
+                {t('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -218,7 +220,7 @@ export function Layout() {
                         }}
                       >
                         <Icon className="size-4" />
-                        <span className="flex-1 text-left">{item.label}</span>
+                        <span className="flex-1 text-left">{t(item.label.toLowerCase())}</span>
                         {isExpanded ? (
                           <ChevronDown className="size-4" />
                         ) : (
@@ -238,7 +240,7 @@ export function Layout() {
                         }}
                       >
                         <Icon className="size-4" />
-                        <span>{item.label}</span>
+                        <span>{t(item.label.toLowerCase())}</span>
                       </Link>
                     )}
 
@@ -262,7 +264,7 @@ export function Layout() {
                               }}
                             >
                               <ChildIcon className="size-4" />
-                              <span>{child.label}</span>
+                              <span>{t(child.label.toLowerCase())}</span>
                             </Link>
                           );
                         })}
