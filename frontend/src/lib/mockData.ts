@@ -99,7 +99,15 @@ export interface Batch {
 export interface InventoryTransaction {
   id: string;
   timestamp: string;
-  type: 'production-in' | 'sale-out' | 'return-in' | 'adjustment' | 'transfer' | 'loss' | 'invoice-edit' | 'batch-finalization';
+  type:
+    | 'production-in'
+    | 'sale-out'
+    | 'return-in'
+    | 'adjustment'
+    | 'transfer'
+    | 'loss'
+    | 'invoice-edit'
+    | 'batch-finalization';
   productId: string;
   productName: string;
   variantId: string;
@@ -159,9 +167,39 @@ export const mockProducts: Product[] = [
     images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab'],
     totalStock: 245,
     variants: [
-      { id: 'v1', productId: 'p1', color: 'White', productionYear: 2024, season: 'Summer', sku: 'TSH-001-WHT-24-SUM', stock: 120, location: 'Main', status: 'Available' },
-      { id: 'v2', productId: 'p1', color: 'Black', productionYear: 2024, season: 'Summer', sku: 'TSH-001-BLK-24-SUM', stock: 85, location: 'Main', status: 'Available' },
-      { id: 'v3', productId: 'p1', color: 'Navy', productionYear: 2024, season: 'Summer', sku: 'TSH-001-NVY-24-SUM', stock: 40, location: 'Main', status: 'Available' },
+      {
+        id: 'v1',
+        productId: 'p1',
+        color: 'White',
+        productionYear: 2024,
+        season: 'Summer',
+        sku: 'TSH-001-WHT-24-SUM',
+        stock: 120,
+        location: 'Main',
+        status: 'Available',
+      },
+      {
+        id: 'v2',
+        productId: 'p1',
+        color: 'Black',
+        productionYear: 2024,
+        season: 'Summer',
+        sku: 'TSH-001-BLK-24-SUM',
+        stock: 85,
+        location: 'Main',
+        status: 'Available',
+      },
+      {
+        id: 'v3',
+        productId: 'p1',
+        color: 'Navy',
+        productionYear: 2024,
+        season: 'Summer',
+        sku: 'TSH-001-NVY-24-SUM',
+        stock: 40,
+        location: 'Main',
+        status: 'Available',
+      },
     ],
   },
   {
@@ -176,8 +214,28 @@ export const mockProducts: Product[] = [
     images: ['https://images.unsplash.com/photo-1551028719-00167b16eac5'],
     totalStock: 78,
     variants: [
-      { id: 'v4', productId: 'p2', color: 'Black', productionYear: 2024, season: 'Winter', sku: 'JKT-002-BLK-24-WIN', stock: 45, location: 'Main', status: 'Available' },
-      { id: 'v5', productId: 'p2', color: 'Gray', productionYear: 2024, season: 'Winter', sku: 'JKT-002-GRY-24-WIN', stock: 33, location: 'Main', status: 'Available' },
+      {
+        id: 'v4',
+        productId: 'p2',
+        color: 'Black',
+        productionYear: 2024,
+        season: 'Winter',
+        sku: 'JKT-002-BLK-24-WIN',
+        stock: 45,
+        location: 'Main',
+        status: 'Available',
+      },
+      {
+        id: 'v5',
+        productId: 'p2',
+        color: 'Gray',
+        productionYear: 2024,
+        season: 'Winter',
+        sku: 'JKT-002-GRY-24-WIN',
+        stock: 33,
+        location: 'Main',
+        status: 'Available',
+      },
     ],
   },
   {
@@ -192,8 +250,28 @@ export const mockProducts: Product[] = [
     images: ['https://images.unsplash.com/photo-1542272604-787c3835535d'],
     totalStock: 15,
     variants: [
-      { id: 'v6', productId: 'p3', color: 'Blue', productionYear: 2024, season: 'All Season', sku: 'JNS-003-BLU-24-ALL', stock: 8, location: 'Main', status: 'Available' },
-      { id: 'v7', productId: 'p3', color: 'Black', productionYear: 2024, season: 'All Season', sku: 'JNS-003-BLK-24-ALL', stock: 7, location: 'Main', status: 'Available' },
+      {
+        id: 'v6',
+        productId: 'p3',
+        color: 'Blue',
+        productionYear: 2024,
+        season: 'All Season',
+        sku: 'JNS-003-BLU-24-ALL',
+        stock: 8,
+        location: 'Main',
+        status: 'Available',
+      },
+      {
+        id: 'v7',
+        productId: 'p3',
+        color: 'Black',
+        productionYear: 2024,
+        season: 'All Season',
+        sku: 'JNS-003-BLK-24-ALL',
+        stock: 7,
+        location: 'Main',
+        status: 'Available',
+      },
     ],
   },
 ];
@@ -241,7 +319,16 @@ export const mockOrders: Order[] = [
     type: 'on-shelf',
     status: 'finalized',
     items: [
-      { id: 'oi1', productId: 'p1', productName: 'Classic T-Shirt', variantId: 'v1', variantDetails: 'White, 2024, Summer', quantity: 3, unitPrice: 120, total: 360 },
+      {
+        id: 'oi1',
+        productId: 'p1',
+        productName: 'Classic T-Shirt',
+        variantId: 'v1',
+        variantDetails: 'White, 2024, Summer',
+        quantity: 3,
+        unitPrice: 120,
+        total: 360,
+      },
     ],
     subtotal: 360,
     discount: 0,
@@ -258,7 +345,16 @@ export const mockOrders: Order[] = [
     type: 'on-demand',
     status: 'draft',
     items: [
-      { id: 'oi2', productId: 'p2', productName: 'Winter Jacket', variantId: 'v4', variantDetails: 'Black, 2024, Winter', quantity: 5, unitPrice: 450, total: 2250 },
+      {
+        id: 'oi2',
+        productId: 'p2',
+        productName: 'Winter Jacket',
+        variantId: 'v4',
+        variantDetails: 'Black, 2024, Winter',
+        quantity: 5,
+        unitPrice: 450,
+        total: 2250,
+      },
     ],
     subtotal: 2250,
     discount: 100,
@@ -279,7 +375,16 @@ export const mockInvoices: Invoice[] = [
     customerName: 'Ahmed Hassan',
     date: '2026-02-14T10:30:00Z',
     items: [
-      { id: 'oi1', productId: 'p1', productName: 'Classic T-Shirt', variantId: 'v1', variantDetails: 'White, 2024, Summer', quantity: 3, unitPrice: 120, total: 360 },
+      {
+        id: 'oi1',
+        productId: 'p1',
+        productName: 'Classic T-Shirt',
+        variantId: 'v1',
+        variantDetails: 'White, 2024, Summer',
+        quantity: 3,
+        unitPrice: 120,
+        total: 360,
+      },
     ],
     subtotal: 360,
     discount: 0,

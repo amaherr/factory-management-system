@@ -22,10 +22,23 @@ const customerController = {
         }
     },
 
-    // function to retrieve all customers
-    getAllCustomers: async (req, res, next) => {
+    // function to retrieve customers
+    getCustomers: async (req, res, next) => {
         try {
-            const customers = await Customer.find();
+            const { search } = req.query;
+
+            // build filter object
+            let filter = {};
+            if (search) {
+                filter = {
+                    $or: [
+                        { name: { $regex: search, $options: 'i' } },
+                        { phoneNumber: { $regex: search, $options: 'i' } },
+                    ],
+                };
+            }
+
+            const customers = await Customer.find(filter);
 
             res.status(200).json(response("Customers retrieved successfully", customers));
         } catch (err) {

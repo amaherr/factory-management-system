@@ -1,5 +1,5 @@
-import type { UserRole } from '../enums/user.enums';
-import { ROLES } from '../enums/user.enums';
+import type { UserRole } from '../services/enums/user.enums';
+import { ROLES } from '../services/enums/user.enums';
 
 export interface NavItem {
   label: string;

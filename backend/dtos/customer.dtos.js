@@ -1,5 +1,4 @@
 const Joi = require("joi");
-const { editCustomer } = require("../controllers/customer.controller");
 
 const customerDtos = {
     createCustomerSchema: Joi.object({
@@ -31,6 +30,10 @@ const customerDtos = {
     })
         .unknown(false)
         .min(1),
+
+    getCustomersSchema: Joi.object({
+        search: Joi.string().trim().min(1).optional(),
+    }).unknown(false),
 };
 
 module.exports = customerDtos;

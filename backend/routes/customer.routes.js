@@ -19,7 +19,7 @@ router.post(
 );
 
 // route to get all customers
-router.get("/", customerController.getAllCustomers);
+router.get("/", validator({ querySchema: customerDtos.getCustomersSchema }), customerController.getCustomers);
 
 // route to get a specific customers
 router.get("/:customerId", customerController.getCustomer);

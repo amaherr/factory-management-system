@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { UserRole } from '../enums/user.enums';
+import type { UserRole } from './enums/user.enums';
 
 export interface User {
   id: string;
