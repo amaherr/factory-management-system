@@ -41,7 +41,10 @@ const issueController = {
     // function to get all issues
     getAllIssues: async (req, res, next) => {
         try {
-            const issues = await Issue.find();
+            const issues = await Issue.find().populate(
+                "createdByUserId resolvedByUserId cancelledByUserId",
+                "name phoneNumber",
+            );
 
             res.status(200).json(response("Issues retrieved successfully", issues));
         } catch (err) {
@@ -54,11 +57,11 @@ const issueController = {
         try {
             const issueId = req.params.issueId;
 
-            const issue = await Issues.findById(issueId).populate(
+            const issue = await Issue.findById(issueId).populate(
                 "createdByUserId resolvedByUserId cancelledByUserId",
             );
             if (!issue) {
-                return next("Issue not found", 404);
+                return next(createError("Issue not found", 404));
             }
 
             res.status(200).json(response("Issue retrieved successfully", issue));
@@ -73,7 +76,10 @@ const issueController = {
             const userId = req.user.id;
 
             // get issues
-            const userIssues = await Issue.find({ createdByUserId: userId });
+            const userIssues = await Issue.find({ createdByUserId: userId }).populate(
+                "createdByUserId resolvedByUserId cancelledByUserId",
+                "name phoneNumber",
+            );
 
             res.status(200).json(response("User issues retrieved successfully", userIssues));
         } catch (err) {

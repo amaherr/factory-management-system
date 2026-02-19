@@ -5,16 +5,18 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import common_en from './resources/en/common.json';
 import nav_en from './resources/en/nav.json';
 import customers_en from './resources/en/customers.json';
+import issues_en from './resources/en/issues.json';
 import common_ar from './resources/ar/common.json';
 import nav_ar from './resources/ar/nav.json';
 import customers_ar from './resources/ar/customers.json';
+import issues_ar from './resources/ar/issues.json';
 
 export const supportedLngs = ['en', 'ar'] as const;
 export type SupportedLng = (typeof supportedLngs)[number];
 
 const resources = {
-  en: { common: common_en, nav: nav_en, customers: customers_en },
-  ar: { common: common_ar, nav: nav_ar, customers: customers_ar },
+  en: { common: common_en, nav: nav_en, customers: customers_en, issues: issues_en },
+  ar: { common: common_ar, nav: nav_ar, customers: customers_ar, issues: issues_ar },
 } as const;
 
 i18n
@@ -22,7 +24,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    ns: ['common', 'nav', 'customers'],
+    ns: ['common', 'nav', 'customers', 'issues'],
     defaultNS: 'common',
     supportedLngs: [...supportedLngs],
     fallbackLng: 'en',
