@@ -3,6 +3,11 @@ const mongoose = require("mongoose");
 const { ISSUE_TYPE, ISSUE_STATUS } = require("../enums/issue.enums");
 
 const issueSchema = mongoose.Schema({
+    issueNumber: {
+        type: Number,
+        required: true,
+        unique: true,
+    },
     createdByUserId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

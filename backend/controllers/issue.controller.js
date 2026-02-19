@@ -1,18 +1,36 @@
+const mongoose = require("mongoose");
+
 const Issue = require("../models/issue.model");
+
+const { COUNTERS } = require("../enums/counter.enums");
 const { ISSUE_STATUS } = require("../enums/issue.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
+const { getNextDocumentNumber } = require("../utils/helpers");
 
 const issueController = {
     // function to create a new issue
     createIssue: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
         try {
             const userId = req.user.id;
             const { issueType, description } = req.body;
 
-            // create new issue
-            const issue = await Issue.create({ createdByUserId: userId, issueType, description });
+            const issue = await session.withTransaction(async () => {
+                // get issue number
+                const issueNumber = await getNextDocumentNumber(COUNTERS.ISSUE_NUMBER, session);
+
+                // create new issue
+                const issue = await Issue.create({
+                    issueNumber,
+                    createdByUserId: userId,
+                    issueType,
+                    description,
+                });
+                return issue;
+            });
 
             res.status(201).json(response("Issue created successfully", issue));
         } catch (err) {
