@@ -105,24 +105,10 @@ export const navigationItems: NavItem[] = [
     roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
   },
   {
-    label: 'Admin',
-    path: '/admin',
-    icon: 'Settings',
+    label: 'User Management',
+    path: '/users',
+    icon: 'UserCog',
     roles: [ROLES.ADMIN],
-    children: [
-      {
-        label: 'Users & Roles',
-        path: '/admin/users',
-        icon: 'UserCog',
-        roles: [ROLES.ADMIN],
-      },
-      {
-        label: 'System Settings',
-        path: '/admin/settings',
-        icon: 'Sliders',
-        roles: [ROLES.ADMIN],
-      },
-    ],
   },
 ];
 

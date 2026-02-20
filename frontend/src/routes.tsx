@@ -16,23 +16,26 @@ import { Customers } from './pages/Customers';
 import { Issues } from './pages/Issues';
 import { Notifications } from './pages/Notifications';
 import { UsersManagement } from './pages/admin/UsersManagement';
-import { SystemSettings } from './pages/admin/SystemSettings';
-import { ColorGuide } from './pages/admin/ColorGuide';
 
 import { useAuth } from './contexts/AuthContext';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
-  
+
   return <>{children}</>;
 }
 
@@ -116,16 +119,8 @@ export const router = createBrowserRouter([
         element: <Notifications />,
       },
       {
-        path: 'admin/users',
+        path: 'users',
         element: <UsersManagement />,
-      },
-      {
-        path: 'admin/settings',
-        element: <SystemSettings />,
-      },
-      {
-        path: 'admin/color-guide',
-        element: <ColorGuide />,
       },
       {
         path: '*',
