@@ -15,7 +15,7 @@ import { ReturnsAdjustments } from './pages/pos/ReturnsAdjustments';
 import { Customers } from './pages/Customers';
 import { Issues } from './pages/Issues';
 import { Notifications } from './pages/Notifications';
-import { UsersManagement } from './pages/admin/UsersManagement';
+import { UsersManagement } from './pages/UsersManagement';
 
 import { useAuth } from './contexts/AuthContext';
 

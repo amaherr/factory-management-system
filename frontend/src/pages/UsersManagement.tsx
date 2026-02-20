@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent } from '../components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../components/ui/select';
+} from '../components/ui/select';
 import {
   Table,
   TableBody,
@@ -17,16 +17,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../../components/ui/table';
-import { Badge } from '../../components/ui/badge';
+} from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
 import { Search, Eye, Loader2, Pencil, Ban, Shield, Trash2 } from 'lucide-react';
-import { AddUserDialog } from '../../components/users/AddUserDialog';
-import { UserDetailsDialog } from '../../components/users/UserDetailsDialog';
-import { EditUserDialog } from '../../components/users/EditUserDialog';
-import { ToggleUserStatusDialog } from '../../components/users/ToggleUserStatusDialog';
-import { DeleteUserDialog } from '../../components/users/DeleteUserDialog';
-import { userService, type User } from '../../services/users';
-import { ROLES } from '../../services/enums/user.enums';
+import { AddUserDialog } from '../components/users/AddUserDialog';
+import { UserDetailsDialog } from '../components/users/UserDetailsDialog';
+import { EditUserDialog } from '../components/users/EditUserDialog';
+import { ToggleUserStatusDialog } from '../components/users/ToggleUserStatusDialog';
+import { DeleteUserDialog } from '../components/users/DeleteUserDialog';
+import { userService, type User } from '../services/users';
+import { ROLES } from '../services/enums/user.enums';
 import { toast } from 'sonner';
 
 export function UsersManagement() {
