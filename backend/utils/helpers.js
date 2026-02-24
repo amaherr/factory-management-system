@@ -1,6 +1,9 @@
 const Notification = require("../models/notification.model");
 const StockMovement = require("../models/stockMovement.model");
 const Counter = require("../models/counter.model");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 // gets the next number of a document
 async function getNextDocumentNumber(name, session) {
@@ -57,4 +60,64 @@ async function createStockMovement(
     return movement;
 }
 
-module.exports = { getNextDocumentNumber, sendNotification, createStockMovement };
+const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+
+function ensureUploadsDir() {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+}
+
+function hashFileName(originalName) {
+    const ext = path.extname(originalName || "").toLowerCase();
+    const hash = crypto.randomBytes(16).toString("hex");
+    return `${hash}${ext}`;
+}
+
+function saveUploadedFile(file) {
+    if (!file) {
+        return null;
+    }
+
+    ensureUploadsDir();
+
+    const fileName = hashFileName(file.originalname);
+    const filePath = path.join(UPLOADS_DIR, fileName);
+    fs.writeFileSync(filePath, file.buffer);
+
+    return `/uploads/${fileName}`;
+}
+
+function deleteUploadedFile(url) {
+    if (!url || typeof url !== "string") {
+        return false;
+    }
+
+    const normalized = url.replace(/\\/g, "/");
+    const uploadsPrefix = "/uploads/";
+
+    if (!normalized.startsWith(uploadsPrefix)) {
+        return false;
+    }
+
+    const fileName = normalized.slice(uploadsPrefix.length);
+    if (!fileName) {
+        return false;
+    }
+
+    const filePath = path.join(UPLOADS_DIR, fileName);
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        return true;
+    }
+
+    return false;
+}
+
+module.exports = {
+    getNextDocumentNumber,
+    sendNotification,
+    createStockMovement,
+    saveUploadedFile,
+    deleteUploadedFile,
+};

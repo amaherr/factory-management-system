@@ -3,7 +3,6 @@ import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsList } from './pages/inventory/ProductsList';
-import { ProductDetails } from './pages/inventory/ProductDetails';
 import { StockOverview } from './pages/inventory/StockOverview';
 import { TransactionsLog } from './pages/inventory/TransactionsLog';
 import { BatchesList } from './pages/inventory/BatchesList';
@@ -69,10 +68,6 @@ export const router = createBrowserRouter([
       {
         path: 'inventory/products',
         element: <ProductsList />,
-      },
-      {
-        path: 'inventory/products/:id',
-        element: <ProductDetails />,
       },
       {
         path: 'inventory/stock',

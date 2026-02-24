@@ -3,6 +3,7 @@ const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../enums/product.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
+const { saveUploadedFile, deleteUploadedFile } = require("../utils/helpers");
 
 const productController = {
     createProduct: async (req, res, next) => {
@@ -24,12 +25,15 @@ const productController = {
                 return next(createError("Product with this code already exists", 400));
             }
 
+            const uploadedImageUrl = req.file ? saveUploadedFile(req.file) : null;
+            const resolvedImage = uploadedImageUrl || defaultImage;
+
             const newProduct = new Product({
                 code,
                 name,
                 description,
                 color,
-                defaultImage,
+                defaultImage: resolvedImage,
                 sku,
                 costPrice,
                 salePrice,
@@ -64,7 +68,9 @@ const productController = {
     updateProduct: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const updates = req.body;
+            const updates = { ...req.body };
+            const shouldRemoveImage =
+                updates.removeImage === true || updates.removeImage === "true";
 
             // query product to validate
             const product = await Product.findById(id);
@@ -73,9 +79,26 @@ const productController = {
             if (!product) {
                 return next(createError("Product not found", 404));
             }
-            if (updates.code && product.status !== PRODUCT_STATUS.PENDING) {
+            if (updates.code && product.status === PRODUCT_STATUS.ACTIVE) {
                 return next(createError("Product code cannot be updated for this product", 409));
             }
+
+            if (shouldRemoveImage && product.defaultImage) {
+                deleteUploadedFile(product.defaultImage);
+                updates.defaultImage = null;
+            }
+
+            if (req.file) {
+                const uploadedImageUrl = saveUploadedFile(req.file);
+                if (uploadedImageUrl) {
+                    if (product.defaultImage) {
+                        deleteUploadedFile(product.defaultImage);
+                    }
+                    updates.defaultImage = uploadedImageUrl;
+                }
+            }
+
+            delete updates.removeImage;
 
             const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
                 new: true,

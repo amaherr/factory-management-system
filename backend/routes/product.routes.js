@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 
 const productController = require("../controllers/product.controller");
 const productDtos = require("../dtos/product.dtos");
@@ -8,6 +9,10 @@ const authorizor = require("../middlewares/authorizor");
 const { ROLES } = require("../enums/user.enums");
 
 const router = express.Router();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // Get all active products (Public/Authenticated)
 router.get("/", productController.getAllActiveProducts);
@@ -18,6 +23,7 @@ router.get("/all", authorizor([ROLES.ADMIN, ROLES.PLANNING]), productController.
 // Create product (Admin, Planner)
 router.post(
     "/",
+    upload.single("image"),
     validator({ bodySchema: productDtos.createProductSchema }),
     authorizor([ROLES.ADMIN, ROLES.PLANNING]),
     productController.createProduct,
@@ -42,7 +48,8 @@ router.delete("/:id", authorizor([ROLES.ADMIN, ROLES.PLANNING]), productControll
 // Update product (Admin, Planner)
 router.put(
     "/:id",
-    validator({ bodySchema: productDtos.createProductSchema }),
+    upload.single("image"),
+    validator({ bodySchema: productDtos.updateProductSchema }),
     authorizor([ROLES.ADMIN, ROLES.PLANNING]),
     productController.updateProduct,
 );
