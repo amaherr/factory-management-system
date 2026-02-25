@@ -1,0 +1,149 @@
+{
+  "title": "Stock Overview",
+  "description": "Real-time inventory levels and locations",
+  "searchPlaceholder": "Search by product name, code, or SKU...",
+  "loading": "Loading stock data...",
+  "noResults": "No stock items found",
+  "noLocation": "No Location",
+  "errors": {
+    "loadFailed": "Failed to load stock data"
+  },
+  "filters": {
+    "allLocations": "All Locations",
+    "lowStockOnly": "Low stock only (<50)"
+  },
+  "table": {
+    "product": "Product",
+    "code": "Code",
+    "sku": "SKU",
+    "location": "Location",
+    "stockLevel": "Stock Level",
+    "totalPhysical": "Total Physical",
+    "totalTheoretical": "Total Theoretical",
+    "totalReserved": "Reserved",
+    "totalSold": "Total Sold",
+    "status": "Status",
+    "actions": "Actions"
+  },
+  "actions": {
+    "view": "View Details",
+    "adjust": "Adjust Stock",
+    "transfer": "Transfer Stock",
+    "setStock": "Set Stock"
+  },
+  "productDetails": {
+    "title": "Product Stock Details",
+    "productInfo": "Product Information",
+    "name": "Product Name",
+    "code": "Product Code",
+    "color": "Color",
+    "season": "Season",
+    "status": "Status",
+    "description": "Description",
+    "pricing": "Pricing",
+    "costPrice": "Cost Price",
+    "salePrice": "Sale Price",
+    "stockSummary": "Stock Summary",
+    "totalPhysical": "Total Physical Stock",
+    "totalTheoretical": "Total Theoretical Stock",
+    "totalReserved": "Total Reserved",
+    "totalSold": "Total Sold",
+    "stockByLocation": "Stock by Location",
+    "noLocations": "No locations assigned",
+    "location": "Location",
+    "quantity": "Quantity"
+  },
+  "locations": {
+    "showroom": "Showroom",
+    "warehouse a": "Warehouse A",
+    "warehouse b": "Warehouse B"
+  },
+  "colors": {
+    "red": "Red",
+    "blue": "Blue",
+    "black": "Black",
+    "white": "White",
+    "green": "Green",
+    "yellow": "Yellow",
+    "gray": "Gray",
+    "navy": "Navy",
+    "brown": "Brown",
+    "beige": "Beige",
+    "pink": "Pink",
+    "purple": "Purple",
+    "orange": "Orange"
+  },
+  "seasons": {
+    "spring": "Spring",
+    "summer": "Summer",
+    "autumn": "Autumn",
+    "winter": "Winter"
+  },
+  "statuses": {
+    "pending": "Pending",
+    "active": "Active",
+    "deactive": "Inactive"
+  },
+  "adjustStock": {
+    "title": "Adjust Stock",
+    "description": "Manually adjust stock for {{productName}} ({{productCode}})",
+    "location": "Location",
+    "selectLocation": "Select location",
+    "adjustmentType": "Adjustment Type",
+    "add": "Add Stock",
+    "subtract": "Subtract Stock",
+    "quantity": "Quantity",
+    "quantityPlaceholder": "Enter quantity",
+    "cancel": "Cancel",
+    "submit": "Adjust Stock",
+    "submitting": "Adjusting...",
+    "success": "Stock adjusted successfully",
+    "errors": {
+      "fillAllFields": "Please fill all fields",
+      "invalidQuantity": "Please enter a valid quantity",
+      "failed": "Failed to adjust stock"
+    }
+  },
+  "transferStock": {
+    "title": "Transfer Stock",
+    "description": "Transfer stock for {{productName}} ({{productCode}}) between locations",
+    "fromLocation": "From Location",
+    "toLocation": "To Location",
+    "selectLocation": "Select location",
+    "available": "Available",
+    "quantity": "Quantity to Transfer",
+    "quantityPlaceholder": "Enter quantity",
+    "cancel": "Cancel",
+    "submit": "Transfer Stock",
+    "submitting": "Transferring...",
+    "success": "Stock transferred successfully",
+    "errors": {
+      "fillAllFields": "Please fill all fields",
+      "sameLocation": "Source and destination locations must be different",
+      "invalidQuantity": "Please enter a valid quantity",
+      "insufficientStock": "Insufficient stock in source location",
+      "failed": "Failed to transfer stock"
+    }
+  },
+  "setStock": {
+    "title": "Set Stock Level",
+    "description": "Set exact stock quantity for {{productName}} ({{productCode}})",
+    "warning": "⚠️ This will override the current stock level. Use with caution!",
+    "location": "Location",
+    "selectLocation": "Select location",
+    "current": "Current",
+    "currentStock": "Current stock",
+    "newQuantity": "New Quantity",
+    "quantityPlaceholder": "Enter new quantity",
+    "units": "units",
+    "cancel": "Cancel",
+    "submit": "Set Stock",
+    "submitting": "Setting...",
+    "success": "Stock level set successfully",
+    "errors": {
+      "fillAllFields": "Please fill all fields",
+      "invalidQuantity": "Please enter a valid quantity (0 or greater)",
+      "failed": "Failed to set stock level"
+    }
+  }
+}

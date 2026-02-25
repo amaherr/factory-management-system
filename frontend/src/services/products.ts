@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Color, ProductStatus, Season } from './enums/product.enums';
+import type { Color, ProductStatus, Season, FactoryLocation } from './enums/product.enums';
 
-export type { Color, ProductStatus, Season };
+export type { Color, ProductStatus, Season, FactoryLocation };
 
 interface Product {
   _id: string;
@@ -139,6 +139,98 @@ export const productService = {
       const { data } = await axios.patch(`${API_BASE}/products/${id}/change-activation`, payload, {
         withCredentials: true,
       });
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  // Stock Management
+  getProductsWithStock: async (): Promise<Product[]> => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/products/in-stock`, {
+        withCredentials: true,
+      });
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  getProductsByLocation: async (location: FactoryLocation): Promise<Product[]> => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/products/location/${location}`, {
+        withCredentials: true,
+      });
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  transferStock: async (
+    productId: string,
+    payload: {
+      fromLocation: FactoryLocation;
+      toLocation: FactoryLocation;
+      quantity: number;
+    },
+  ): Promise<Product> => {
+    try {
+      const { data } = await axios.patch(`${API_BASE}/products/${productId}/transfer`, payload, {
+        withCredentials: true,
+      });
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  adjustStock: async (
+    productId: string,
+    payload: {
+      location: FactoryLocation;
+      adjustmentType: 'add' | 'subtract';
+      quantity: number;
+    },
+  ): Promise<Product> => {
+    try {
+      const { data } = await axios.patch(
+        `${API_BASE}/products/${productId}/manual-physical-adjustment`,
+        payload,
+        {
+          withCredentials: true,
+        },
+      );
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  setStock: async (
+    productId: string,
+    payload: {
+      location: FactoryLocation;
+      newQuantity: number;
+    },
+  ): Promise<{
+    productId: string;
+    location: string;
+    previousQuantity: number;
+    newQuantity: number;
+    delta: number;
+    totalPhysicalStock: number;
+    locations: Array<{ location: string; quantityInStock: number }>;
+  }> => {
+    try {
+      const { data } = await axios.patch(
+        `${API_BASE}/products/${productId}/set-physical-stock`,
+        payload,
+        {
+          withCredentials: true,
+        },
+      );
       return data.data;
     } catch (error) {
       throw extractError(error);

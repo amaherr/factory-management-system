@@ -1,0 +1,149 @@
+{
+  "title": "نظرة عامة على المخزون",
+  "description": "مستويات ومواقع المخزون في الوقت الفعلي",
+  "searchPlaceholder": "البحث بالاسم أو الكود أو SKU...",
+  "loading": "جاري تحميل بيانات المخزون...",
+  "noResults": "لا توجد عناصر مخزون",
+  "noLocation": "لا يوجد موقع",
+  "errors": {
+    "loadFailed": "فشل تحميل بيانات المخزون"
+  },
+  "filters": {
+    "allLocations": "جميع المواقع",
+    "lowStockOnly": "مخزون منخفض فقط (<50)"
+  },
+  "table": {
+    "product": "المنتج",
+    "code": "الكود",
+    "sku": "SKU",
+    "location": "الموقع",
+    "stockLevel": "مستوى المخزون",
+    "totalPhysical": "إجمالي المخزون الفعلي",
+    "totalTheoretical": "إجمالي المخزون النظري",
+    "totalReserved": "المحجوز",
+    "totalSold": "المبيعات",
+    "status": "الحالة",
+    "actions": "الإجراءات"
+  },
+  "actions": {
+    "view": "عرض التفاصيل",
+    "adjust": "تعديل المخزون",
+    "transfer": "نقل المخزون",
+    "setStock": "تعيين المخزون"
+  },
+  "productDetails": {
+    "title": "بيانات مخزون المنتج",
+    "productInfo": "بيانات المنتج",
+    "name": "اسم المنتج",
+    "code": "كود المنتج",
+    "color": "اللون",
+    "season": "الموسم",
+    "status": "الحالة",
+    "description": "الوصف",
+    "pricing": "الأسعار",
+    "costPrice": "سعر التكلفة",
+    "salePrice": "سعر البيع",
+    "stockSummary": "ملخص المخزون",
+    "totalPhysical": "إجمالي المخزون الفعلي",
+    "totalTheoretical": "إجمالي المخزون النظري",
+    "totalReserved": "إجمالي المحجوز",
+    "totalSold": "إجمالي المبيعات",
+    "stockByLocation": "المخزون حسب الموقع",
+    "noLocations": "لم يتم تعيين مواقع",
+    "location": "الموقع",
+    "quantity": "الكمية"
+  },
+  "locations": {
+    "showroom": "صالة العرض",
+    "warehouse a": "المخزن أ",
+    "warehouse b": "المخزن ب"
+  },
+  "colors": {
+    "red": "أحمر",
+    "blue": "أزرق",
+    "black": "أسود",
+    "white": "أبيض",
+    "green": "أخضر",
+    "yellow": "أصفر",
+    "gray": "رمادي",
+    "navy": "كحلي",
+    "brown": "بني",
+    "beige": "بيج",
+    "pink": "وردي",
+    "purple": "بنفسجي",
+    "orange": "برتقالي"
+  },
+  "seasons": {
+    "spring": "ربيع",
+    "summer": "صيف",
+    "autumn": "خريف",
+    "winter": "شتاء"
+  },
+  "statuses": {
+    "pending": "قيد الانتظار",
+    "active": "نشط",
+    "deactive": "غير نشط"
+  },
+  "adjustStock": {
+    "title": "تعديل المخزون",
+    "description": "تعديل المخزون يدويًا لـ {{productName}} ({{productCode}})",
+    "location": "الموقع",
+    "selectLocation": "اختر الموقع",
+    "adjustmentType": "نوع التعديل",
+    "add": "إضافة مخزون",
+    "subtract": "خصم مخزون",
+    "quantity": "الكمية",
+    "quantityPlaceholder": "أدخل الكمية",
+    "cancel": "إلغاء",
+    "submit": "تعديل المخزون",
+    "submitting": "جاري التعديل...",
+    "success": "تم تعديل المخزون بنجاح",
+    "errors": {
+      "fillAllFields": "يرجى ملء جميع الحقول",
+      "invalidQuantity": "يرجى إدخال كمية صحيحة",
+      "failed": "فشل تعديل المخزون"
+    }
+  },
+  "transferStock": {
+    "title": "نقل المخزون",
+    "description": "نقل المخزون لـ {{productName}} ({{productCode}}) بين المواقع",
+    "fromLocation": "من الموقع",
+    "toLocation": "إلى الموقع",
+    "selectLocation": "اختر الموقع",
+    "available": "المتاح",
+    "quantity": "الكمية المراد نقلها",
+    "quantityPlaceholder": "أدخل الكمية",
+    "cancel": "إلغاء",
+    "submit": "نقل المخزون",
+    "submitting": "جاري النقل...",
+    "success": "تم نقل المخزون بنجاح",
+    "errors": {
+      "fillAllFields": "يرجى ملء جميع الحقول",
+      "sameLocation": "يجب أن يكون موقع المصدر والوجهة مختلفين",
+      "invalidQuantity": "يرجى إدخال كمية صحيحة",
+      "insufficientStock": "مخزون غير كافٍ في الموقع المصدر",
+      "failed": "فشل نقل المخزون"
+    }
+  },
+  "setStock": {
+    "title": "تعيين مستوى المخزون",
+    "description": "تعيين الكمية الدقيقة للمخزون لـ {{productName}} ({{productCode}})",
+    "warning": "⚠️ سيؤدي هذا إلى تجاوز مستوى المخزون الحالي. استخدم بحذر!",
+    "location": "الموقع",
+    "selectLocation": "اختر الموقع",
+    "current": "الحالي",
+    "currentStock": "المخزون الحالي",
+    "newQuantity": "الكمية الجديدة",
+    "quantityPlaceholder": "أدخل الكمية الجديدة",
+    "units": "وحدة",
+    "cancel": "إلغاء",
+    "submit": "تعيين المخزون",
+    "submitting": "جاري التعيين...",
+    "success": "تم تعيين مستوى المخزون بنجاح",
+    "errors": {
+      "fillAllFields": "يرجى ملء جميع الحقول",
+      "invalidQuantity": "يرجى إدخال كمية صحيحة (0 أو أكثر)",
+      "failed": "فشل تعيين مستوى المخزون"
+    }
+  }
+}
