@@ -4,7 +4,7 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { ProductsList } from './pages/inventory/ProductsList';
 import { StockOverview } from './pages/inventory/StockOverview';
-import { TransactionsLog } from './pages/inventory/TransactionsLog';
+import { StockMovementPage } from './pages/inventory/StockMovement';
 import { BatchesList } from './pages/inventory/BatchesList';
 import { InventoryExport } from './pages/inventory/InventoryExport';
 import { NewSale } from './pages/pos/NewSale';
@@ -74,8 +74,8 @@ export const router = createBrowserRouter([
         element: <StockOverview />,
       },
       {
-        path: 'inventory/transactions',
-        element: <TransactionsLog />,
+        path: 'inventory/movements',
+        element: <StockMovementPage />,
       },
       {
         path: 'inventory/batches',

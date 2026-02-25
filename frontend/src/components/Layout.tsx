@@ -67,7 +67,8 @@ const iconMap: Record<string, any> = {
 export function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation('common');
+  const { t: tCommon } = useTranslation('common');
+  const { t: tNav } = useTranslation('nav');
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -115,7 +116,7 @@ export function Layout() {
             />
             <Input
               type="text"
-              placeholder={t('search')}
+              placeholder={tCommon('search')}
               className="pl-10 border-[--border-default]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,12 +177,12 @@ export function Layout() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>{t('profile')}</DropdownMenuItem>
-              <DropdownMenuItem>{t('change password')}</DropdownMenuItem>
+              <DropdownMenuItem>{tCommon('profile')}</DropdownMenuItem>
+              <DropdownMenuItem>{tCommon('change password')}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="size-4 mr-2" />
-                {t('logout')}
+                {tCommon('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -220,7 +221,7 @@ export function Layout() {
                         }}
                       >
                         <Icon className="size-4" />
-                        <span className="flex-1 text-left">{t(item.label.toLowerCase())}</span>
+                        <span className="flex-1 text-left">{tNav(item.label.toLowerCase())}</span>
                         {isExpanded ? (
                           <ChevronDown className="size-4" />
                         ) : (
@@ -240,7 +241,7 @@ export function Layout() {
                         }}
                       >
                         <Icon className="size-4" />
-                        <span>{t(item.label.toLowerCase())}</span>
+                        <span>{tNav(item.label.toLowerCase())}</span>
                       </Link>
                     )}
 
@@ -264,7 +265,7 @@ export function Layout() {
                               }}
                             >
                               <ChildIcon className="size-4" />
-                              <span>{t(child.label.toLowerCase())}</span>
+                              <span>{tNav(child.label.toLowerCase())}</span>
                             </Link>
                           );
                         })}

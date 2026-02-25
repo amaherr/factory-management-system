@@ -35,10 +35,10 @@ export const navigationItems: NavItem[] = [
         roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING, ROLES.SALES],
       },
       {
-        label: 'Transactions Log',
-        path: '/inventory/transactions',
+        label: 'Stock Movements',
+        path: '/inventory/movements',
         icon: 'History',
-        roles: [ROLES.ADMIN, ROLES.INVENTORY],
+        roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING],
       },
       {
         label: 'Batches & Production',

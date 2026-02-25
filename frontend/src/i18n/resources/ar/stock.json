@@ -145,5 +145,56 @@
       "invalidQuantity": "يرجى إدخال كمية صحيحة (0 أو أكثر)",
       "failed": "فشل تعيين مستوى المخزون"
     }
+  },
+  "movements": {
+    "title": "حركات المخزون",
+    "description": "سجل تدقيق كامل لجميع حركات المخزون",
+    "searchPlaceholder": "البحث عن طريق كود المنتج...",
+    "loading": "جاري تحميل حركات المخزون...",
+    "noResults": "لم يتم العثور على حركات مخزون",
+    "errors": {
+      "loadFailed": "فشل تحميل حركات المخزون"
+    },
+    "filters": {
+      "allTypes": "جميع الأنواع",
+      "reserve": "احتياطي",
+      "unreserve": "إلغاء الحتياطي",
+      "sales": "مبيعات",
+      "batch": "دفعة",
+      "return": "إرجاع",
+      "manual_adjustment": "تعديل يدوي"
+    },
+    "table": {
+      "timestamp": "الوقت",
+      "type": "النوع",
+      "product": "المنتج",
+      "code": "الكود",
+      "quantity": "الكمية",
+      "reference": "المرجع",
+      "performedBy": "تم بواسطة",
+      "notes": "ملاحظات",
+      "actions": "الإجراءات"
+    },
+    "details": {
+      "title": "تفاصيل حركة المخزون",
+      "product": "المنتج",
+      "code": "كود المنتج",
+      "type": "نوع الحركة",
+      "quantity": "تغيير الكمية",
+      "notes": "ملاحظات",
+      "reference": "المرجع",
+      "relatedOrder": "الطلب ذي الصلة",
+      "relatedReturn": "الإرجاع ذي الصلة",
+      "relatedBatch": "الدفعة ذات الصلة",
+      "performedBy": "تم بواسطة",
+      "createdAt": "تاريخ الإنشاء",
+      "close": "إغلاق"
+    },
+    "pagination": {
+      "showing": "عرض {{from}} إلى {{to}} من {{total}} حركة",
+      "previous": "السابق",
+      "next": "التالي",
+      "page": "الصفحة {{current}} من {{total}}"
+    }
   }
 }

@@ -145,5 +145,56 @@
       "invalidQuantity": "Please enter a valid quantity (0 or greater)",
       "failed": "Failed to set stock level"
     }
+  },
+  "movements": {
+    "title": "Stock Movements",
+    "description": "Complete audit trail of all stock movements",
+    "searchPlaceholder": "Search by product code...",
+    "loading": "Loading stock movements...",
+    "noResults": "No stock movements found",
+    "errors": {
+      "loadFailed": "Failed to load stock movements"
+    },
+    "filters": {
+      "allTypes": "All Types",
+      "reserve": "Reserve",
+      "unreserve": "Unreserve",
+      "sales": "Sales",
+      "batch": "Batch",
+      "return": "Return",
+      "manual_adjustment": "Manual Adjustment"
+    },
+    "table": {
+      "timestamp": "Timestamp",
+      "type": "Type",
+      "product": "Product",
+      "code": "Code",
+      "quantity": "Quantity",
+      "reference": "Reference",
+      "performedBy": "Performed By",
+      "notes": "Notes",
+      "actions": "Actions"
+    },
+    "details": {
+      "title": "Stock Movement Details",
+      "product": "Product",
+      "code": "Product Code",
+      "type": "Movement Type",
+      "quantity": "Quantity Changed",
+      "notes": "Notes",
+      "reference": "Reference",
+      "relatedOrder": "Related Order",
+      "relatedReturn": "Related Return",
+      "relatedBatch": "Related Batch",
+      "performedBy": "Performed By",
+      "createdAt": "Created At",
+      "close": "Close"
+    },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}} movements",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{current}} of {{total}}"
+    }
   }
 }

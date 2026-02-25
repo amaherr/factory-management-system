@@ -1,7 +1,18 @@
 {
-  "dashboard": "Dashboard",
-  "inventory": "Inventory",
-  "pos": "POS",
-  "customers": "Customers",
-  "issues": "Issues"
+  "dashboard": "لوحة التحكم",
+  "inventory": "المخزون",
+  "products & models": "المنتجات والموديلات",
+  "stock overview": "نظرة عامة على المخزون",
+  "stock movements": "حركات المخزون",
+  "batches & production": "دفعات الإنتاج",
+  "export": "تصدير",
+  "pos": "نقطة البيع",
+  "new sale": "بيع جديد",
+  "orders": "الطلبات",
+  "invoices": "الفواتير",
+  "returns / adjustments": "المرتجعات / التعديلات",
+  "customers": "العملاء",
+  "issues": "المشاكل",
+  "notifications": "الإشعارات",
+  "user management": "إدارة المستخدمين"
 }
