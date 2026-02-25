@@ -5,7 +5,9 @@
     "main": "index.js",
     "scripts": {
         "dev": "nodemon app.js",
-        "start": "node app.js"
+        "start": "node app.js",
+        "clear:db": "node scripts/clearDatabase.js",
+        "clear:db:keep-users": "node scripts/clearDatabase.js User"
     },
     "keywords": [],
     "author": "",
