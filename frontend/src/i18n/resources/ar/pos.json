@@ -1,0 +1,51 @@
+{
+  "title": "بيع جديد",
+  "description": "إنشاء طلب جديد أو إنهاء عملية بيع",
+  "searchPlaceholder": "ابحث عن المنتجات بالاسم أو الكود...",
+  "loadingProducts": "جاري تحميل المنتجات...",
+  "noProducts": "لم يتم العثور على منتجات",
+  "currency": "ج.م",
+  "stockAvailable": "{{count}} متاح",
+  "outOfStock": "نفدت الكمية",
+  "cartTitle": "السلة ({{count}})",
+  "customer": "العميل",
+  "selectCustomer": "اختر العميل",
+  "orderType": {
+    "label": "نوع الطلب",
+    "onShelf": "من المخزون",
+    "onDemand": "حسب الطلب",
+    "onShelfHint": "خصم فوري من المخزون",
+    "onDemandHint": "حجز/تخطيط لاحقًا"
+  },
+  "emptyCart": "السلة فارغة",
+  "onlyStockAvailable": "المتاح فقط {{count}}!",
+  "pricing": {
+    "subtotal": "الإجمالي الفرعي",
+    "discount": "الخصم",
+    "tax": "الضريبة",
+    "total": "الإجمالي"
+  },
+  "notes": "ملاحظات",
+  "notesPlaceholder": "أضف ملاحظات...",
+  "actions": {
+    "finalize": "إنهاء البيع",
+    "finalizing": "جاري الإنهاء...",
+    "saveDraft": "حفظ كمسودة",
+    "savingDraft": "جاري الحفظ...",
+    "clearCart": "تفريغ السلة"
+  },
+  "toasts": {
+    "finalizedSuccess": "تم إنهاء البيع بنجاح (طلب رقم {{orderNumber}})",
+    "draftSaved": "تم حفظ الطلب كمسودة (طلب رقم {{orderNumber}})"
+  },
+  "errors": {
+    "loadFailed": "فشل تحميل المنتجات/العملاء",
+    "emptyCart": "السلة فارغة",
+    "selectCustomer": "يرجى اختيار عميل",
+    "discountTaxInvalid": "يجب أن تكون قيم الخصم والضريبة غير سالبة",
+    "onlyStockAvailable": "المتاح فقط {{stock}} وحدة",
+    "outOfStock": "{{product}} غير متوفر في المخزون",
+    "createFailed": "فشل إنشاء الطلب",
+    "finalizeFailed": "فشل إنهاء البيع"
+  }
+}

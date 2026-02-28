@@ -1,0 +1,51 @@
+{
+  "title": "New Sale",
+  "description": "Create a new order or finalize a sale",
+  "searchPlaceholder": "Search products by name or code...",
+  "loadingProducts": "Loading products...",
+  "noProducts": "No products found",
+  "currency": "EGP",
+  "stockAvailable": "{{count}} in stock",
+  "outOfStock": "Out of stock",
+  "cartTitle": "Cart ({{count}})",
+  "customer": "Customer",
+  "selectCustomer": "Select customer",
+  "orderType": {
+    "label": "Order Type",
+    "onShelf": "On-Shelf",
+    "onDemand": "On-Demand",
+    "onShelfHint": "Immediate stock deduction",
+    "onDemandHint": "Reserve/plan for later"
+  },
+  "emptyCart": "Cart is empty",
+  "onlyStockAvailable": "Only {{count}} available!",
+  "pricing": {
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "tax": "Tax",
+    "total": "Total"
+  },
+  "notes": "Notes",
+  "notesPlaceholder": "Add notes...",
+  "actions": {
+    "finalize": "Finalize Sale",
+    "finalizing": "Finalizing...",
+    "saveDraft": "Save as Draft",
+    "savingDraft": "Saving...",
+    "clearCart": "Clear Cart"
+  },
+  "toasts": {
+    "finalizedSuccess": "Sale finalized successfully (Order #{{orderNumber}})",
+    "draftSaved": "Order saved as draft (Order #{{orderNumber}})"
+  },
+  "errors": {
+    "loadFailed": "Failed to load products/customers",
+    "emptyCart": "Cart is empty",
+    "selectCustomer": "Please select a customer",
+    "discountTaxInvalid": "Discount and tax must be non-negative",
+    "onlyStockAvailable": "Only {{stock}} units available",
+    "outOfStock": "{{product}} is out of stock",
+    "createFailed": "Failed to create order",
+    "finalizeFailed": "Failed to finalize sale"
+  }
+}
