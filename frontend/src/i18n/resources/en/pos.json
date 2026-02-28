@@ -1,6 +1,16 @@
 {
-  "title": "New Sale",
+  "title": "Sales Page",
   "description": "Create a new order or finalize a sale",
+  "listTitle": "Orders",
+  "listDescription": "View and manage orders",
+  "changeStatus": "Change Status",
+  "changeOrderStatus": "Change Order Status",
+  "changeOrderStatusDescription": "Select a new status for order",
+  "newStatus": "New Status",
+  "selectStatus": "Select a status",
+  "finalizeOrderWarning": "Once finalized, the order cannot be edited. This action is irreversible.",
+  "cancelOrderWarning": "Cancelling this order will return any reserved stock to inventory.",
+  "finalize": "Finalize",
   "searchPlaceholder": "Search products by name or code...",
   "loadingProducts": "Loading products...",
   "noProducts": "No products found",
@@ -27,6 +37,7 @@
   },
   "notes": "Notes",
   "notesPlaceholder": "Add notes...",
+  "ac-title": "Actions",
   "actions": {
     "finalize": "Finalize Sale",
     "finalizing": "Finalizing...",
@@ -36,7 +47,11 @@
   },
   "toasts": {
     "finalizedSuccess": "Sale finalized successfully (Order #{{orderNumber}})",
-    "draftSaved": "Order saved as draft (Order #{{orderNumber}})"
+    "draftSaved": "Order saved as draft (Order #{{orderNumber}})",
+    "orderFinalized": "Order finalized successfully",
+    "orderCancelled": "Order cancelled successfully",
+    "orderDeleted": "Order #{{orderNumber}} deleted",
+    "generalError": "An error occurred"
   },
   "errors": {
     "loadFailed": "Failed to load products/customers",
@@ -47,5 +62,31 @@
     "outOfStock": "{{product}} is out of stock",
     "createFailed": "Failed to create order",
     "finalizeFailed": "Failed to finalize sale"
-  }
+  },
+  "allStatus": "All Status",
+  "allTypes": "All Types",
+  "status": "Status",
+  "orderStatus": {
+    "draft": "Draft",
+    "finalized": "Finalized",
+    "cancelled": "Cancelled"
+  },
+  "orderNumber": "Order Number",
+  "createdDate": "Created Date",
+  "viewDetails": "View Details",
+  "cancelOrder": "Cancel Order",
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "close": "Close",
+  "processing": "Processing...",
+  "confirmCancel": "Confirm Cancel",
+  "noOrders": "No orders found",
+  "orderDetailsTitle": "Order Details",
+  "items": "Items",
+  "cancelOrderTitle": "Cancel Order?",
+  "cancelOrderDescription": "Are you sure you want to cancel order #{{orderNumber}}? This action cannot be undone.",
+  "deleteOrderTitle": "Delete Order?",
+  "deleteOrderDescription": "Are you sure you want to delete order #{{orderNumber}}? This action cannot be undone.",
+  "loading": "Loading...",
+  "generalError": "An error occurred"
 }

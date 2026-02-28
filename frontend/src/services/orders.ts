@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+export const CURRENCY = 'EGP ';
+
 export const ORDER_TYPES = {
   ON_SHELF: 'on shelf',
   ON_DEMAND: 'on demand',
@@ -31,30 +33,46 @@ export interface CreateOrderPayload {
 }
 
 export interface ChangeOrderStatusPayload {
-  status: OrderStatus;
+  status: 'finalized' | 'cancelled';
+}
+
+export interface OrderItem {
+  productId: string | { _id: string; name: string; productCode: string };
+  quantity: number;
+  unitPrice: number;
+  _id: string;
 }
 
 export interface Order {
   _id: string;
   orderNumber: number;
-  customerId: string;
-  createdByUserId: string;
+  customerId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        company: string;
+        phoneNumber: string;
+        address: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+  createdByUserId: string | { _id: string; name: string; email: string };
   orderType: OrderType;
-  items: Array<{
-    productId: string;
-    quantity: number;
-    unitPrice: number;
-  }>;
+  items: OrderItem[];
   subTotal: number;
   discountAmount: number;
   taxAmount: number;
   total: number;
   status: OrderStatus;
   notes?: string;
-  finalizedAt?: string;
-  cancelledAt?: string;
+  finalizedAt?: string | null;
+  cancelledAt?: string | null;
+  cancelledByUserId?: string | null;
+  finalizedByUserId?: string;
   createdAt: string;
   updatedAt: string;
+  __v?: number;
 }
 
 interface CreateOrderResponse {
@@ -73,7 +91,64 @@ interface ChangeOrderStatusResponse {
   };
 }
 
+export interface GetOrdersResponse {
+  success: boolean;
+  message: string;
+  data: {
+    count: number;
+    orders: Order[];
+  };
+}
+
+export interface GetOrderResponse {
+  success: boolean;
+  message: string;
+  data: Order;
+}
+
 export const orderService = {
+  async getOrders(filters?: {
+    status?: string;
+    orderType?: string;
+    query?: string;
+  }): Promise<Order[]> {
+    try {
+      axios.defaults.withCredentials = true;
+      const params: Record<string, string> = {};
+
+      if (filters?.status && filters.status !== 'all') {
+        params.status = filters.status;
+      }
+      if (filters?.orderType && filters.orderType !== 'all') {
+        params.orderType = filters.orderType;
+      }
+      if (filters?.query) {
+        const num = Number(filters.query);
+        if (!Number.isNaN(num)) {
+          params.q = String(num);
+        }
+      }
+
+      const response = await axios.get<GetOrdersResponse>(`${API_URL}/orders`, { params });
+      const orders = response.data.data.orders;
+      // Ensure we always return an array
+      return Array.isArray(orders) ? orders : [];
+    } catch (error: any) {
+      console.error('Failed to fetch orders:', error?.response?.data?.message || error.message);
+      throw new Error(error?.response?.data?.message || 'Failed to fetch orders');
+    }
+  },
+
+  async getOrder(orderId: string): Promise<Order> {
+    try {
+      axios.defaults.withCredentials = true;
+      const response = await axios.get<GetOrderResponse>(`${API_URL}/orders/${orderId}`);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.message || 'Failed to fetch order');
+    }
+  },
+
   async createOrder(payload: CreateOrderPayload): Promise<Order> {
     try {
       axios.defaults.withCredentials = true;
@@ -81,6 +156,15 @@ export const orderService = {
       return response.data.data.createdOrder;
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Failed to create order');
+    }
+  },
+
+  async deleteOrder(orderId: string): Promise<void> {
+    try {
+      axios.defaults.withCredentials = true;
+      await axios.delete(`${API_URL}/orders/${orderId}`);
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.message || 'Failed to delete order');
     }
   },
 

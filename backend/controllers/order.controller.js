@@ -187,8 +187,11 @@ const orderController = {
                 if (!Number.isNaN(num)) filter.orderNumber = num;
             }
 
-            // get filtered orders
-            const orders = await Order.find(filter).sort({ createdAt: -1 });
+            // get filtered orders with populated fields
+            const orders = await Order.find(filter)
+                .populate("customerId")
+                .populate("items.productId", "name productCode")
+                .sort({ createdAt: -1 });
 
             res.status(200).json(
                 response("Orders retrieved successfully", { count: orders.length, orders }),
@@ -222,9 +225,10 @@ const orderController = {
                 if (!Number.isNaN(num)) filter.orderNumber = num;
             }
 
-            const orders = await Order.find({ ...filter, createdByUserId: userId }).sort(
-                "-createdAt",
-            );
+            const orders = await Order.find({ ...filter, createdByUserId: userId })
+                .populate("customerId")
+                .populate("items.productId", "name productCode")
+                .sort("-createdAt");
 
             res.status(200).json(response("Order retrieved successfully", orders));
         } catch (err) {
@@ -237,10 +241,10 @@ const orderController = {
         try {
             const orderId = req.params.orderId;
 
-            // get order
-            const order = await Order.findById(orderId).populate(
-                "createdByUserId customerId finalizedByUserId cancelledByUserId",
-            );
+            // get order with populated fields
+            const order = await Order.findById(orderId)
+                .populate("createdByUserId customerId finalizedByUserId cancelledByUserId")
+                .populate("items.productId", "name productCode");
             if (!order) {
                 return next(createError("Order not found", 404));
             }

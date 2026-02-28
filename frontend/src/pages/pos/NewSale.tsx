@@ -14,12 +14,12 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { Separator } from '../../components/ui/separator';
-import { Search, Plus, Minus, Trash2, ShoppingCart, Save } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { customerService, type Customer } from '../../services/customers';
 import { productService, type Product } from '../../services/products';
-import { ORDER_STATUS, ORDER_TYPES, orderService } from '../../services/orders';
+import { ORDER_TYPES, orderService } from '../../services/orders';
 import { getProductImageSrc } from '../../utils/imageUpload';
 
 interface CartItem {
@@ -46,7 +46,7 @@ export function NewSale() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [processingAction, setProcessingAction] = useState<'finalize' | 'draft' | null>(null);
+  const [processingAction, setProcessingAction] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -185,39 +185,19 @@ export function NewSale() {
     }
 
     try {
-      setProcessingAction('finalize');
-      const createdOrder = await createOrder();
-      await orderService.changeOrderStatus(createdOrder._id, { status: ORDER_STATUS.FINALIZED });
-      toast.success(t('toasts.finalizedSuccess', { orderNumber: createdOrder.orderNumber }));
-      resetOrderForm();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('errors.finalizeFailed'));
-    } finally {
-      setProcessingAction(null);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    if (!validateBeforeSubmit()) {
-      return;
-    }
-
-    try {
-      setProcessingAction('draft');
+      setProcessingAction(true);
       const createdOrder = await createOrder();
       toast.success(t('toasts.draftSaved', { orderNumber: createdOrder.orderNumber }));
       resetOrderForm();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('errors.createFailed'));
     } finally {
-      setProcessingAction(null);
+      setProcessingAction(false);
     }
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const total = subtotal - discount + tax;
-
-  const isBusy = processingAction !== null;
 
   return (
     <div className="p-6">
@@ -281,7 +261,7 @@ export function NewSale() {
                               size="sm"
                               onClick={() => addToCart(product)}
                               disabled={
-                                isBusy ||
+                                processingAction ||
                                 (orderType === 'on-shelf' && product.totalTheoreticalStock === 0)
                               }
                             >
@@ -378,7 +358,7 @@ export function NewSale() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeFromCart(item.productId)}
-                          disabled={isBusy}
+                          disabled={processingAction}
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -389,7 +369,7 @@ export function NewSale() {
                             variant="outline"
                             size="sm"
                             onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            disabled={isBusy}
+                            disabled={processingAction}
                           >
                             <Minus className="size-3" />
                           </Button>
@@ -398,7 +378,7 @@ export function NewSale() {
                             variant="outline"
                             size="sm"
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            disabled={isBusy}
+                            disabled={processingAction}
                           >
                             <Plus className="size-3" />
                           </Button>
@@ -428,7 +408,7 @@ export function NewSale() {
                     value={discount}
                     onChange={(e) => setDiscount(Number(e.target.value))}
                     min="0"
-                    disabled={isBusy}
+                    disabled={processingAction}
                   />
                 </div>
                 <div className="space-y-1">
@@ -438,7 +418,7 @@ export function NewSale() {
                     value={tax}
                     onChange={(e) => setTax(Number(e.target.value))}
                     min="0"
-                    disabled={isBusy}
+                    disabled={processingAction}
                   />
                 </div>
                 <Separator />
@@ -456,7 +436,7 @@ export function NewSale() {
                   placeholder={t('notesPlaceholder')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  disabled={isBusy}
+                  disabled={processingAction}
                 />
               </div>
 
@@ -464,29 +444,10 @@ export function NewSale() {
                 <Button
                   className="w-full"
                   onClick={handleFinalize}
-                  disabled={isBusy}
+                  disabled={processingAction}
                 >
                   <ShoppingCart className="size-4 mr-2" />
-                  {processingAction === 'finalize'
-                    ? t('actions.finalizing')
-                    : t('actions.finalize')}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSaveDraft}
-                  disabled={isBusy}
-                >
-                  <Save className="size-4 mr-2" />
-                  {processingAction === 'draft' ? t('actions.savingDraft') : t('actions.saveDraft')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={resetOrderForm}
-                  disabled={isBusy}
-                >
-                  {t('actions.clearCart')}
+                  {processingAction ? t('actions.savingDraft') : t('actions.saveDraft')}
                 </Button>
               </div>
             </CardContent>

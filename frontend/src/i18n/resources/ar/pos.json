@@ -1,6 +1,16 @@
 {
-  "title": "بيع جديد",
+  "title": "صفحة المبيعات",
   "description": "إنشاء طلب جديد أو إنهاء عملية بيع",
+  "listTitle": "الطلبات",
+  "listDescription": "عرض وإدارة الطلبات",
+  "changeStatus": "تغيير الحالة",
+  "changeOrderStatus": "تغيير حالة الطلب",
+  "changeOrderStatusDescription": "اختر حالة جديدة للطلب",
+  "newStatus": "الحالة الجديدة",
+  "selectStatus": "اختر حالة",
+  "finalizeOrderWarning": "بمجرد إنهاء الطلب، لا يمكن تعديله. هذا الإجراء لا رجعة فيه.",
+  "cancelOrderWarning": "سيؤدي إلغاء هذا الطلب إلى إرجاع أي سهم محجوز إلى المخزن.",
+  "finalize": "إنهاء",
   "searchPlaceholder": "ابحث عن المنتجات بالاسم أو الكود...",
   "loadingProducts": "جاري تحميل المنتجات...",
   "noProducts": "لم يتم العثور على منتجات",
@@ -27,6 +37,7 @@
   },
   "notes": "ملاحظات",
   "notesPlaceholder": "أضف ملاحظات...",
+  "ac-title": "الإجراءات",
   "actions": {
     "finalize": "إنهاء البيع",
     "finalizing": "جاري الإنهاء...",
@@ -36,7 +47,11 @@
   },
   "toasts": {
     "finalizedSuccess": "تم إنهاء البيع بنجاح (طلب رقم {{orderNumber}})",
-    "draftSaved": "تم حفظ الطلب كمسودة (طلب رقم {{orderNumber}})"
+    "draftSaved": "تم حفظ الطلب كمسودة (طلب رقم {{orderNumber}})",
+    "orderFinalized": "تم تنهاء الطلب بنجاح",
+    "orderCancelled": "تم إلغاء الطلب بنجاح",
+    "orderDeleted": "تم حذف الطلب رقم {{orderNumber}}",
+    "generalError": "حدث خطأ ما"
   },
   "errors": {
     "loadFailed": "فشل تحميل المنتجات/العملاء",
@@ -47,5 +62,31 @@
     "outOfStock": "{{product}} غير متوفر في المخزون",
     "createFailed": "فشل إنشاء الطلب",
     "finalizeFailed": "فشل إنهاء البيع"
-  }
+  },
+  "allStatus": "جميع الحالات",
+  "allTypes": "جميع الأنواع",
+  "status": "الحالة",
+  "orderStatus": {
+    "draft": "مسودة",
+    "finalized": "منتهي",
+    "cancelled": "ملغى"
+  },
+  "orderNumber": "رقم الطلب",
+  "createdDate": "تاريخ الإنشاء",
+  "viewDetails": "عرض التفاصيل",
+  "cancelOrder": "إلغاء الطلب",
+  "delete": "حذف",
+  "cancel": "إلغاء",
+  "close": "إغلاق",
+  "processing": "جاري المعالجة...",
+  "confirmCancel": "تأكيد الإلغاء",
+  "noOrders": "لم يتم العثور على طلبات",
+  "orderDetailsTitle": "تفاصيل الطلب",
+  "items": "العناصر",
+  "cancelOrderTitle": "إلغاء الطلب؟",
+  "cancelOrderDescription": "هل أنت متأكد من رغبتك في إلغاء الطلب رقم {{orderNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
+  "deleteOrderTitle": "حذف الطلب؟",
+  "deleteOrderDescription": "هل أنت متأكد من رغبتك في حذف الطلب رقم {{orderNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
+  "loading": "جاري التحميل...",
+  "generalError": "حدث خطأ ما"
 }
