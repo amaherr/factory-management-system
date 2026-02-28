@@ -5,8 +5,8 @@ import { Dashboard } from './pages/Dashboard';
 import { ProductsList } from './pages/inventory/ProductsList';
 import { StockOverview } from './pages/inventory/StockOverview';
 import { StockMovementPage } from './pages/inventory/StockMovement';
-import { BatchesList } from './pages/inventory/BatchesList';
 import { InventoryExport } from './pages/inventory/InventoryExport';
+import { BatchesList } from './pages/production/BatchesList';
 import { NewSale } from './pages/pos/NewSale';
 import { OrdersList } from './pages/pos/OrdersList';
 import { InvoicesList } from './pages/pos/InvoicesList';
@@ -78,12 +78,12 @@ export const router = createBrowserRouter([
         element: <StockMovementPage />,
       },
       {
-        path: 'inventory/batches',
-        element: <BatchesList />,
-      },
-      {
         path: 'inventory/export',
         element: <InventoryExport />,
+      },
+      {
+        path: 'production/batches',
+        element: <BatchesList />,
       },
       {
         path: 'pos/new',

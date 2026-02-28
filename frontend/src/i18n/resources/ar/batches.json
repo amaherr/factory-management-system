@@ -1,0 +1,130 @@
+{
+  "title": "الدفعات والإنتاج",
+  "description": "تتبع دفعات الإنتاج من التخطيط إلى الإنجاز",
+  "searchPlaceholder": "البحث في الدفعات...",
+  "loading": "جاري تحميل الدفعات...",
+  "noResults": "لم يتم العثور على دفعات",
+  "createBatch": "إنشاء دفعة",
+  "errors": {
+    "loadFailed": "فشل تحميل الدفعات",
+    "createFailed": "فشل إنشاء الدفعة",
+    "updateFailed": "فشل تحديث الدفعة",
+    "deleteFailed": "فشل حذف الدفعة",
+    "finalizeFailed": "فشل إنهاء الدفعة"
+  },
+  "filters": {
+    "allStatus": "جميع الحالات",
+    "planning": "التخطيط",
+    "production": "الإنتاج",
+    "done": "مكتمل"
+  },
+  "table": {
+    "batchNumber": "رقم الدفعة",
+    "product": "المنتج",
+    "plannedQty": "الكمية المخططة",
+    "producedQty": "الكمية المنتجة",
+    "loss": "الفاقد",
+    "status": "الحالة",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "actions": "الإجراءات"
+  },
+  "actions": {
+    "view": "عرض التفاصيل",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "finalizePlanning": "بدء الإنتاج",
+    "finalizeProduction": "إنهاء الإنتاج"
+  },
+  "create": {
+    "title": "إنشاء دفعة جديدة",
+    "description": "إنشاء دفعة إنتاج جديدة",
+    "product": "المنتج",
+    "selectProduct": "اختر المنتج",
+    "order": "الطلب ذي الصلة (اختياري)",
+    "selectOrder": "اختر الطلب",
+    "noOrder": "لا يوجد طلب مرتبط",
+    "plannedQuantity": "الكمية المخططة",
+    "plannedQuantityPlaceholder": "أدخل الكمية المخططة",
+    "startDate": "تاريخ البدء",
+    "cancel": "إلغاء",
+    "submit": "إنشاء الدفعة",
+    "submitting": "جاري الإنشاء...",
+    "success": "تم إنشاء الدفعة بنجاح",
+    "errors": {
+      "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
+      "invalidQuantity": "يرجى إدخال كمية صحيحة (الحد الأدنى 1)"
+    }
+  },
+  "edit": {
+    "title": "تعديل الدفعة",
+    "description": "تعديل تفاصيل الدفعة (مرحلة التخطيط فقط)",
+    "submit": "تحديث الدفعة",
+    "submitting": "جاري التحديث...",
+    "success": "تم تحديث الدفعة بنجاح"
+  },
+  "delete": {
+    "title": "حذف الدفعة",
+    "description": "هل أنت متأكد من حذف الدفعة رقم {{batchNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "cancel": "إلغاء",
+    "confirm": "حذف",
+    "deleting": "جاري الحذف...",
+    "success": "تم حذف الدفعة بنجاح"
+  },
+  "finalizePlanning": {
+    "title": "بدء الإنتاج",
+    "description": "نقل الدفعة رقم {{batchNumber}} من التخطيط إلى الإنتاج",
+    "startDate": "تاريخ بدء الإنتاج",
+    "cancel": "إلغاء",
+    "confirm": "بدء الإنتاج",
+    "submitting": "جاري البدء...",
+    "success": "تم بدء الإنتاج بنجاح"
+  },
+  "finalizeProduction": {
+    "title": "إنهاء الإنتاج",
+    "description": "إنهاء الإنتاج للدفعة رقم {{batchNumber}}",
+    "producedQuantity": "الكمية المنتجة",
+    "producedQuantityPlaceholder": "أدخل الكمية المنتجة",
+    "endDate": "تاريخ الانتهاء",
+    "plannedQuantity": "الكمية المخططة",
+    "expectedLoss": "الفاقد المتوقع",
+    "cancel": "إلغاء",
+    "confirm": "إنهاء الإنتاج",
+    "submitting": "جاري الإنهاء...",
+    "success": "تم إنهاء الإنتاج بنجاح",
+    "errors": {
+      "fillAllFields": "يرجى ملء جميع الحقول المطلوبة",
+      "invalidQuantity": "يرجى إدخال كمية صحيحة (0 أو أكثر)"
+    }
+  },
+  "details": {
+    "title": "تفاصيل الدفعة",
+    "batchInfo": "معلومات الدفعة",
+    "batchNumber": "رقم الدفعة",
+    "product": "المنتج",
+    "relatedOrder": "الطلب ذي الصلة",
+    "noOrder": "لا يوجد طلب مرتبط",
+    "status": "الحالة",
+    "plannedQuantity": "الكمية المخططة",
+    "producedQuantity": "الكمية المنتجة",
+    "loss": "الفاقد",
+    "startDate": "تاريخ البدء",
+    "endDate": "تاريخ الانتهاء",
+    "notCompleted": "لم يكتمل بعد",
+    "progress": "تقدم الإنتاج",
+    "events": "أحداث الدفعة",
+    "eventStage": "المرحلة",
+    "eventLoss": "الفاقد",
+    "eventStartDate": "تاريخ البدء",
+    "eventEndDate": "تاريخ الانتهاء",
+    "eventNotes": "ملاحظات",
+    "eventFinalizedBy": "تم الإنهاء بواسطة",
+    "noEvents": "لا توجد أحداث مسجلة",
+    "close": "إغلاق"
+  },
+  "stages": {
+    "planning": "التخطيط",
+    "production": "الإنتاج",
+    "done": "مكتمل"
+  }
+}

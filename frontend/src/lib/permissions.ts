@@ -41,16 +41,24 @@ export const navigationItems: NavItem[] = [
         roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING],
       },
       {
-        label: 'Batches & Production',
-        path: '/inventory/batches',
-        icon: 'Factory',
-        roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.PLANNING],
-      },
-      {
         label: 'Export',
         path: '/inventory/export',
         icon: 'Download',
         roles: [ROLES.ADMIN, ROLES.INVENTORY],
+      },
+    ],
+  },
+  {
+    label: 'Production',
+    path: '/production',
+    icon: 'Factory',
+    roles: [ROLES.ADMIN, ROLES.PLANNING, ROLES.INVENTORY],
+    children: [
+      {
+        label: 'Batches',
+        path: '/production/batches',
+        icon: 'Boxes',
+        roles: [ROLES.ADMIN, ROLES.PLANNING, ROLES.INVENTORY],
       },
     ],
   },

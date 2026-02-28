@@ -1,0 +1,131 @@
+{
+  "title": "Batches & Production",
+  "description": "Track production batches from planning to completion",
+  "searchPlaceholder": "Search batches...",
+  "loading": "Loading batches...",
+  "noResults": "No batches found",
+  "createBatch": "Create Batch",
+  "errors": {
+    "loadFailed": "Failed to load batches",
+    "createFailed": "Failed to create batch",
+    "updateFailed": "Failed to update batch",
+    "deleteFailed": "Failed to delete batch",
+    "finalizeFailed": "Failed to finalize batch"
+  },
+  "filters": {
+    "allStatus": "All Status",
+    "planning": "Planning",
+    "production": "Production",
+    "done": "Done"
+  },
+  "table": {
+    "batchNumber": "Batch #",
+    "product": "Product",
+    "plannedQty": "Planned Qty",
+    "producedQty": "Produced Qty",
+    "loss": "Loss",
+    "status": "Status",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "actions": "Actions"
+  },
+  "actions": {
+    "view": "View Details",
+    "edit": "Edit",
+    "delete": "Delete",
+    "finalizePlanning": "Start Production",
+    "finalizeProduction": "Complete Production"
+  },
+
+  "create": {
+    "title": "Create New Batch",
+    "description": "Create a new production batch",
+    "product": "Product",
+    "selectProduct": "Select product",
+    "order": "Related Order (Optional)",
+    "selectOrder": "Select order",
+    "noOrder": "No related order",
+    "plannedQuantity": "Planned Quantity",
+    "plannedQuantityPlaceholder": "Enter planned quantity",
+    "startDate": "Start Date",
+    "cancel": "Cancel",
+    "submit": "Create Batch",
+    "submitting": "Creating...",
+    "success": "Batch created successfully",
+    "errors": {
+      "fillAllFields": "Please fill all required fields",
+      "invalidQuantity": "Please enter a valid quantity (minimum 1)"
+    }
+  },
+  "edit": {
+    "title": "Edit Batch",
+    "description": "Edit batch details (Planning stage only)",
+    "submit": "Update Batch",
+    "submitting": "Updating...",
+    "success": "Batch updated successfully"
+  },
+  "delete": {
+    "title": "Delete Batch",
+    "description": "Are you sure you want to delete batch #{{batchNumber}}? This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "deleting": "Deleting...",
+    "success": "Batch deleted successfully"
+  },
+  "finalizePlanning": {
+    "title": "Start Production",
+    "description": "Move batch #{{batchNumber}} from planning to production",
+    "startDate": "Production Start Date",
+    "cancel": "Cancel",
+    "confirm": "Start Production",
+    "submitting": "Starting...",
+    "success": "Production started successfully"
+  },
+  "finalizeProduction": {
+    "title": "Complete Production",
+    "description": "Finalize production for batch #{{batchNumber}}",
+    "producedQuantity": "Produced Quantity",
+    "producedQuantityPlaceholder": "Enter produced quantity",
+    "endDate": "End Date",
+    "plannedQuantity": "Planned Quantity",
+    "expectedLoss": "Expected Loss",
+    "cancel": "Cancel",
+    "confirm": "Complete Production",
+    "submitting": "Completing...",
+    "success": "Production completed successfully",
+    "errors": {
+      "fillAllFields": "Please fill all required fields",
+      "invalidQuantity": "Please enter a valid quantity (0 or greater)"
+    }
+  },
+  "details": {
+    "title": "Batch Details",
+    "batchInfo": "Batch Information",
+    "batchNumber": "Batch Number",
+    "product": "Product",
+    "relatedOrder": "Related Order",
+    "noOrder": "No related order",
+    "status": "Status",
+    "plannedQuantity": "Planned Quantity",
+    "producedQuantity": "Produced Quantity",
+    "loss": "Loss",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "notCompleted": "Not completed yet",
+    "progress": "Production Progress",
+    "events": "Batch Events",
+    "eventStage": "Stage",
+    "eventLoss": "Loss",
+    "eventStartDate": "Start Date",
+    "eventEndDate": "End Date",
+    "eventNotes": "Notes",
+    "eventFinalizedBy": "Finalized By",
+    "noEvents": "No events recorded",
+    "close": "Close"
+  },
+  "stages": {
+    "planning": "Planning",
+    "production": "Production",
+    "done": "Done"
+  }
+}
