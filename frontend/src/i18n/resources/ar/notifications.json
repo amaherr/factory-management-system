@@ -1,0 +1,26 @@
+{
+  "title": "الإشعارات",
+  "description": "عرض وإدارة الإشعارات الخاصة بك",
+  "noNotifications": "لا توجد إشعارات",
+  "loadingNotifications": "جاري تحميل الإشعارات...",
+  "types": {
+    "issue": "مشكلة",
+    "batch": "دفعة",
+    "inventory": "مخزون",
+    "invoice": "فاتورة",
+    "order": "طلب"
+  },
+  "detailsTitle": "تفاصيل الإشعار",
+  "relatedEntity": "العنصر المرتبط",
+  "timestamp": "الوقت",
+  "status": "الحالة",
+  "statusUnread": "غير مقروء",
+  "statusRead": "مقروء",
+  "read": "مقروء",
+  "close": "إغلاق",
+  "toasts": {
+    "markedAsRead": "تم وضع علامة مقروء على الإشعار",
+    "markedAllAsRead": "تم وضع علامة مقروء على جميع الإشعارات",
+    "error": "حدث خطأ ما"
+  }
+}

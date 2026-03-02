@@ -107,12 +107,6 @@ export const navigationItems: NavItem[] = [
     roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
   },
   {
-    label: 'Notifications',
-    path: '/notifications',
-    icon: 'Bell',
-    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
-  },
-  {
     label: 'User Management',
     path: '/users',
     icon: 'UserCog',

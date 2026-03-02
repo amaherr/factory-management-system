@@ -11,6 +11,7 @@ import products_en from './resources/en/products.json';
 import stock_en from './resources/en/stock.json';
 import batches_en from './resources/en/batches.json';
 import pos_en from './resources/en/pos.json';
+import notifications_en from './resources/en/notifications.json';
 import common_ar from './resources/ar/common.json';
 import nav_ar from './resources/ar/nav.json';
 import customers_ar from './resources/ar/customers.json';
@@ -20,6 +21,7 @@ import products_ar from './resources/ar/products.json';
 import stock_ar from './resources/ar/stock.json';
 import batches_ar from './resources/ar/batches.json';
 import pos_ar from './resources/ar/pos.json';
+import notifications_ar from './resources/ar/notifications.json';
 
 export const supportedLngs = ['en', 'ar'] as const;
 export type SupportedLng = (typeof supportedLngs)[number];
@@ -35,6 +37,7 @@ const resources = {
     stock: stock_en,
     batches: batches_en,
     pos: pos_en,
+    notifications: notifications_en,
   },
   ar: {
     common: common_ar,
@@ -46,6 +49,7 @@ const resources = {
     stock: stock_ar,
     batches: batches_ar,
     pos: pos_ar,
+    notifications: notifications_ar,
   },
 } as const;
 
@@ -54,7 +58,18 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    ns: ['common', 'nav', 'customers', 'issues', 'users', 'products', 'stock', 'batches', 'pos'],
+    ns: [
+      'common',
+      'nav',
+      'customers',
+      'issues',
+      'users',
+      'products',
+      'stock',
+      'batches',
+      'pos',
+      'notifications',
+    ],
     defaultNS: 'common',
     supportedLngs: [...supportedLngs],
     fallbackLng: 'en',

@@ -1,0 +1,26 @@
+{
+  "title": "Notifications",
+  "description": "View and manage your notifications",
+  "noNotifications": "No notifications found",
+  "loadingNotifications": "Loading notifications...",
+  "types": {
+    "issue": "Issue",
+    "batch": "Batch",
+    "inventory": "Inventory",
+    "invoice": "Invoice",
+    "order": "Order"
+  },
+  "detailsTitle": "Notification Details",
+  "relatedEntity": "Related Item",
+  "timestamp": "Timestamp",
+  "status": "Status",
+  "statusUnread": "Unread",
+  "statusRead": "Read",
+  "read": "Read",
+  "close": "Close",
+  "toasts": {
+    "markedAsRead": "Notification marked as read",
+    "markedAllAsRead": "All notifications marked as read",
+    "error": "An error occurred"
+  }
+}

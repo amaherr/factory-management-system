@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,7 +41,7 @@ import {
   UserCog,
   Sliders,
 } from 'lucide-react';
-import { mockNotifications } from '../lib/mockData';
+import { notificationService } from '../services/notifications';
 
 const iconMap: Record<string, any> = {
   LayoutDashboard,
@@ -71,11 +71,29 @@ export function Layout() {
   const { t: tNav } = useTranslation('nav');
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const notifications = await notificationService.getNotifications();
+        const unread = notifications.filter((n) => !n.read).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (!user) return null;
 
   const navigation = getFilteredNavigation(user.roles);
-  const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
@@ -138,7 +156,7 @@ export function Layout() {
                 style={{ backgroundColor: 'var(--accent-500)', color: 'var(--text-on-dark)' }}
                 className="absolute -top-1 -right-1 size-5 rounded-full p-0 flex items-center justify-center text-xs border-0"
               >
-                {unreadCount}
+                {unreadCount > 10 ? '10+' : unreadCount}
               </Badge>
             )}
           </Button>
