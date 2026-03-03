@@ -162,31 +162,33 @@ export function Layout() {
                 <ChevronDown className="size-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent
+              align="end"
+              className="w-56"
+            >
               <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span>{user.name}</span>
-                  <span
-                    className="text-xs font-normal"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    {user.email}
-                  </span>
-                  <div className="flex gap-1 flex-wrap mt-1">
+                <div className="flex flex-col gap-2">
+                  <div>
+                    <span className="font-medium">{user.name}</span>
+                    <div
+                      className="text-xs font-normal"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      {user.email}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
                     {user.roles.map((role) => (
                       <Badge
                         key={role}
                         variant="secondary"
                       >
-                        {role}
+                        {tCommon(role)}
                       </Badge>
                     ))}
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>{tCommon('profile')}</DropdownMenuItem>
-              <DropdownMenuItem>{tCommon('change password')}</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="size-4 mr-2" />
