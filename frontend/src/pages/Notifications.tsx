@@ -6,11 +6,13 @@ import { Badge } from '../components/ui/badge';
 import { CheckCheck, Check, Bell, Loader2 } from 'lucide-react';
 import { notificationService, type Notification } from '../services/notifications';
 import { NotificationDetailDialog } from '../components/NotificationDetailDialog';
+import { useNotification } from '../contexts/NotificationContext';
 import { toast } from 'sonner';
 
 export function Notifications() {
   const { t } = useTranslation('notifications');
   const { t: tCommon } = useTranslation('common');
+  const { refreshUnreadCount } = useNotification();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -40,6 +42,7 @@ export function Notifications() {
       setNotifications((prev) =>
         prev.map((n) => (n._id === notificationId ? { ...n, status: 'read' } : n)),
       );
+      await refreshUnreadCount();
       toast.success(tCommon('markAsRead'));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('toasts.error'));
@@ -57,6 +60,7 @@ export function Notifications() {
       const unreadIds = notifications.filter((n) => n.status === 'unread').map((n) => n._id);
       await notificationService.markAllAsRead(unreadIds);
       setNotifications((prev) => prev.map((n) => ({ ...n, status: 'read' })));
+      await refreshUnreadCount();
       toast.success(t('toasts.markedAllAsRead'));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('toasts.error'));

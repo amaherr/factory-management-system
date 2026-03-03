@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { getFilteredNavigation } from '../lib/permissions';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -41,7 +42,6 @@ import {
   UserCog,
   Sliders,
 } from 'lucide-react';
-import { notificationService } from '../services/notifications';
 
 const iconMap: Record<string, any> = {
   LayoutDashboard,
@@ -66,30 +66,20 @@ const iconMap: Record<string, any> = {
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { unreadCount, refreshUnreadCount } = useNotification();
   const navigate = useNavigate();
   const { t: tCommon } = useTranslation('common');
   const { t: tNav } = useTranslation('nav');
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const fetchUnreadCount = async () => {
-      try {
-        const notifications = await notificationService.getNotifications();
-        const unread = notifications.filter((n) => !n.read).length;
-        setUnreadCount(unread);
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-      }
-    };
+    refreshUnreadCount();
 
-    fetchUnreadCount();
-
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    // Poll for new notifications every 10 seconds
+    const interval = setInterval(refreshUnreadCount, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshUnreadCount]);
 
   if (!user) return null;
 
