@@ -183,7 +183,7 @@ export function Layout() {
                         key={role}
                         variant="secondary"
                       >
-                        {tCommon(role)}
+                        {tCommon(`role_${role}`)}
                       </Badge>
                     ))}
                   </div>
