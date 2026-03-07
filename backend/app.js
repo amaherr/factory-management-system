@@ -34,7 +34,6 @@ app.use(
         allowedHeaders: ["Content-Type", "Authorization"],
     }),
 );
-
 app.use(express.json());
 app.use(cookieParser(process.env.COOKIE_KEY));
 app.use(logger);

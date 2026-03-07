@@ -1,4 +1,5 @@
 const Joi = require("joi");
+const { RETURN_STATUS } = require("../enums/return.enums");
 
 const objectId = Joi.string().hex().length(24);
 
@@ -21,6 +22,10 @@ const returnDtos = {
         returnDate: Joi.date().iso().optional(),
         items: Joi.array().items(returnItemSchema).min(1).optional(),
     }).min(1),
+
+    updateReturnStatusSchema: Joi.object({
+        status: Joi.string().valid(RETURN_STATUS.FINALIZED, RETURN_STATUS.CANCELLED).required(),
+    }),
 };
 
 module.exports = returnDtos;

@@ -42,6 +42,14 @@ router.put(
     returnController.editReturn,
 );
 
+// Update return status (Admin, Accountin)
+router.patch(
+    "/:returnId/status",
+    authorizor([ROLES.ADMIN, ROLES.ACCOUNTING]),
+    validator({ bodySchema: returnDtos.updateReturnStatusSchema }),
+    returnController.updateReturnStatus,
+);
+
 // Delete return (Admin only)
 router.delete("/:returnId", authorizor([ROLES.ADMIN]), returnController.deleteReturn);
 

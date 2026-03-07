@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { RETURN_STATUS } = require("../enums/return.enums");
+
 const returnSchema = new mongoose.Schema(
     {
         returnNumber: {
@@ -18,6 +20,13 @@ const returnSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
+        },
+
+        status: {
+            type: String,
+            required: true,
+            enum: Object.values(RETURN_STATUS),
+            default: RETURN_STATUS.DRAFT,
         },
 
         note: {
