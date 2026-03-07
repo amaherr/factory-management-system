@@ -88,5 +88,94 @@
   "deleteOrderTitle": "Delete Order?",
   "deleteOrderDescription": "Are you sure you want to delete order #{{orderNumber}}? This action cannot be undone.",
   "loading": "Loading...",
-  "generalError": "An error occurred"
+  "generalError": "An error occurred",
+  "returns": {
+    "title": "Returns",
+    "description": "Create and manage product returns",
+    "createButton": "Create Return",
+    "searchPlaceholder": "Search by return #, order #, note, or user...",
+    "statusFilterLabel": "Filter by status",
+    "allStatus": "All Status",
+    "noReturns": "No returns found",
+    "status": {
+      "draft": "Draft",
+      "finalized": "Finalized",
+      "cancelled": "Cancelled"
+    },
+    "table": {
+      "returnNumber": "Return #",
+      "orderNumber": "Order #",
+      "status": "Status",
+      "itemsCount": "Items",
+      "createdBy": "Created By",
+      "returnDate": "Return Date",
+      "actions": "Actions"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "changeStatus": "Change Status",
+      "delete": "Delete"
+    },
+    "createDialog": {
+      "title": "Create Return",
+      "description": "Create a draft return. Stock will only change when finalized.",
+      "orderLabel": "Order",
+      "orderPlaceholder": "Select a finalized order",
+      "loadingOrders": "Loading finalized orders...",
+      "noFinalizedOrders": "No finalized orders available",
+      "returnDate": "Return Date",
+      "note": "Note",
+      "notePlaceholder": "Add note (optional)",
+      "itemsTitle": "Return Items",
+      "chooseOrderFirst": "Select an order first to choose return quantities.",
+      "soldQty": "Sold Qty",
+      "unitPrice": "Unit Price",
+      "returnQty": "Return Qty",
+      "noOrderItems": "No items found in this order",
+      "submit": "Create Return",
+      "creating": "Creating..."
+    },
+    "detailsDialog": {
+      "title": "Return Details",
+      "itemsTitle": "Items",
+      "qty": "Quantity",
+      "note": "Note"
+    },
+    "editDialog": {
+      "title": "Edit Return",
+      "description": "Update return #{{returnNumber}} while it is still draft",
+      "submit": "Save Changes",
+      "saving": "Saving..."
+    },
+    "statusDialog": {
+      "title": "Change Return Status",
+      "description": "Select a new status for return #{{returnNumber}}",
+      "selectStatus": "Select status",
+      "finalizeWarning": "Finalizing this return will update stock and create stock movement records.",
+      "cancelWarning": "Cancelling this return keeps stock unchanged.",
+      "confirm": "Confirm"
+    },
+    "deleteDialog": {
+      "title": "Delete Return?",
+      "description": "Are you sure you want to delete return #{{returnNumber}}? This action cannot be undone."
+    },
+    "common": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "processing": "Processing...",
+      "loading": "Loading..."
+    },
+    "toasts": {
+      "createdSuccess": "Return created successfully",
+      "updatedSuccess": "Return updated successfully",
+      "finalizedSuccess": "Return finalized successfully",
+      "cancelledSuccess": "Return cancelled successfully",
+      "deletedSuccess": "Return #{{returnNumber}} deleted",
+      "selectOrder": "Please select an order",
+      "selectAtLeastOneItem": "Please enter at least one return quantity",
+      "generalError": "An error occurred"
+    }
+  }
 }

@@ -88,5 +88,94 @@
   "deleteOrderTitle": "حذف الطلب؟",
   "deleteOrderDescription": "هل أنت متأكد من رغبتك في حذف الطلب رقم {{orderNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
   "loading": "جاري التحميل...",
-  "generalError": "حدث خطأ ما"
+  "generalError": "حدث خطأ ما",
+  "returns": {
+    "title": "المرتجعات",
+    "description": "إنشاء وإدارة مرتجعات المنتجات",
+    "createButton": "إنشاء مرتجع",
+    "searchPlaceholder": "ابحث برقم المرتجع أو رقم الطلب أو الملاحظة أو المستخدم...",
+    "statusFilterLabel": "تصفية حسب الحالة",
+    "allStatus": "جميع الحالات",
+    "noReturns": "لا توجد مرتجعات",
+    "status": {
+      "draft": "مسودة",
+      "finalized": "منتهي",
+      "cancelled": "ملغى"
+    },
+    "table": {
+      "returnNumber": "رقم المرتجع",
+      "orderNumber": "رقم الطلب",
+      "status": "الحالة",
+      "itemsCount": "العناصر",
+      "createdBy": "تم الإنشاء بواسطة",
+      "returnDate": "تاريخ المرتجع",
+      "actions": "الإجراءات"
+    },
+    "actions": {
+      "viewDetails": "عرض التفاصيل",
+      "edit": "تعديل",
+      "changeStatus": "تغيير الحالة",
+      "delete": "حذف"
+    },
+    "createDialog": {
+      "title": "إنشاء مرتجع",
+      "description": "يتم إنشاء المرتجع كمسودة. يتغير المخزون فقط عند الإنهاء.",
+      "orderLabel": "الطلب",
+      "orderPlaceholder": "اختر طلبًا منتهيًا",
+      "loadingOrders": "جاري تحميل الطلبات المنتهية...",
+      "noFinalizedOrders": "لا توجد طلبات منتهية",
+      "returnDate": "تاريخ المرتجع",
+      "note": "ملاحظة",
+      "notePlaceholder": "أضف ملاحظة (اختياري)",
+      "itemsTitle": "عناصر المرتجع",
+      "chooseOrderFirst": "اختر طلبًا أولًا لتحديد كميات المرتجع.",
+      "soldQty": "الكمية المباعة",
+      "unitPrice": "سعر الوحدة",
+      "returnQty": "كمية المرتجع",
+      "noOrderItems": "لا توجد عناصر في هذا الطلب",
+      "submit": "إنشاء مرتجع",
+      "creating": "جاري الإنشاء..."
+    },
+    "detailsDialog": {
+      "title": "تفاصيل المرتجع",
+      "itemsTitle": "العناصر",
+      "qty": "الكمية",
+      "note": "ملاحظة"
+    },
+    "editDialog": {
+      "title": "تعديل المرتجع",
+      "description": "تحديث المرتجع رقم {{returnNumber}} طالما أنه مسودة",
+      "submit": "حفظ التعديلات",
+      "saving": "جاري الحفظ..."
+    },
+    "statusDialog": {
+      "title": "تغيير حالة المرتجع",
+      "description": "اختر حالة جديدة للمرتجع رقم {{returnNumber}}",
+      "selectStatus": "اختر الحالة",
+      "finalizeWarning": "إنهاء هذا المرتجع سيحدث المخزون وينشئ حركات مخزون.",
+      "cancelWarning": "إلغاء هذا المرتجع لا يغير المخزون.",
+      "confirm": "تأكيد"
+    },
+    "deleteDialog": {
+      "title": "حذف المرتجع؟",
+      "description": "هل أنت متأكد من حذف المرتجع رقم {{returnNumber}}؟ لا يمكن التراجع عن هذا الإجراء."
+    },
+    "common": {
+      "close": "إغلاق",
+      "cancel": "إلغاء",
+      "delete": "حذف",
+      "processing": "جاري المعالجة...",
+      "loading": "جاري التحميل..."
+    },
+    "toasts": {
+      "createdSuccess": "تم إنشاء المرتجع بنجاح",
+      "updatedSuccess": "تم تحديث المرتجع بنجاح",
+      "finalizedSuccess": "تم إنهاء المرتجع بنجاح",
+      "cancelledSuccess": "تم إلغاء المرتجع بنجاح",
+      "deletedSuccess": "تم حذف المرتجع رقم {{returnNumber}}",
+      "selectOrder": "يرجى اختيار طلب",
+      "selectAtLeastOneItem": "يرجى إدخال كمية مرتجع لعنصر واحد على الأقل",
+      "generalError": "حدث خطأ ما"
+    }
+  }
 }

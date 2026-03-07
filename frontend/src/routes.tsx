@@ -10,7 +10,7 @@ import { BatchesList } from './pages/production/BatchesList';
 import { NewSale } from './pages/pos/NewSale';
 import { OrdersList } from './pages/pos/OrdersList';
 import { InvoicesList } from './pages/pos/InvoicesList';
-import { ReturnsAdjustments } from './pages/pos/ReturnsAdjustments';
+import { Returns } from './pages/pos/Returns';
 import { Customers } from './pages/Customers';
 import { Issues } from './pages/Issues';
 import { Notifications } from './pages/Notifications';
@@ -99,7 +99,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'pos/returns',
-        element: <ReturnsAdjustments />,
+        element: <Returns />,
       },
       {
         path: 'customers',

@@ -87,10 +87,10 @@ export const navigationItems: NavItem[] = [
         roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
       },
       {
-        label: 'Returns / Adjustments',
+        label: 'Returns',
         path: '/pos/returns',
         icon: 'Undo',
-        roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY],
+        roles: [ROLES.ADMIN, ROLES.SALES],
       },
     ],
   },
