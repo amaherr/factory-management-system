@@ -1,0 +1,71 @@
+{
+  "title": "التصدير",
+  "description": "تنزيل مجموعات قاعدة البيانات بصيغة CSV أو Excel",
+  "defaultCollectionDescription": "تنزيل جميع السجلات من هذه المجموعة.",
+  "formats": {
+    "csv": "CSV",
+    "xlsx": "إكسل (XLSX)"
+  },
+  "generateCard": {
+    "title": "إنشاء تصدير",
+    "collection": "المجموعة",
+    "format": "الصيغة",
+    "loadingCollections": "جاري تحميل المجموعات...",
+    "selectCollection": "اختر مجموعة",
+    "generate": "إنشاء التصدير",
+    "generating": "جاري الإنشاء..."
+  },
+  "detailsCard": {
+    "title": "تفاصيل التصدير",
+    "emptyState": "اختر مجموعة لعرض تفاصيل التصدير.",
+    "collection": "المجموعة المختارة",
+    "descriptionLabel": "ما الذي يتضمنه هذا التصدير",
+    "liveDataBadge": "بيانات مباشرة من قاعدة البيانات",
+    "adminOnlyBadge": "للمشرف فقط"
+  },
+  "history": {
+    "title": "عمليات التصدير الأخيرة",
+    "emptyState": "لم يتم إنشاء أي عمليات تصدير في هذه الجلسة.",
+    "table": {
+      "fileName": "اسم الملف",
+      "generatedAt": "وقت الإنشاء",
+      "collection": "المجموعة",
+      "format": "الصيغة",
+      "size": "الحجم"
+    }
+  },
+  "success": {
+    "exportReady": "تم إنشاء التصدير بنجاح"
+  },
+  "errors": {
+    "loadCollections": "فشل تحميل المجموعات",
+    "selectCollection": "يرجى اختيار مجموعة",
+    "downloadFailed": "فشل إنشاء التصدير"
+  },
+  "collections": {
+    "users": "المستخدمون",
+    "customers": "العملاء",
+    "products": "المنتجات",
+    "orders": "الطلبات",
+    "issues": "المشكلات",
+    "notifications": "الإشعارات",
+    "returns": "المرتجعات",
+    "batches": "الدفعات",
+    "batch_events": "أحداث الدفعات",
+    "counters": "العدادات",
+    "stock_movements": "حركات المخزون"
+  },
+  "collectionDescriptions": {
+    "users": "ملفات المستخدمين والأدوار وحالات الحساب.",
+    "customers": "بيانات العملاء الأساسية وتفاصيل التواصل المرتبطة.",
+    "products": "بيانات كتالوج المنتجات والأسعار وبيانات المخزون.",
+    "orders": "رؤوس الطلبات والإجماليات والحالات والروابط المرتبطة.",
+    "issues": "سجلات تتبع المشكلات وحالات دورة الحياة.",
+    "notifications": "إشعارات النظام وحالات القراءة/عدم القراءة.",
+    "returns": "سجلات المرتجعات والحالات ومراجع العناصر.",
+    "batches": "بيانات تخطيط وإنتاج الدفعات.",
+    "batch_events": "سجل أحداث الدفعات والتسلسل الزمني.",
+    "counters": "عدادات النظام المستخدمة لتوليد المعرفات التسلسلية.",
+    "stock_movements": "سجلات حركات المخزون مع الفروقات والمراجع."
+  }
+}

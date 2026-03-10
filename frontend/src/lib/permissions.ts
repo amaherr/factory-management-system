@@ -40,12 +40,6 @@ export const navigationItems: NavItem[] = [
         icon: 'History',
         roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING],
       },
-      {
-        label: 'Export',
-        path: '/inventory/export',
-        icon: 'Download',
-        roles: [ROLES.ADMIN, ROLES.INVENTORY],
-      },
     ],
   },
   {
@@ -110,6 +104,12 @@ export const navigationItems: NavItem[] = [
     label: 'User Management',
     path: '/users',
     icon: 'UserCog',
+    roles: [ROLES.ADMIN],
+  },
+  {
+    label: 'Export',
+    path: '/export',
+    icon: 'Download',
     roles: [ROLES.ADMIN],
   },
 ];

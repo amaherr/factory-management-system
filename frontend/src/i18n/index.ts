@@ -12,6 +12,7 @@ import stock_en from './resources/en/stock.json';
 import batches_en from './resources/en/batches.json';
 import pos_en from './resources/en/pos.json';
 import notifications_en from './resources/en/notifications.json';
+import export_en from './resources/en/export.json';
 import common_ar from './resources/ar/common.json';
 import nav_ar from './resources/ar/nav.json';
 import customers_ar from './resources/ar/customers.json';
@@ -22,6 +23,7 @@ import stock_ar from './resources/ar/stock.json';
 import batches_ar from './resources/ar/batches.json';
 import pos_ar from './resources/ar/pos.json';
 import notifications_ar from './resources/ar/notifications.json';
+import export_ar from './resources/ar/export.json';
 
 export const supportedLngs = ['en', 'ar'] as const;
 export type SupportedLng = (typeof supportedLngs)[number];
@@ -38,6 +40,7 @@ const resources = {
     batches: batches_en,
     pos: pos_en,
     notifications: notifications_en,
+    export: export_en,
   },
   ar: {
     common: common_ar,
@@ -50,6 +53,7 @@ const resources = {
     batches: batches_ar,
     pos: pos_ar,
     notifications: notifications_ar,
+    export: export_ar,
   },
 } as const;
 
@@ -69,6 +73,7 @@ i18n
       'batches',
       'pos',
       'notifications',
+      'export',
     ],
     defaultNS: 'common',
     supportedLngs: [...supportedLngs],

@@ -1,0 +1,71 @@
+{
+  "title": "Export",
+  "description": "Download database collections as CSV or Excel files",
+  "defaultCollectionDescription": "Download all records from this collection.",
+  "formats": {
+    "csv": "CSV",
+    "xlsx": "Excel (XLSX)"
+  },
+  "generateCard": {
+    "title": "Generate Export",
+    "collection": "Collection",
+    "format": "Format",
+    "loadingCollections": "Loading collections...",
+    "selectCollection": "Select collection",
+    "generate": "Generate Export",
+    "generating": "Generating..."
+  },
+  "detailsCard": {
+    "title": "Export Details",
+    "emptyState": "Select a collection to view export details.",
+    "collection": "Selected collection",
+    "descriptionLabel": "What this export includes",
+    "liveDataBadge": "Live database data",
+    "adminOnlyBadge": "Admin only"
+  },
+  "history": {
+    "title": "Recent Exports",
+    "emptyState": "No exports generated in this session.",
+    "table": {
+      "fileName": "File Name",
+      "generatedAt": "Generated At",
+      "collection": "Collection",
+      "format": "Format",
+      "size": "Size"
+    }
+  },
+  "success": {
+    "exportReady": "Export generated successfully"
+  },
+  "errors": {
+    "loadCollections": "Failed to load collections",
+    "selectCollection": "Please select a collection",
+    "downloadFailed": "Failed to generate export"
+  },
+  "collections": {
+    "users": "Users",
+    "customers": "Customers",
+    "products": "Products",
+    "orders": "Orders",
+    "issues": "Issues",
+    "notifications": "Notifications",
+    "returns": "Returns",
+    "batches": "Batches",
+    "batch_events": "Batch Events",
+    "counters": "Counters",
+    "stock_movements": "Stock Movements"
+  },
+  "collectionDescriptions": {
+    "users": "User profiles, roles, and account status fields.",
+    "customers": "Customer master records and related contact details.",
+    "products": "Product catalog data, pricing, and stock metadata.",
+    "orders": "Order headers, totals, statuses, and linked entities.",
+    "issues": "Issue tracking records and their lifecycle statuses.",
+    "notifications": "System notifications and read/unread states.",
+    "returns": "Return records, statuses, and return line references.",
+    "batches": "Production batch planning and production metrics.",
+    "batch_events": "Batch event audit trail and timeline entries.",
+    "counters": "System counters used to generate running identifiers.",
+    "stock_movements": "Inventory movement logs including deltas and references."
+  }
+}
