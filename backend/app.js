@@ -17,6 +17,7 @@ const returnRoutes = require("./routes/return.routes");
 const batchRoutes = require("./routes/batch.routes");
 const stockMovementRoutes = require("./routes/stockMovement.routes");
 const exportRoutes = require("./routes/export.routes");
+const analyticsRoutes = require("./routes/analytics.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");
@@ -54,6 +55,7 @@ app.use("/api/returns", returnRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
 app.use("/api/exports", exportRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // mount error handler
 app.use(errorHandler);
