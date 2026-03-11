@@ -11,10 +11,42 @@ export interface NavItem {
 
 export const navigationItems: NavItem[] = [
   {
-    label: 'Dashboard',
-    path: '/',
-    icon: 'LayoutDashboard',
-    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.INVENTORY, ROLES.ACCOUNTING, ROLES.PLANNING],
+    label: 'Dashboards',
+    path: '/dashboards',
+    icon: 'BarChart3',
+    roles: [ROLES.ADMIN],
+    children: [
+      {
+        label: 'Executive Dashboard',
+        path: '/dashboards/executive',
+        icon: 'LayoutDashboard',
+        roles: [ROLES.ADMIN],
+      },
+      {
+        label: 'Sales Dashboard',
+        path: '/dashboards/sales',
+        icon: 'TrendingUp',
+        roles: [ROLES.ADMIN],
+      },
+      {
+        label: 'Production Dashboard',
+        path: '/dashboards/production',
+        icon: 'Factory',
+        roles: [ROLES.ADMIN],
+      },
+      {
+        label: 'Inventory Dashboard',
+        path: '/dashboards/inventory',
+        icon: 'Package',
+        roles: [ROLES.ADMIN],
+      },
+      {
+        label: 'Operations Dashboard',
+        path: '/dashboards/operations',
+        icon: 'ShieldAlert',
+        roles: [ROLES.ADMIN],
+      },
+    ],
   },
   {
     label: 'Inventory',

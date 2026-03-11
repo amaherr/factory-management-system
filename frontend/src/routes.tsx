@@ -1,11 +1,15 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
 import { ProductsList } from './pages/inventory/ProductsList';
 import { StockOverview } from './pages/inventory/StockOverview';
 import { StockMovementPage } from './pages/inventory/StockMovement';
 import { Export } from './pages/Export';
+import { ExecutiveDashboard } from './pages/dashboards/ExecutiveDashboard';
+import { SalesDashboard } from './pages/dashboards/SalesDashboard';
+import { ProductionDashboard } from './pages/dashboards/ProductionDashboard';
+import { InventoryDashboard } from './pages/dashboards/InventoryDashboard';
+import { OperationsDashboard } from './pages/dashboards/OperationsDashboard';
 import { BatchesList } from './pages/production/BatchesList';
 import { NewSale } from './pages/pos/NewSale';
 import { OrdersList } from './pages/pos/OrdersList';
@@ -17,6 +21,7 @@ import { Notifications } from './pages/Notifications';
 import { UsersManagement } from './pages/UsersManagement';
 
 import { useAuth } from './contexts/AuthContext';
+import { getFilteredNavigation } from './lib/permissions';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -48,6 +53,29 @@ function NotFound() {
   );
 }
 
+function HomeRedirect() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
+
+  const navigation = getFilteredNavigation(user.roles);
+
+  const firstAccessiblePath = navigation.reduce<string | null>((foundPath, item) => {
+    if (foundPath) return foundPath;
+    if (item.children?.length) return item.children[0].path;
+    return item.path;
+  }, null);
+
+  return (
+    <Navigate
+      to={firstAccessiblePath || '/notifications'}
+      replace
+    />
+  );
+}
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -63,7 +91,27 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <HomeRedirect />,
+      },
+      {
+        path: 'dashboards/executive',
+        element: <ExecutiveDashboard />,
+      },
+      {
+        path: 'dashboards/sales',
+        element: <SalesDashboard />,
+      },
+      {
+        path: 'dashboards/production',
+        element: <ProductionDashboard />,
+      },
+      {
+        path: 'dashboards/inventory',
+        element: <InventoryDashboard />,
+      },
+      {
+        path: 'dashboards/operations',
+        element: <OperationsDashboard />,
       },
       {
         path: 'inventory/products',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -25,6 +25,8 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
+  TrendingUp,
+  BarChart3,
   LayoutDashboard,
   Package,
   ShoppingCart,
@@ -41,10 +43,13 @@ import {
   Undo,
   UserCog,
   Sliders,
+  ShieldAlert,
 } from 'lucide-react';
 
 const iconMap: Record<string, any> = {
   LayoutDashboard,
+  TrendingUp,
+  BarChart3,
   Package,
   ShoppingCart,
   Users,
@@ -62,15 +67,17 @@ const iconMap: Record<string, any> = {
   Undo,
   UserCog,
   Sliders,
+  ShieldAlert,
 };
 
 export function Layout() {
   const { user, logout } = useAuth();
   const { unreadCount, refreshUnreadCount } = useNotification();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t: tCommon } = useTranslation('common');
   const { t: tNav } = useTranslation('nav');
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['/dashboards']);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -211,6 +218,8 @@ export function Layout() {
                 const Icon = iconMap[item.icon];
                 const isExpanded = expandedItems.includes(item.path);
                 const hasChildren = item.children && item.children.length > 0;
+                const isGroupActive =
+                  location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
 
                 return (
                   <div key={item.path}>
@@ -220,14 +229,16 @@ export function Layout() {
                         className="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
                         style={{
                           color: 'var(--text-on-dark)',
-                          backgroundColor: isExpanded ? 'var(--sidebar-hover)' : 'transparent',
+                          backgroundColor:
+                            isExpanded || isGroupActive ? 'var(--sidebar-hover)' : 'transparent',
                         }}
                         onMouseEnter={(e) => {
-                          if (!isExpanded)
+                          if (!isExpanded && !isGroupActive)
                             e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
                         }}
                         onMouseLeave={(e) => {
-                          if (!isExpanded) e.currentTarget.style.backgroundColor = 'transparent';
+                          if (!isExpanded && !isGroupActive)
+                            e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <Icon className="size-4" />
@@ -242,12 +253,16 @@ export function Layout() {
                       <Link
                         to={item.path}
                         className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-                        style={{ color: 'var(--text-on-dark)' }}
+                        style={{
+                          color: 'var(--text-on-dark)',
+                          backgroundColor: isGroupActive ? 'var(--sidebar-hover)' : 'transparent',
+                        }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
+                          if (!isGroupActive)
+                            e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
+                          if (!isGroupActive) e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <Icon className="size-4" />
@@ -259,19 +274,30 @@ export function Layout() {
                       <div className="ml-4 mt-1 space-y-1">
                         {item.children?.map((child) => {
                           const ChildIcon = iconMap[child.icon];
+                          const isChildActive =
+                            location.pathname === child.path ||
+                            location.pathname.startsWith(`${child.path}/`);
                           return (
                             <Link
                               key={child.path}
                               to={child.path}
                               className="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors"
-                              style={{ color: 'var(--text-on-dark)', opacity: 0.85 }}
+                              style={{
+                                color: 'var(--text-on-dark)',
+                                opacity: isChildActive ? 1 : 0.85,
+                                backgroundColor: isChildActive
+                                  ? 'var(--sidebar-hover)'
+                                  : 'transparent',
+                              }}
                               onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
                                 e.currentTarget.style.opacity = '1';
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
-                                e.currentTarget.style.opacity = '0.85';
+                                e.currentTarget.style.backgroundColor = isChildActive
+                                  ? 'var(--sidebar-hover)'
+                                  : 'transparent';
+                                e.currentTarget.style.opacity = isChildActive ? '1' : '0.85';
                               }}
                             >
                               <ChildIcon className="size-4" />

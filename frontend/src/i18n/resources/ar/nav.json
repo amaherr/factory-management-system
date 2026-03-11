@@ -1,5 +1,11 @@
 {
   "dashboard": "لوحة التحكم",
+  "dashboards": "اللوحات",
+  "executive dashboard": "اللوحة التنفيذية",
+  "sales dashboard": "لوحة المبيعات",
+  "production dashboard": "لوحة الإنتاج",
+  "inventory dashboard": "لوحة المخزون",
+  "operations dashboard": "لوحة العمليات",
   "inventory": "المخزون",
   "products & models": "المنتجات والموديلات",
   "stock overview": "نظرة عامة على المخزون",

@@ -1,5 +1,11 @@
 {
   "dashboard": "Dashboard",
+  "dashboards": "Dashboards",
+  "executive dashboard": "Executive Dashboard",
+  "sales dashboard": "Sales Dashboard",
+  "production dashboard": "Production Dashboard",
+  "inventory dashboard": "Inventory Dashboard",
+  "operations dashboard": "Operations Dashboard",
   "inventory": "Inventory",
   "products & models": "Products & Models",
   "stock overview": "Stock Overview",
