@@ -200,6 +200,9 @@ const batchController = {
             if (!batch) {
                 throw createError("Batch not found", 404);
             }
+            if (batch.status !== BATCH_STATUS.PLANNING) {
+                throw createError("Batch cannot be deleted", 409);
+            }
 
             // Delete associated events
             await BatchEvent.deleteMany({ batchId: id }).session(session);
