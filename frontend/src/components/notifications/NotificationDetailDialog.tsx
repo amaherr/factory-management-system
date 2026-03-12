@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Card, CardContent } from './ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Card, CardContent } from '../ui/card';
 import { Bell } from 'lucide-react';
-import type { Notification } from '../services/notifications';
+import type { Notification } from '../../services/notifications';
 
 interface NotificationDetailDialogProps {
   notification: Notification | null;

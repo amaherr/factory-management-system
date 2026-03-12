@@ -5,7 +5,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { CheckCheck, Check, Bell, Loader2 } from 'lucide-react';
 import { notificationService, type Notification } from '../services/notifications';
-import { NotificationDetailDialog } from '../components/NotificationDetailDialog';
+import { NotificationDetailDialog } from '../components/notifications/NotificationDetailDialog';
 import { useNotification } from '../contexts/NotificationContext';
 import { toast } from 'sonner';
 
