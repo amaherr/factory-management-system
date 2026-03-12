@@ -186,6 +186,8 @@ export function EditReturnModal({
                         <p className="text-sm font-medium">{productName}</p>
                         <p className="text-xs text-gray-500">
                           {t('returns.createDialog.soldQty')}: {orderItem.quantity}
+                          {orderItem.actualQuantity != null &&
+                            ` (${t('returns.createDialog.actualQty')}: ${orderItem.actualQuantity})`}
                         </p>
                       </div>
 
@@ -197,6 +199,11 @@ export function EditReturnModal({
                           {CURRENCY}
                           {Number(orderItem.unitPrice).toFixed(2)}
                         </p>
+                        {orderItem.totalPrice != null && (
+                          <p className="text-xs text-gray-500">
+                            {t('returns.createDialog.itemTotal')}: {CURRENCY}{Number(orderItem.totalPrice).toFixed(2)}
+                          </p>
+                        )}
                       </div>
 
                       <div>

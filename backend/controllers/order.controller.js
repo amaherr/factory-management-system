@@ -62,18 +62,20 @@ const orderController = {
                     }
 
                     const actualQuantity = Number(it.quantity) * Number(product.sku);
+                    const totalPrice = actualQuantity * product.salePrice;
 
                     return {
                         productId: it.productId,
                         quantity: it.quantity,
                         actualQuantity,
                         unitPrice: product.salePrice, // snapshot
+                        totalPrice,
                     };
                 });
 
                 // compute totals from pricedItems
                 const subTotal = pricedItems.reduce(
-                    (acc, item) => acc + item.unitPrice * item.quantity,
+                    (acc, item) => acc + item.totalPrice,
                     0,
                 );
 
@@ -489,19 +491,21 @@ const orderController = {
                         }
 
                         const actualQuantity = Number(it.quantity) * Number(product.sku);
+                        const totalPrice = actualQuantity * product.salePrice;
 
                         return {
                             productId: it.productId,
                             quantity: Number(it.quantity),
                             actualQuantity,
                             unitPrice: product.salePrice, // snapshot
+                            totalPrice,
                         };
                     });
                 }
 
                 // recompute totals (based on pricedItems + nextDiscountAmount/nextTaxAmount)
                 const subTotal = pricedItems.reduce(
-                    (acc, it) => acc + Number(it.unitPrice) * Number(it.quantity),
+                    (acc, it) => acc + Number(it.totalPrice),
                     0,
                 );
 

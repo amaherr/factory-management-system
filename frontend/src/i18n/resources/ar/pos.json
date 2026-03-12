@@ -33,7 +33,8 @@
     "subtotal": "الإجمالي الفرعي",
     "discount": "الخصم",
     "tax": "الضريبة",
-    "total": "الإجمالي"
+    "total": "الإجمالي",
+    "itemTotal": "إجمالي الصنف"
   },
   "notes": "ملاحظات",
   "notesPlaceholder": "أضف ملاحظات...",
@@ -89,6 +90,7 @@
   "deleteOrderDescription": "هل أنت متأكد من رغبتك في حذف الطلب رقم {{orderNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
   "loading": "جاري التحميل...",
   "generalError": "حدث خطأ ما",
+  "actualQuantity": "الكمية الفعلية",
   "returns": {
     "title": "المرتجعات",
     "description": "إنشاء وإدارة مرتجعات المنتجات",
@@ -130,7 +132,9 @@
       "itemsTitle": "عناصر المرتجع",
       "chooseOrderFirst": "اختر طلبًا أولًا لتحديد كميات المرتجع.",
       "soldQty": "الكمية المباعة",
+      "actualQty": "الكمية الفعلية",
       "unitPrice": "سعر الوحدة",
+      "itemTotal": "إجمالي الصنف",
       "returnQty": "كمية المرتجع",
       "noOrderItems": "لا توجد عناصر في هذا الطلب",
       "submit": "إنشاء مرتجع",
@@ -140,6 +144,7 @@
       "title": "تفاصيل المرتجع",
       "itemsTitle": "العناصر",
       "qty": "الكمية",
+      "actualQty": "الكمية الفعلية",
       "note": "ملاحظة"
     },
     "editDialog": {

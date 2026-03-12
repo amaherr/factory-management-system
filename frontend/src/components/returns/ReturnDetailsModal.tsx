@@ -88,6 +88,11 @@ export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnD
                       <p className="text-xs text-gray-500">
                         {t('returns.detailsDialog.qty')}: {item.quantity}
                       </p>
+                      {item.actualQuantity != null && (
+                        <p className="text-xs text-gray-500">
+                          {t('returns.detailsDialog.actualQty')}: {item.actualQuantity}
+                        </p>
+                      )}
                     </div>
                     <p className="text-sm font-medium">
                       {CURRENCY}

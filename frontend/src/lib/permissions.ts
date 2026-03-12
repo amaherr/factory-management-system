@@ -107,12 +107,6 @@ export const navigationItems: NavItem[] = [
         roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
       },
       {
-        label: 'Invoices',
-        path: '/pos/invoices',
-        icon: 'Receipt',
-        roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
-      },
-      {
         label: 'Returns',
         path: '/pos/returns',
         icon: 'Undo',

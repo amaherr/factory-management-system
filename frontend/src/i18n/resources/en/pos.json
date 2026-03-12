@@ -33,7 +33,8 @@
     "subtotal": "Subtotal",
     "discount": "Discount",
     "tax": "Tax",
-    "total": "Total"
+    "total": "Total",
+    "itemTotal": "Item Total"
   },
   "notes": "Notes",
   "notesPlaceholder": "Add notes...",
@@ -89,6 +90,7 @@
   "deleteOrderDescription": "Are you sure you want to delete order #{{orderNumber}}? This action cannot be undone.",
   "loading": "Loading...",
   "generalError": "An error occurred",
+  "actualQuantity": "Actual Qty",
   "returns": {
     "title": "Returns",
     "description": "Create and manage product returns",
@@ -130,7 +132,9 @@
       "itemsTitle": "Return Items",
       "chooseOrderFirst": "Select an order first to choose return quantities.",
       "soldQty": "Sold Qty",
+      "actualQty": "Actual Qty",
       "unitPrice": "Unit Price",
+      "itemTotal": "Item Total",
       "returnQty": "Return Qty",
       "noOrderItems": "No items found in this order",
       "submit": "Create Return",
@@ -140,6 +144,7 @@
       "title": "Return Details",
       "itemsTitle": "Items",
       "qty": "Quantity",
+      "actualQty": "Actual Qty",
       "note": "Note"
     },
     "editDialog": {

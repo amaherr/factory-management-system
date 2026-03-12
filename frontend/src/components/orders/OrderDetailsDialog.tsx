@@ -151,9 +151,14 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                           {item.quantity} × {CURRENCY}
                           {item.unitPrice.toFixed(2)}
                         </p>
+                        {item.actualQuantity != null && (
+                          <p className="text-xs text-gray-500">
+                            {t('actualQuantity')}: {item.actualQuantity}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-600">
-                          {CURRENCY}
-                          {(item.quantity * item.unitPrice).toFixed(2)}
+                          {t('pricing.itemTotal')}: {CURRENCY}
+                          {(item.totalPrice ?? item.actualQuantity * item.unitPrice).toFixed(2)}
                         </p>
                       </div>
                     </div>

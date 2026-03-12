@@ -7,7 +7,6 @@
     "issue": "Issue",
     "batch": "Batch",
     "inventory": "Inventory",
-    "invoice": "Invoice",
     "order": "Order"
   },
   "detailsTitle": "Notification Details",

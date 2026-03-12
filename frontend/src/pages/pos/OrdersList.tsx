@@ -22,9 +22,9 @@ import { Badge } from '../../components/ui/badge';
 import { Search, Eye, Settings, Trash2, Loader2 } from 'lucide-react';
 import type { Order } from '../../services/orders';
 import { orderService, CURRENCY } from '../../services/orders';
-import { OrderDetailsDialog } from '../../components/pos/OrderDetailsDialog';
-import { ChangeOrderStatusDialog } from '../../components/pos/ChangeOrderStatusDialog';
-import { DeleteOrderDialog } from '../../components/pos/DeleteOrderDialog';
+import { OrderDetailsDialog } from '../../components/orders/OrderDetailsDialog';
+import { ChangeOrderStatusDialog } from '../../components/orders/ChangeOrderStatusDialog';
+import { DeleteOrderDialog } from '../../components/orders/DeleteOrderDialog';
 import { toast } from 'sonner';
 
 export function OrdersList() {

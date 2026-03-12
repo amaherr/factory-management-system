@@ -25,11 +25,11 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { CreateReturnModal } from '../../components/retuns/CreateReturnModal';
-import { ReturnDetailsModal } from '../../components/retuns/ReturnDetailsModal';
-import { EditReturnModal } from '../../components/retuns/EditReturnModal';
-import { ChangeReturnStatusModal } from '../../components/retuns/ChangeReturnStatusModal';
-import { DeleteReturnModal } from '../../components/retuns/DeleteReturnModal';
+import { CreateReturnModal } from '../../components/returns/CreateReturnModal';
+import { ReturnDetailsModal } from '../../components/returns/ReturnDetailsModal';
+import { EditReturnModal } from '../../components/returns/EditReturnModal';
+import { ChangeReturnStatusModal } from '../../components/returns/ChangeReturnStatusModal';
+import { DeleteReturnModal } from '../../components/returns/DeleteReturnModal';
 
 function getStatusColor(status: string): string {
   if (status === 'finalized') return 'bg-green-100 text-green-800';

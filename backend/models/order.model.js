@@ -46,6 +46,11 @@ const orderSchema = mongoose.Schema(
                     required: true,
                     min: 0,
                 },
+                totalPrice: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                },
             },
         ],
         subTotal: {

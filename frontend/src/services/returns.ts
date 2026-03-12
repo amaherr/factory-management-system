@@ -21,6 +21,7 @@ export interface ReturnItem {
         code?: string;
       };
   quantity: number;
+  actualQuantity: number;
   unitPrice: number;
 }
 
