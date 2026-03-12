@@ -13,7 +13,6 @@ import { OperationsDashboard } from './pages/dashboards/OperationsDashboard';
 import { BatchesList } from './pages/production/BatchesList';
 import { NewSale } from './pages/pos/NewSale';
 import { OrdersList } from './pages/pos/OrdersList';
-import { InvoicesList } from './pages/pos/InvoicesList';
 import { Returns } from './pages/pos/Returns';
 import { Customers } from './pages/Customers';
 import { Issues } from './pages/Issues';
@@ -140,10 +139,6 @@ export const router = createBrowserRouter([
       {
         path: 'pos/orders',
         element: <OrdersList />,
-      },
-      {
-        path: 'pos/invoices',
-        element: <InvoicesList />,
       },
       {
         path: 'pos/returns',
