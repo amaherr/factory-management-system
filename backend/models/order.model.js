@@ -35,6 +35,12 @@ const orderSchema = mongoose.Schema(
                     required: true,
                     min: 1,
                 },
+                actualQuantity: {
+                    // quantity times product sku
+                    type: Number,
+                    required: true,
+                    min: 1,
+                },
                 unitPrice: {
                     type: Number,
                     required: true,

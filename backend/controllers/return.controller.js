@@ -56,9 +56,14 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
             );
         }
 
+        // Calculate actualQuantity based on the ratio from order (actualQuantity / quantity)
+        const skuRatio = Number(sold.actualQuantity) / Number(sold.quantity);
+        const actualQuantity = qty * skuRatio;
+
         snapshot.push({
             productId: sold.productId,
             quantity: qty,
+            actualQuantity,
             unitPrice: sold.unitPrice,
         });
     }
@@ -293,11 +298,11 @@ const returnController = {
                 const stockMovements = [];
                 for (const item of returnDoc.items) {
                     const r = await Product.updateOne(
-                        { _id: item.productId, totalSold: { $gte: item.quantity } },
+                        { _id: item.productId, totalSold: { $gte: item.actualQuantity } },
                         {
                             $inc: {
-                                totalSold: -item.quantity,
-                                totalTheoreticalStock: +item.quantity,
+                                totalSold: -item.actualQuantity,
+                                totalTheoreticalStock: +item.actualQuantity,
                             },
                         },
                         { session },
@@ -311,7 +316,7 @@ const returnController = {
                         {
                             productId: item.productId,
                             returnId: returnDoc._id,
-                            quantityChange: item.quantity,
+                            quantityChange: item.actualQuantity,
                             movementType: STOCK_MOVEMENT_TYPE.RETURN,
                             notes: `Return finalized for order ${returnDoc.orderId} - ${returnDoc.note || ""}`.trim(),
                             userId,

@@ -41,6 +41,7 @@ const orderController = {
                     {
                         _id: 1,
                         status: 1,
+                        sku: 1,
                         salePrice: 1,
                         totalTheoreticalStock: 1,
                         totalReserved: 1,
@@ -60,9 +61,12 @@ const orderController = {
                         throw createError(`Product ${it.productId} is not activated`, 409);
                     }
 
+                    const actualQuantity = Number(it.quantity) * Number(product.sku);
+
                     return {
                         productId: it.productId,
                         quantity: it.quantity,
+                        actualQuantity,
                         unitPrice: product.salePrice, // snapshot
                     };
                 });
@@ -109,13 +113,13 @@ const orderController = {
                         const r = await Product.updateOne(
                             {
                                 _id: item.productId,
-                                totalTheoreticalStock: { $gte: item.quantity },
+                                totalTheoreticalStock: { $gte: item.actualQuantity },
                                 status: PRODUCT_STATUS.ACTIVE,
                             },
                             {
                                 $inc: {
-                                    totalTheoreticalStock: -item.quantity,
-                                    totalReserved: +item.quantity,
+                                    totalTheoreticalStock: -item.actualQuantity,
+                                    totalReserved: +item.actualQuantity,
                                 },
                             },
                             { session },
@@ -130,7 +134,7 @@ const orderController = {
                             {
                                 orderId: created[0]._id,
                                 productId: item.productId,
-                                quantityChange: item.quantity,
+                                quantityChange: item.actualQuantity,
                                 movementType: STOCK_MOVEMENT_TYPE.RESERVE,
                                 notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
                                 userId,
@@ -314,11 +318,11 @@ const orderController = {
                         for (const item of updatedOrder.items) {
                             // check and move stock
                             const r = await Product.updateOne(
-                                { _id: item.productId, totalReserved: { $gte: item.quantity } },
+                                { _id: item.productId, totalReserved: { $gte: item.actualQuantity } },
                                 {
                                     $inc: {
-                                        totalSold: +item.quantity,
-                                        totalReserved: -item.quantity,
+                                        totalSold: +item.actualQuantity,
+                                        totalReserved: -item.actualQuantity,
                                     },
                                 },
                                 { session },
@@ -336,7 +340,7 @@ const orderController = {
                                 {
                                     orderId: updatedOrder._id,
                                     productId: item.productId,
-                                    quantityChange: item.quantity,
+                                    quantityChange: item.actualQuantity,
                                     movementType: STOCK_MOVEMENT_TYPE.SALES,
                                     notes: `Order ${updatedOrder.orderNumber} finalized (sold)`,
                                     userId,
@@ -352,11 +356,11 @@ const orderController = {
                         for (const item of updatedOrder.items) {
                             // check and move stock
                             const r = await Product.updateOne(
-                                { _id: item.productId, totalReserved: { $gte: item.quantity } },
+                                { _id: item.productId, totalReserved: { $gte: item.actualQuantity } },
                                 {
                                     $inc: {
-                                        totalTheoreticalStock: +item.quantity,
-                                        totalReserved: -item.quantity,
+                                        totalTheoreticalStock: +item.actualQuantity,
+                                        totalReserved: -item.actualQuantity,
                                     },
                                 },
                                 { session },
@@ -374,7 +378,7 @@ const orderController = {
                                 {
                                     orderId: updatedOrder._id,
                                     productId: item.productId,
-                                    quantityChange: item.quantity,
+                                    quantityChange: item.actualQuantity,
                                     movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
                                     notes: `Order ${updatedOrder.orderNumber} cancelled (unreserved)`,
                                     userId,
@@ -468,6 +472,7 @@ const orderController = {
                         {
                             _id: 1,
                             status: 1,
+                            sku: 1,
                             salePrice: 1,
                             totalTheoreticalStock: 1,
                             totalReserved: 1,
@@ -483,9 +488,12 @@ const orderController = {
                             throw createError(`Product ${it.productId} is not activated`, 409);
                         }
 
+                        const actualQuantity = Number(it.quantity) * Number(product.sku);
+
                         return {
                             productId: it.productId,
                             quantity: Number(it.quantity),
+                            actualQuantity,
                             unitPrice: product.salePrice, // snapshot
                         };
                     });
@@ -508,11 +516,11 @@ const orderController = {
                     // undo old reservations (unreserve everything from the old order)
                     for (const oldItem of order.items) {
                         const r = await Product.updateOne(
-                            { _id: oldItem.productId, totalReserved: { $gte: oldItem.quantity } },
+                            { _id: oldItem.productId, totalReserved: { $gte: oldItem.actualQuantity } },
                             {
                                 $inc: {
-                                    totalTheoreticalStock: +oldItem.quantity,
-                                    totalReserved: -oldItem.quantity,
+                                    totalTheoreticalStock: +oldItem.actualQuantity,
+                                    totalReserved: -oldItem.actualQuantity,
                                 },
                             },
                             { session },
@@ -543,12 +551,12 @@ const orderController = {
                             {
                                 _id: newItem.productId,
                                 status: PRODUCT_STATUS.ACTIVE,
-                                totalTheoreticalStock: { $gte: newItem.quantity },
+                                totalTheoreticalStock: { $gte: newItem.actualQuantity },
                             },
                             {
                                 $inc: {
-                                    totalTheoreticalStock: -newItem.quantity,
-                                    totalReserved: +newItem.quantity,
+                                    totalTheoreticalStock: -newItem.actualQuantity,
+                                    totalReserved: +newItem.actualQuantity,
                                 },
                             },
                             { session },
@@ -562,7 +570,7 @@ const orderController = {
                             {
                                 orderId: order._id,
                                 productId: newItem.productId,
-                                quantityChange: newItem.quantity,
+                                quantityChange: newItem.actualQuantity,
                                 movementType: STOCK_MOVEMENT_TYPE.RESERVE,
                                 notes: `Order ${order.orderNumber} edited (reserve updated)`,
                                 userId,
@@ -637,12 +645,12 @@ const orderController = {
                             const r = await Product.updateOne(
                                 {
                                     _id: item.productId,
-                                    totalReserved: { $gte: item.quantity },
+                                    totalReserved: { $gte: item.actualQuantity },
                                 },
                                 {
                                     $inc: {
-                                        totalTheoreticalStock: +item.quantity,
-                                        totalReserved: -item.quantity,
+                                        totalTheoreticalStock: +item.actualQuantity,
+                                        totalReserved: -item.actualQuantity,
                                     },
                                 },
                                 { session },
