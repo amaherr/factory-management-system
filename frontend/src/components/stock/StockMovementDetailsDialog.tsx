@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import type { StockMovement } from '../../services/stockMovements';
+import type { StockMovement, StockBucket, WarehouseAction } from '../../services/stockMovements';
 
 interface StockMovementDetailsDialogProps {
   movement: StockMovement | null;
@@ -19,16 +19,27 @@ export function StockMovementDetailsDialog({
 
   if (!movement) return null;
 
-  const getMovementTypeColor = (type: string) => {
+  const getMovementTypeColor = (type: StockBucket) => {
     const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       reserve: 'secondary',
-      unreserve: 'outline',
       sales: 'destructive',
       batch: 'default',
       return: 'secondary',
       manual_adjustment: 'outline',
+      inventory: 'default',
     };
     return colorMap[type] || 'outline';
+  };
+
+  const getWarehouseActionColor = (action?: WarehouseAction | null) => {
+    const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      pick: 'destructive',
+      receive: 'default',
+      transfer: 'secondary',
+    };
+
+    if (!action) return 'outline';
+    return colorMap[action] || 'outline';
   };
 
   const getQuantityColor = (quantity: number) => {
@@ -64,13 +75,19 @@ export function StockMovementDetailsDialog({
 
           {/* Movement Details */}
           <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">Movement Details</h3>
+            <h3 className="font-semibold mb-3 text-sm text-gray-700">
+              {t('movements.details.movement')}
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.type')}</p>
-                <div className="mt-1">
-                  <Badge variant={getMovementTypeColor(movement.movementType)}>
-                    {t(`movements.filters.${movement.movementType}`)}
+                <p className="text-xs text-muted-foreground">{t('movements.details.flow')}</p>
+                <div className="mt-1 flex items-center gap-2">
+                  <Badge variant={getMovementTypeColor(movement.from)}>
+                    {t(`movements.buckets.${movement.from}`)}
+                  </Badge>
+                  <span className="text-muted-foreground text-sm">{t('movements.table.to')}</span>
+                  <Badge variant={getMovementTypeColor(movement.to)}>
+                    {t(`movements.buckets.${movement.to}`)}
                   </Badge>
                 </div>
               </div>
@@ -84,11 +101,61 @@ export function StockMovementDetailsDialog({
                 </div>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.warehouseAction')}
+                </p>
+                <div className="mt-1">
+                  <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
+                    {movement.warehouseAction
+                      ? t(`movements.warehouseActions.${movement.warehouseAction}`)
+                      : t('movements.warehouseActions.none')}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.executionStatus')}
+                </p>
+                <div className="mt-1">
+                  <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
+                    {movement.isExecuted
+                      ? t('movements.execution.executed')
+                      : t('movements.execution.pending')}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.sourceLocation')}
+                </p>
+                <p className="font-medium">
+                  {movement.sourceLocation
+                    ? t(`locations.${movement.sourceLocation.toLowerCase()}`)
+                    : t('movements.details.noLocation')}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.destinationLocation')}
+                </p>
+                <p className="font-medium">
+                  {movement.destinationLocation
+                    ? t(`locations.${movement.destinationLocation.toLowerCase()}`)
+                    : t('movements.details.noLocation')}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* References Section */}
           <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">References</h3>
+            <h3 className="font-semibold mb-3 text-sm text-gray-700">
+              {t('movements.details.references')}
+            </h3>
             <div className="grid grid-cols-1 gap-3">
               {movement.orderId && (
                 <div>
@@ -115,27 +182,57 @@ export function StockMovementDetailsDialog({
                 </div>
               )}
               {!movement.orderId && !movement.returnId && !movement.batchId && (
-                <p className="text-xs text-gray-400">No related documents</p>
+                <p className="text-xs text-gray-400">{t('movements.details.noReferences')}</p>
               )}
             </div>
           </div>
 
           {/* Audit Information */}
           <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">Audit Information</h3>
+            <h3 className="font-semibold mb-3 text-sm text-gray-700">
+              {t('movements.details.audit')}
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">
                   {t('movements.details.performedBy')}
                 </p>
                 <div>
-                  <p className="font-medium">{movement.userId?.name || 'Unknown'}</p>
-                  <p className="text-xs text-gray-500">{movement.userId?.email || '-'}</p>
+                  <p className="font-medium">
+                    {movement.createdByUserId?.name || t('movements.unknownUser')}
+                  </p>
+                  <p className="text-xs text-gray-500">{movement.createdByUserId?.email || '-'}</p>
                 </div>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{t('movements.details.createdAt')}</p>
                 <p className="text-sm">{new Date(movement.createdAt!).toLocaleString()}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.physicalExecutedBy')}
+                </p>
+                <div>
+                  <p className="font-medium">
+                    {movement.physicalExecutedByUserId?.name ||
+                      t('movements.details.notExecutedYet')}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {movement.physicalExecutedByUserId?.email || '-'}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('movements.details.physicalExecutedAt')}
+                </p>
+                <p className="text-sm">
+                  {movement.physicalExecutedAt
+                    ? new Date(movement.physicalExecutedAt).toLocaleString()
+                    : t('movements.details.notExecutedYet')}
+                </p>
               </div>
             </div>
           </div>

@@ -13,9 +13,15 @@ const stockMovementController = {
             const {
                 productId, // filter by product
                 q, // search by product code
-                movementType, // filter by movement type
-                from, // date range filter
-                to,
+                fromType, // filter by source stock bucket
+                toType, // filter by destination stock bucket
+                movementType, // backward compatibility filter (matches from OR to)
+                warehouseAction,
+                isExecuted,
+                createdByUserId,
+                physicalExecutedByUserId,
+                createdFrom, // date range filter
+                createdTo,
                 page = 1,
                 limit = 20,
             } = req.query;
@@ -31,15 +37,39 @@ const stockMovementController = {
                 filter.productId = productId;
             }
 
+            if (fromType) {
+                filter.from = fromType;
+            }
+
+            if (toType) {
+                filter.to = toType;
+            }
+
             if (movementType) {
-                filter.movementType = movementType;
+                filter.$or = [{ from: movementType }, { to: movementType }];
+            }
+
+            if (warehouseAction) {
+                filter.warehouseAction = warehouseAction;
+            }
+
+            if (typeof isExecuted !== "undefined") {
+                filter.isExecuted = isExecuted === "true";
+            }
+
+            if (createdByUserId) {
+                filter.createdByUserId = createdByUserId;
+            }
+
+            if (physicalExecutedByUserId) {
+                filter.physicalExecutedByUserId = physicalExecutedByUserId;
             }
 
             // date range
-            if (from || to) {
+            if (createdFrom || createdTo) {
                 filter.createdAt = {};
-                if (from) filter.createdAt.$gte = new Date(from);
-                if (to) filter.createdAt.$lte = new Date(to);
+                if (createdFrom) filter.createdAt.$gte = new Date(createdFrom);
+                if (createdTo) filter.createdAt.$lte = new Date(createdTo);
             }
 
             // search by product code
@@ -47,6 +77,8 @@ const stockMovementController = {
                 const product = await Product.findOne({ code: q });
                 if (product) {
                     filter.productId = product._id;
+                } else {
+                    filter.productId = null;
                 }
             }
 
@@ -59,7 +91,8 @@ const stockMovementController = {
             // get stock movements
             const movements = await StockMovement.find(filter)
                 .populate("productId", "code name")
-                .populate("userId", "name email")
+                .populate("createdByUserId", "name email")
+                .populate("physicalExecutedByUserId", "name email")
                 .populate("orderId", "orderNumber")
                 .populate("returnId", "returnNumber")
                 .populate("batchId", "batchNumber")
@@ -90,7 +123,8 @@ const stockMovementController = {
             // get stock movement
             const movement = await StockMovement.findById(movementId)
                 .populate("productId")
-                .populate("userId", "name email")
+                .populate("createdByUserId", "name email")
+                .populate("physicalExecutedByUserId", "name email")
                 .populate("orderId")
                 .populate("returnId")
                 .populate("batchId");
@@ -123,7 +157,8 @@ const stockMovementController = {
 
             // get movements
             const movements = await StockMovement.find({ productId })
-                .populate("userId", "name email")
+                .populate("createdByUserId", "name email")
+                .populate("physicalExecutedByUserId", "name email")
                 .populate("orderId", "orderNumber")
                 .populate("returnId", "returnNumber")
                 .populate("batchId", "batchNumber")

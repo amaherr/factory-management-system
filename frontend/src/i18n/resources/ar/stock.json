@@ -157,37 +157,70 @@
     },
     "filters": {
       "allTypes": "جميع الأنواع",
+      "execution": {
+        "all": "جميع حالات التنفيذ",
+        "executed": "تم التنفيذ",
+        "pending": "قيد الانتظار"
+      }
+    },
+    "buckets": {
       "reserve": "احتياطي",
-      "unreserve": "إلغاء الحتياطي",
       "sales": "مبيعات",
       "batch": "دفعة",
       "return": "إرجاع",
-      "manual_adjustment": "تعديل يدوي"
+      "manual_adjustment": "تعديل يدوي",
+      "inventory": "مخزون"
+    },
+    "warehouseActions": {
+      "pick": "سحب",
+      "receive": "استلام",
+      "transfer": "نقل",
+      "none": "بدون إجراء"
+    },
+    "execution": {
+      "executed": "تم التنفيذ",
+      "pending": "قيد الانتظار"
     },
     "table": {
       "timestamp": "الوقت",
-      "type": "النوع",
+      "flow": "المسار",
+      "to": "إلى",
       "product": "المنتج",
       "code": "الكود",
       "quantity": "الكمية",
+      "warehouseAction": "إجراء المستودع",
+      "execution": "التنفيذ",
       "reference": "المرجع",
       "performedBy": "تم بواسطة",
       "notes": "ملاحظات",
       "actions": "الإجراءات"
     },
+    "unknownUser": "غير معروف",
     "details": {
       "title": "تفاصيل حركة المخزون",
       "product": "المنتج",
       "code": "كود المنتج",
-      "type": "نوع الحركة",
+      "movement": "تفاصيل الحركة",
+      "flow": "مسار المخزون",
       "quantity": "تغيير الكمية",
+      "warehouseAction": "إجراء المستودع",
+      "executionStatus": "حالة التنفيذ",
+      "sourceLocation": "الموقع المصدر",
+      "destinationLocation": "موقع الوجهة",
+      "noLocation": "لا يوجد موقع",
       "notes": "ملاحظات",
+      "references": "المراجع",
       "reference": "المرجع",
       "relatedOrder": "الطلب ذي الصلة",
       "relatedReturn": "الإرجاع ذي الصلة",
       "relatedBatch": "الدفعة ذات الصلة",
+      "noReferences": "لا توجد مستندات مرتبطة",
+      "audit": "معلومات التدقيق",
       "performedBy": "تم بواسطة",
       "createdAt": "تاريخ الإنشاء",
+      "physicalExecutedBy": "تم التنفيذ الفعلي بواسطة",
+      "physicalExecutedAt": "وقت التنفيذ الفعلي",
+      "notExecutedYet": "لم يتم التنفيذ بعد",
       "close": "إغلاق"
     },
     "pagination": {

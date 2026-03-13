@@ -714,15 +714,28 @@ const getInventoryDashboard = async (req, res, next) => {
                 },
             ]),
 
-            // Stock movement volume and quantity per movement type
+            // Stock movement volume and quantity per stock flow (from -> to)
             StockMovement.aggregate([
                 { $match: movementFilter },
                 {
                     $group: {
-                        _id: "$movementType",
+                        _id: {
+                            from: "$from",
+                            to: "$to",
+                        },
                         count: { $sum: 1 },
                         netQuantity: { $sum: "$quantityChange" },
                         absoluteQuantity: { $sum: { $abs: "$quantityChange" } },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        from: "$_id.from",
+                        to: "$_id.to",
+                        count: 1,
+                        netQuantity: 1,
+                        absoluteQuantity: 1,
                     },
                 },
                 { $sort: { count: -1 } },
@@ -905,7 +918,7 @@ const getOperationsDashboard = async (req, res, next) => {
             StockMovement.aggregate([
                 {
                     $match: {
-                        movementType: "manual_adjustment",
+                        $or: [{ from: "manual_adjustment" }, { to: "manual_adjustment" }],
                         ...movementFilter,
                     },
                 },

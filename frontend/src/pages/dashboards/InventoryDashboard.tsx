@@ -80,6 +80,12 @@ export function InventoryDashboard() {
     setter(value);
   };
 
+  const getBucketLabel = (bucket?: string) => {
+    if (!bucket) return t('common.na');
+    const translated = t(`inventory.stockBuckets.${bucket}`);
+    return translated === `inventory.stockBuckets.${bucket}` ? humanizeLabel(bucket) : translated;
+  };
+
   return (
     <div className="space-y-6 p-6">
       <DashboardHero
@@ -201,7 +207,7 @@ export function InventoryDashboard() {
               >
                 <LineChart
                   data={data.movementBreakdown.map((item) => ({
-                    movementType: humanizeLabel(item._id),
+                    movementFlow: `${getBucketLabel(item.from)} ${t('inventory.flowTo')} ${getBucketLabel(item.to)}`,
                     count: item.count,
                     absoluteQuantity: item.absoluteQuantity,
                   }))}
@@ -211,7 +217,7 @@ export function InventoryDashboard() {
                     stroke="var(--border-light)"
                   />
                   <XAxis
-                    dataKey="movementType"
+                    dataKey="movementFlow"
                     stroke="var(--text-muted)"
                   />
                   <YAxis stroke="var(--text-muted)" />

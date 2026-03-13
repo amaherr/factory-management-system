@@ -2,6 +2,22 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+export type StockBucket =
+  | 'reserve'
+  | 'sales'
+  | 'batch'
+  | 'return'
+  | 'manual_adjustment'
+  | 'inventory';
+
+export type WarehouseAction = 'pick' | 'receive' | 'transfer';
+
+export interface MovementUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 export interface StockMovement {
   _id?: string;
   orderId?: {
@@ -22,15 +38,31 @@ export interface StockMovement {
     name: string;
   } | null;
   quantityChange: number;
-  movementType: string;
+  from: StockBucket;
+  to: StockBucket;
   notes?: string;
-  userId?: {
-    _id: string;
-    name: string;
-    email: string;
-  } | null;
+  createdByUserId?: MovementUser | null;
+  warehouseAction?: WarehouseAction | null;
+  isExecuted: boolean;
+  sourceLocation?: string | null;
+  destinationLocation?: string | null;
+  physicalExecutedAt?: string | null;
+  physicalExecutedByUserId?: MovementUser | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface GetStockMovementsFilters {
+  productCode?: string;
+  fromType?: StockBucket;
+  toType?: StockBucket;
+  movementType?: StockBucket;
+  warehouseAction?: WarehouseAction;
+  isExecuted?: boolean;
+  createdFrom?: string;
+  createdTo?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface GetStockMovementsResponse {
@@ -50,14 +82,7 @@ export interface StockMovementResponse {
 }
 
 export const stockMovementService = {
-  async getStockMovements(
-    productCode?: string,
-    movementType?: string,
-    page: number = 1,
-    limit: number = 20,
-    from?: string,
-    to?: string,
-  ): Promise<{
+  async getStockMovements(filters: GetStockMovementsFilters = {}): Promise<{
     total: number;
     page: number;
     limit: number;
@@ -67,11 +92,28 @@ export const stockMovementService = {
     try {
       axios.defaults.withCredentials = true;
 
+      const {
+        productCode,
+        fromType,
+        toType,
+        movementType,
+        warehouseAction,
+        isExecuted,
+        createdFrom,
+        createdTo,
+        page = 1,
+        limit = 20,
+      } = filters;
+
       const params: any = { page, limit };
       if (productCode) params.q = productCode;
       if (movementType) params.movementType = movementType;
-      if (from) params.from = from;
-      if (to) params.to = to;
+      if (fromType) params.fromType = fromType;
+      if (toType) params.toType = toType;
+      if (warehouseAction) params.warehouseAction = warehouseAction;
+      if (typeof isExecuted === 'boolean') params.isExecuted = isExecuted;
+      if (createdFrom) params.createdFrom = createdFrom;
+      if (createdTo) params.createdTo = createdTo;
 
       const response = await axios.get<GetStockMovementsResponse>(`${API_URL}/stock-movements`, {
         params,

@@ -157,37 +157,70 @@
     },
     "filters": {
       "allTypes": "All Types",
+      "execution": {
+        "all": "All Execution States",
+        "executed": "Executed",
+        "pending": "Pending"
+      }
+    },
+    "buckets": {
       "reserve": "Reserve",
-      "unreserve": "Unreserve",
       "sales": "Sales",
       "batch": "Batch",
       "return": "Return",
-      "manual_adjustment": "Manual Adjustment"
+      "manual_adjustment": "Manual Adjustment",
+      "inventory": "Inventory"
+    },
+    "warehouseActions": {
+      "pick": "Pick",
+      "receive": "Receive",
+      "transfer": "Transfer",
+      "none": "No Action"
+    },
+    "execution": {
+      "executed": "Executed",
+      "pending": "Pending"
     },
     "table": {
       "timestamp": "Timestamp",
-      "type": "Type",
+      "flow": "Flow",
+      "to": "to",
       "product": "Product",
       "code": "Code",
       "quantity": "Quantity",
+      "warehouseAction": "Warehouse Action",
+      "execution": "Execution",
       "reference": "Reference",
       "performedBy": "Performed By",
       "notes": "Notes",
       "actions": "Actions"
     },
+    "unknownUser": "Unknown",
     "details": {
       "title": "Stock Movement Details",
       "product": "Product",
       "code": "Product Code",
-      "type": "Movement Type",
+      "movement": "Movement Details",
+      "flow": "Stock Flow",
       "quantity": "Quantity Changed",
+      "warehouseAction": "Warehouse Action",
+      "executionStatus": "Execution Status",
+      "sourceLocation": "Source Location",
+      "destinationLocation": "Destination Location",
+      "noLocation": "No Location",
       "notes": "Notes",
+      "references": "References",
       "reference": "Reference",
       "relatedOrder": "Related Order",
       "relatedReturn": "Related Return",
       "relatedBatch": "Related Batch",
+      "noReferences": "No related documents",
+      "audit": "Audit Information",
       "performedBy": "Performed By",
       "createdAt": "Created At",
+      "physicalExecutedBy": "Physically Executed By",
+      "physicalExecutedAt": "Physical Execution Time",
+      "notExecutedYet": "Not executed yet",
       "close": "Close"
     },
     "pagination": {

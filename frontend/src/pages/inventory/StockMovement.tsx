@@ -20,13 +20,19 @@ import {
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
 import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { stockMovementService, type StockMovement } from '../../services/stockMovements';
+import {
+  stockMovementService,
+  type StockMovement,
+  type StockBucket,
+  type WarehouseAction,
+} from '../../services/stockMovements';
 import { StockMovementDetailsDialog } from '../../components/stock/StockMovementDetailsDialog';
 
 export function StockMovementPage() {
   const { t } = useTranslation('stock');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [executionFilter, setExecutionFilter] = useState<'all' | 'executed' | 'pending'>('all');
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +52,14 @@ export function StockMovementPage() {
         setLoading(true);
         setError(null);
 
-        const response = await stockMovementService.getStockMovements(
-          searchQuery || undefined,
-          typeFilter !== 'all' ? typeFilter : undefined,
-          currentPage,
+        const response = await stockMovementService.getStockMovements({
+          productCode: searchQuery || undefined,
+          movementType: typeFilter !== 'all' ? (typeFilter as StockBucket) : undefined,
+          isExecuted:
+            executionFilter === 'all' ? undefined : executionFilter === 'executed' ? true : false,
+          page: currentPage,
           limit,
-        );
+        });
 
         setMovements(response.movements);
         setTotalPages(response.pages);
@@ -65,23 +73,34 @@ export function StockMovementPage() {
     };
 
     fetchMovements();
-  }, [searchQuery, typeFilter, currentPage, limit]);
+  }, [searchQuery, typeFilter, executionFilter, currentPage, limit]);
 
   const handleViewDetails = (movement: StockMovement) => {
     setSelectedMovement(movement);
     setDetailsOpen(true);
   };
 
-  const getMovementTypeColor = (type: string) => {
+  const getMovementTypeColor = (type: StockBucket) => {
     const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       reserve: 'secondary',
-      unreserve: 'outline',
       sales: 'destructive',
       batch: 'default',
       return: 'secondary',
       manual_adjustment: 'outline',
+      inventory: 'default',
     };
     return colorMap[type] || 'outline';
+  };
+
+  const getWarehouseActionColor = (action?: WarehouseAction | null) => {
+    const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      pick: 'destructive',
+      receive: 'default',
+      transfer: 'secondary',
+    };
+
+    if (!action) return 'outline';
+    return colorMap[action] || 'outline';
   };
 
   const getQuantityColor = (quantity: number) => {
@@ -100,7 +119,7 @@ export function StockMovementPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
               <Input
@@ -125,14 +144,32 @@ export function StockMovementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('movements.filters.allTypes')}</SelectItem>
-                <SelectItem value="reserve">{t('movements.filters.reserve')}</SelectItem>
-                <SelectItem value="unreserve">{t('movements.filters.unreserve')}</SelectItem>
-                <SelectItem value="sales">{t('movements.filters.sales')}</SelectItem>
-                <SelectItem value="batch">{t('movements.filters.batch')}</SelectItem>
-                <SelectItem value="return">{t('movements.filters.return')}</SelectItem>
+                <SelectItem value="reserve">{t('movements.buckets.reserve')}</SelectItem>
+                <SelectItem value="sales">{t('movements.buckets.sales')}</SelectItem>
+                <SelectItem value="batch">{t('movements.buckets.batch')}</SelectItem>
+                <SelectItem value="return">{t('movements.buckets.return')}</SelectItem>
                 <SelectItem value="manual_adjustment">
-                  {t('movements.filters.manual_adjustment')}
+                  {t('movements.buckets.manual_adjustment')}
                 </SelectItem>
+                <SelectItem value="inventory">{t('movements.buckets.inventory')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={executionFilter}
+              onValueChange={(value: 'all' | 'executed' | 'pending') => {
+                setExecutionFilter(value);
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('movements.filters.execution.all')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('movements.filters.execution.all')}</SelectItem>
+                <SelectItem value="executed">
+                  {t('movements.filters.execution.executed')}
+                </SelectItem>
+                <SelectItem value="pending">{t('movements.filters.execution.pending')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -159,10 +196,12 @@ export function StockMovementPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('movements.table.timestamp')}</TableHead>
-                    <TableHead>{t('movements.table.type')}</TableHead>
+                    <TableHead>{t('movements.table.flow')}</TableHead>
                     <TableHead>{t('movements.table.product')}</TableHead>
                     <TableHead>{t('movements.table.code')}</TableHead>
                     <TableHead>{t('movements.table.quantity')}</TableHead>
+                    <TableHead>{t('movements.table.warehouseAction')}</TableHead>
+                    <TableHead>{t('movements.table.execution')}</TableHead>
                     <TableHead>{t('movements.table.reference')}</TableHead>
                     <TableHead>{t('movements.table.performedBy')}</TableHead>
                     <TableHead className="text-right">{t('movements.table.actions')}</TableHead>
@@ -173,9 +212,15 @@ export function StockMovementPage() {
                     <TableRow key={movement._id}>
                       <TableCell>{new Date(movement.createdAt!).toLocaleString()}</TableCell>
                       <TableCell>
-                        <Badge variant={getMovementTypeColor(movement.movementType)}>
-                          {t(`movements.filters.${movement.movementType}`)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={getMovementTypeColor(movement.from)}>
+                            {t(`movements.buckets.${movement.from}`)}
+                          </Badge>
+                          <span className="text-muted-foreground">{t('movements.table.to')}</span>
+                          <Badge variant={getMovementTypeColor(movement.to)}>
+                            {t(`movements.buckets.${movement.to}`)}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div>
@@ -191,6 +236,20 @@ export function StockMovementPage() {
                           {movement.quantityChange}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
+                          {movement.warehouseAction
+                            ? t(`movements.warehouseActions.${movement.warehouseAction}`)
+                            : t('movements.warehouseActions.none')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
+                          {movement.isExecuted
+                            ? t('movements.execution.executed')
+                            : t('movements.execution.pending')}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-mono text-sm">
                         {movement.orderId?.orderNumber
                           ? `ORD-${movement.orderId.orderNumber}`
@@ -200,7 +259,9 @@ export function StockMovementPage() {
                               ? `BATCH-${movement.batchId.batchNumber}`
                               : '-'}
                       </TableCell>
-                      <TableCell>{movement.userId?.name || 'Unknown'}</TableCell>
+                      <TableCell>
+                        {movement.createdByUserId?.name || t('movements.unknownUser')}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"

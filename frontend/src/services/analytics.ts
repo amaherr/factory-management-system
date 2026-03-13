@@ -164,7 +164,8 @@ export interface InventoryDashboardData {
     productCount: number;
   }>;
   movementBreakdown: Array<{
-    _id: string;
+    from: string;
+    to: string;
     count: number;
     netQuantity: number;
     absoluteQuantity: number;
