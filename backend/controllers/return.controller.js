@@ -6,7 +6,7 @@ const Order = require("../models/order.model");
 const StockMovement = require("../models/stockMovement.model");
 
 const { RETURN_STATUS } = require("../enums/return.enums");
-const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
 const { ORDER_STATUS } = require("../enums/order.enums");
 const { COUNTERS } = require("../enums/counter.enums");
 
@@ -315,11 +315,13 @@ const returnController = {
                     const stockMovement = await createStockMovement(
                         {
                             productId: item.productId,
-                            returnId: returnDoc._id,
                             quantityChange: item.actualQuantity,
-                            movementType: STOCK_MOVEMENT_TYPE.RETURN,
+                            from: STOCK_MOVEMENT_TYPE.RETURN,
+                            to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                            createdByUserId: userId,
                             notes: `Return finalized for order ${returnDoc.orderId} - ${returnDoc.note || ""}`.trim(),
-                            userId,
+                            returnId: returnDoc._id,
+                            warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
                         },
                         session,
                     );
@@ -334,14 +336,12 @@ const returnController = {
                 return { updatedReturn: returnDoc, stockMovements };
             });
 
-            return res
-                .status(200)
-                .json(
-                    response("Return status updated successfully", {
-                        updatedReturn,
-                        stockMovements,
-                    }),
-                );
+            return res.status(200).json(
+                response("Return status updated successfully", {
+                    updatedReturn,
+                    stockMovements,
+                }),
+            );
         } catch (err) {
             return next(err);
         } finally {

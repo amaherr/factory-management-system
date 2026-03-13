@@ -4,11 +4,10 @@ const Batch = require("../models/batch.model");
 const BatchEvent = require("../models/batchEvent.model");
 const Product = require("../models/product.model");
 const Order = require("../models/order.model");
-const StockMovement = require("../models/stockMovement.model");
 
 const { BATCH_STATUS } = require("../enums/batch.enums");
 const { BATCH_EVENT_STAGES } = require("../enums/batchEvent.enums");
-const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
 const { COUNTERS } = require("../enums/counter.enums");
 
 const response = require("../utils/responseFactory");
@@ -341,11 +340,13 @@ const batchController = {
             const stockMovement = await createStockMovement(
                 {
                     productId: batch.productId,
-                    batchId: batch._id,
                     quantityChange: producedQuantity,
-                    movementType: STOCK_MOVEMENT_TYPE.BATCH,
+                    from: STOCK_MOVEMENT_TYPE.BATCH,
+                    to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                    createdByUserId: req.user.id,
                     notes: `Batch ${batch.batchNumber} production finalized`,
-                    userId: req.user.id,
+                    batchId: batch._id,
+                    warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
                 },
                 session,
             );

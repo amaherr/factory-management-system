@@ -1,8 +1,20 @@
 const mongoose = require("mongoose");
-const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+
+const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
+const { FACTORY_LOCATIONS } = require("../enums/product.enums");
 
 const stockMovementSchema = new mongoose.Schema(
     {
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+            required: true,
+        },
+        quantityChange: {
+            type: Number,
+            required: true,
+        },
+
         orderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",
@@ -15,18 +27,13 @@ const stockMovementSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Batch",
         },
-        productId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Product",
+
+        from: {
+            type: String,
+            enum: Object.values(STOCK_MOVEMENT_TYPE),
             required: true,
         },
-
-        quantityChange: {
-            type: Number,
-            required: true,
-        },
-
-        movementType: {
+        to: {
             type: String,
             enum: Object.values(STOCK_MOVEMENT_TYPE),
             required: true,
@@ -37,10 +44,42 @@ const stockMovementSchema = new mongoose.Schema(
             trim: true,
         },
 
-        userId: {
+        createdByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
+        },
+
+        // physical stock information
+        warehouseAction: {
+            type: String,
+            enum: Object.values(WAREHOUSE_ACTIONS),
+            default: null,
+        },
+        isExecuted: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        sourceLocation: {
+            type: String,
+            enum: Object.values(FACTORY_LOCATIONS),
+            default: null,
+        },
+        destinationLocation: {
+            type: String,
+            enum: Object.values(FACTORY_LOCATIONS),
+            default: null,
+        },
+
+        physicalExecutedAt: {
+            type: Date,
+            default: null,
+        },
+        physicalExecutedByUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
         },
     },
     {

@@ -14,7 +14,7 @@ const StockMovement = require("../models/stockMovement.model");
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 const { PRODUCT_STATUS } = require("../enums/product.enums");
 const { COUNTERS } = require("../enums/counter.enums");
-const { STOCK_MOVEMENT_TYPE } = require("../enums/stockMovement.enums");
+const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
@@ -74,10 +74,7 @@ const orderController = {
                 });
 
                 // compute totals from pricedItems
-                const subTotal = pricedItems.reduce(
-                    (acc, item) => acc + item.totalPrice,
-                    0,
-                );
+                const subTotal = pricedItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
                 // normalize values
                 const discount = Number(discountAmount || 0);
@@ -134,12 +131,14 @@ const orderController = {
                         // create stock movement for the item
                         const sm = await createStockMovement(
                             {
-                                orderId: created[0]._id,
                                 productId: item.productId,
                                 quantityChange: item.actualQuantity,
-                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                from: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                to: STOCK_MOVEMENT_TYPE.RESERVE,
+                                createdByUserId: userId,
                                 notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
-                                userId,
+                                orderId: created[0]._id,
+                                isExecuted: true,
                             },
                             session,
                         );
@@ -320,7 +319,10 @@ const orderController = {
                         for (const item of updatedOrder.items) {
                             // check and move stock
                             const r = await Product.updateOne(
-                                { _id: item.productId, totalReserved: { $gte: item.actualQuantity } },
+                                {
+                                    _id: item.productId,
+                                    totalReserved: { $gte: item.actualQuantity },
+                                },
                                 {
                                     $inc: {
                                         totalSold: +item.actualQuantity,
@@ -340,12 +342,14 @@ const orderController = {
                             // create stock movement
                             const sm = await createStockMovement(
                                 {
-                                    orderId: updatedOrder._id,
                                     productId: item.productId,
                                     quantityChange: item.actualQuantity,
-                                    movementType: STOCK_MOVEMENT_TYPE.SALES,
+                                    from: STOCK_MOVEMENT_TYPE.RESERVE,
+                                    to: STOCK_MOVEMENT_TYPE.SALES,
+                                    createdByUserId: userId,
                                     notes: `Order ${updatedOrder.orderNumber} finalized (sold)`,
-                                    userId,
+                                    orderId: updatedOrder._id,
+                                    warehouseAction: WAREHOUSE_ACTIONS.PICK,
                                 },
                                 session,
                             );
@@ -358,7 +362,10 @@ const orderController = {
                         for (const item of updatedOrder.items) {
                             // check and move stock
                             const r = await Product.updateOne(
-                                { _id: item.productId, totalReserved: { $gte: item.actualQuantity } },
+                                {
+                                    _id: item.productId,
+                                    totalReserved: { $gte: item.actualQuantity },
+                                },
                                 {
                                     $inc: {
                                         totalTheoreticalStock: +item.actualQuantity,
@@ -378,12 +385,14 @@ const orderController = {
                             // create stock movement
                             const sm = await createStockMovement(
                                 {
-                                    orderId: updatedOrder._id,
                                     productId: item.productId,
                                     quantityChange: item.actualQuantity,
-                                    movementType: STOCK_MOVEMENT_TYPE.UNRESERVE,
+                                    from: STOCK_MOVEMENT_TYPE.RESERVE,
+                                    to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                    createdByUserId: userId,
                                     notes: `Order ${updatedOrder.orderNumber} cancelled (unreserved)`,
-                                    userId,
+                                    orderId: updatedOrder._id,
+                                    isExecuted: true,
                                 },
                                 session,
                             );
@@ -504,10 +513,7 @@ const orderController = {
                 }
 
                 // recompute totals (based on pricedItems + nextDiscountAmount/nextTaxAmount)
-                const subTotal = pricedItems.reduce(
-                    (acc, it) => acc + Number(it.totalPrice),
-                    0,
-                );
+                const subTotal = pricedItems.reduce((acc, it) => acc + Number(it.totalPrice), 0);
 
                 const total = subTotal + nextTaxAmount - nextDiscountAmount;
                 if (total < 0) {
@@ -520,7 +526,10 @@ const orderController = {
                     // undo old reservations (unreserve everything from the old order)
                     for (const oldItem of order.items) {
                         const r = await Product.updateOne(
-                            { _id: oldItem.productId, totalReserved: { $gte: oldItem.actualQuantity } },
+                            {
+                                _id: oldItem.productId,
+                                totalReserved: { $gte: oldItem.actualQuantity },
+                            },
                             {
                                 $inc: {
                                     totalTheoreticalStock: +oldItem.actualQuantity,
@@ -572,12 +581,14 @@ const orderController = {
 
                         const sm = await createStockMovement(
                             {
-                                orderId: order._id,
                                 productId: newItem.productId,
                                 quantityChange: newItem.actualQuantity,
-                                movementType: STOCK_MOVEMENT_TYPE.RESERVE,
+                                from: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                to: STOCK_MOVEMENT_TYPE.RESERVE,
+                                createdByUserId: userId,
                                 notes: `Order ${order.orderNumber} edited (reserve updated)`,
-                                userId,
+                                orderId: order._id,
+                                isExecuted: true,
                             },
                             session,
                         );

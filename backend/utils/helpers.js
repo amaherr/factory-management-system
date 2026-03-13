@@ -29,12 +29,19 @@ async function createStockMovement(
     {
         productId,
         quantityChange,
-        movementType,
-        userId,
+        from,
+        to,
+        createdByUserId,
         notes,
         orderId, // optional
         returnId, // optional
         batchId, // optional
+        warehouseAction, // optional
+        isExecuted, // optional
+        sourceLocation, // optional
+        destinationLocation, // optional
+        physicalExecutedAt, // optional
+        physicalExecutedByUserId, // optional
     },
     session,
 ) {
@@ -45,8 +52,10 @@ async function createStockMovement(
     const doc = {
         productId,
         quantityChange,
-        movementType,
-        userId,
+        from,
+        to,
+        createdByUserId,
+        isExecuted: isExecuted ?? false,
     };
 
     if (notes != null) doc.notes = notes;
@@ -55,6 +64,13 @@ async function createStockMovement(
     if (orderId != null) doc.orderId = orderId;
     if (returnId != null) doc.returnId = returnId;
     if (batchId != null) doc.batchId = batchId;
+
+    // optional warehouse/physical execution fields
+    if (warehouseAction != null) doc.warehouseAction = warehouseAction;
+    if (sourceLocation != null) doc.sourceLocation = sourceLocation;
+    if (destinationLocation != null) doc.destinationLocation = destinationLocation;
+    if (physicalExecutedAt != null) doc.physicalExecutedAt = physicalExecutedAt;
+    if (physicalExecutedByUserId != null) doc.physicalExecutedByUserId = physicalExecutedByUserId;
 
     const [movement] = await StockMovement.create([doc], { session });
     return movement;
