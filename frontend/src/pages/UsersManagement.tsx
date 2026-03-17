@@ -19,11 +19,10 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Search, Eye, Loader2, Pencil, Ban, Shield, Trash2 } from 'lucide-react';
+import { Search, Eye, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import { AddUserDialog } from '../components/users/AddUserDialog';
 import { UserDetailsDialog } from '../components/users/UserDetailsDialog';
 import { EditUserDialog } from '../components/users/EditUserDialog';
-import { ToggleUserStatusDialog } from '../components/users/ToggleUserStatusDialog';
 import { DeleteUserDialog } from '../components/users/DeleteUserDialog';
 import { userService, type User } from '../services/users';
 import { ROLES } from '../services/enums/user.enums';
@@ -33,14 +32,13 @@ export function UsersManagement() {
   const { t } = useTranslation('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [toggleStatusUser, setToggleStatusUser] = useState<User | null>(null);
-  const [toggleStatusOpen, setToggleStatusOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -68,7 +66,11 @@ export function UsersManagement() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.phoneNumber.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.roles.includes(roleFilter as any);
-    return matchesSearch && matchesRole;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && user.isActive) ||
+      (statusFilter === 'inactive' && !user.isActive);
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   const handleUserAdded = (newUser: User) => {
@@ -85,21 +87,12 @@ export function UsersManagement() {
     setEditOpen(true);
   };
 
-  const handleToggleStatus = (user: User) => {
-    setToggleStatusUser(user);
-    setToggleStatusOpen(true);
-  };
-
   const handleDeleteUser = (user: User) => {
     setDeletingUser(user);
     setDeleteOpen(true);
   };
 
   const handleUserUpdated = (updatedUser: User) => {
-    setUsers((prev) => prev.map((u) => (u._id === updatedUser._id ? updatedUser : u)));
-  };
-
-  const handleStatusChanged = (updatedUser: User) => {
     setUsers((prev) => prev.map((u) => (u._id === updatedUser._id ? updatedUser : u)));
   };
 
@@ -119,22 +112,34 @@ export function UsersManagement() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_180px] gap-3">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder={t('search_placeholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={loading}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
             <Select
               value={roleFilter}
               onValueChange={setRoleFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('filter_by_role')} />
               </SelectTrigger>
               <SelectContent>
@@ -145,6 +150,19 @@ export function UsersManagement() {
                 <SelectItem value={ROLES.PLANNING}>{t('role_planning')}</SelectItem>
                 <SelectItem value={ROLES.ACCOUNTING}>{t('role_accounting')}</SelectItem>
                 <SelectItem value={ROLES.PRODUCTION}>{t('role_production')}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
+              <SelectTrigger className="h-9 rounded-md">
+                <SelectValue placeholder={t('filter_by_status')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('all_statuses')}</SelectItem>
+                <SelectItem value="active">{t('active')}</SelectItem>
+                <SelectItem value="inactive">{t('inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -229,6 +247,7 @@ export function UsersManagement() {
                           size="sm"
                           onClick={() => handleViewDetails(user)}
                           title={t('user_details')}
+                          className="text-black hover:bg-black/10"
                         >
                           <Eye className="size-4" />
                         </Button>
@@ -237,26 +256,16 @@ export function UsersManagement() {
                           size="sm"
                           onClick={() => handleEditUser(user)}
                           title={t('edit_user')}
+                          className="text-blue-700 hover:bg-blue-50"
                         >
                           <Pencil className="size-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleToggleStatus(user)}
-                          title={user.isActive ? t('deactivate') : t('activate')}
-                        >
-                          {user.isActive ? (
-                            <Ban className="size-4" />
-                          ) : (
-                            <Shield className="size-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           onClick={() => handleDeleteUser(user)}
                           title={t('delete_user')}
+                          className="text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="size-4" />
                         </Button>
@@ -280,12 +289,6 @@ export function UsersManagement() {
         open={editOpen}
         onOpenChange={setEditOpen}
         onUserUpdated={handleUserUpdated}
-      />
-      <ToggleUserStatusDialog
-        user={toggleStatusUser}
-        open={toggleStatusOpen}
-        onOpenChange={setToggleStatusOpen}
-        onStatusChanged={handleStatusChanged}
       />
       <DeleteUserDialog
         user={deletingUser}

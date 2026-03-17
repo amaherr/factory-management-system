@@ -8,10 +8,10 @@
  * node scripts/clearDatabase.js [collections_to_preserve]
  *
  * Examples:
- * node scripts/clearDatabase.js                    # Clear all collections
- * node scripts/clearDatabase.js User               # Preserve User collection
- * node scripts/clearDatabase.js User Role          # Preserve User and Role collections
- * node scripts/clearDatabase.js User Role Product  # Preserve multiple collections
+ * node scripts/clearDatabase.js                         # Clear all collections
+ * node scripts/clearDatabase.js users                   # Preserve User collection
+ * node scripts/clearDatabase.js users products          # Preserve User and Role collections
+ * node scripts/clearDatabase.js users products batches  # Preserve multiple collections
  */
 
 require("dotenv").config();

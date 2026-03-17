@@ -5,6 +5,17 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Checkbox } from '../ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../ui/alert-dialog';
+import { Switch } from '../ui/switch';
 import { Eye, EyeOff } from 'lucide-react';
 import { userService, type User } from '../../services/users';
 import { ROLE_VALUES } from '../../services/enums/user.enums';
@@ -22,11 +33,14 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
   const { t } = useTranslation('users');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmStatusDialogOpen, setConfirmStatusDialogOpen] = useState(false);
+  const [pendingSubmitEvent, setPendingSubmitEvent] = useState<React.FormEvent | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phoneNumber: '',
     password: '',
     roles: [] as UserRole[],
+    isActive: true,
   });
 
   useEffect(() => {
@@ -36,9 +50,105 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
         phoneNumber: user.phoneNumber,
         password: '',
         roles: user.roles,
+        isActive: user.isActive,
       });
     }
   }, [user]);
+
+  const resetDialogState = () => {
+    setShowPassword(false);
+    setConfirmStatusDialogOpen(false);
+    setPendingSubmitEvent(null);
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      throw new Error(t('name_required'));
+    }
+    if (!formData.phoneNumber.trim()) {
+      throw new Error(t('phone_required'));
+    }
+    if (formData.phoneNumber.length < 5) {
+      throw new Error(t('phone_min_length'));
+    }
+    if (formData.password && formData.password.length < 6) {
+      throw new Error(t('password_min_length'));
+    }
+    if (formData.roles.length === 0) {
+      throw new Error(t('roles_required'));
+    }
+  };
+
+  const buildChanges = () => {
+    if (!user) {
+      return {
+        basicUpdates: {},
+        rolesChanged: false,
+        activationChanged: false,
+      };
+    }
+
+    const basicUpdates: { name?: string; phoneNumber?: string; password?: string } = {};
+    if (formData.name.trim() !== user.name) {
+      basicUpdates.name = formData.name.trim();
+    }
+    if (formData.phoneNumber.trim() !== user.phoneNumber) {
+      basicUpdates.phoneNumber = formData.phoneNumber.trim();
+    }
+    if (formData.password) {
+      basicUpdates.password = formData.password;
+    }
+
+    const rolesChanged =
+      formData.roles.length !== user.roles.length ||
+      formData.roles.some((role) => !user.roles.includes(role));
+
+    const activationChanged = formData.isActive !== user.isActive;
+
+    return { basicUpdates, rolesChanged, activationChanged };
+  };
+
+  const executeSubmit = async () => {
+    if (!user?._id) return;
+
+    setLoading(true);
+
+    try {
+      validateForm();
+
+      const { basicUpdates, rolesChanged, activationChanged } = buildChanges();
+
+      if (Object.keys(basicUpdates).length === 0 && !rolesChanged && !activationChanged) {
+        throw new Error(t('no_changes_made'));
+      }
+
+      let updatedUser = user;
+
+      if (Object.keys(basicUpdates).length > 0) {
+        updatedUser = await userService.editUser(user._id, basicUpdates);
+      }
+
+      if (rolesChanged) {
+        updatedUser = await userService.changeUserRoles(user._id, formData.roles);
+      }
+
+      if (activationChanged) {
+        updatedUser = await userService.changeUserActivation(user._id, formData.isActive);
+        toast.success(
+          formData.isActive ? t('user_activated_successfully') : t('user_deactivated_successfully'),
+        );
+      }
+
+      toast.success(t('user_updated_successfully'));
+      onUserUpdated(updatedUser);
+      onOpenChange(false);
+      resetDialogState();
+    } catch (error: any) {
+      toast.error(error.message || t('failed_to_update_user'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRoleToggle = (role: UserRole) => {
     setFormData((prev) => ({
@@ -53,65 +163,23 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
     e.preventDefault();
     if (!user?._id) return;
 
-    setLoading(true);
-
     try {
-      // Validation
-      if (!formData.name.trim()) {
-        throw new Error(t('name_required'));
-      }
-      if (!formData.phoneNumber.trim()) {
-        throw new Error(t('phone_required'));
-      }
-      if (formData.phoneNumber.length < 5) {
-        throw new Error(t('phone_min_length'));
-      }
-      if (formData.password && formData.password.length < 6) {
-        throw new Error(t('password_min_length'));
-      }
-      if (formData.roles.length === 0) {
-        throw new Error(t('roles_required'));
-      }
+      validateForm();
+      const { basicUpdates, rolesChanged, activationChanged } = buildChanges();
 
-      // Update basic info if changed
-      const basicUpdates: { name?: string; phoneNumber?: string; password?: string } = {};
-      if (formData.name.trim() !== user.name) {
-        basicUpdates.name = formData.name.trim();
-      }
-      if (formData.phoneNumber.trim() !== user.phoneNumber) {
-        basicUpdates.phoneNumber = formData.phoneNumber.trim();
-      }
-      if (formData.password) {
-        basicUpdates.password = formData.password;
-      }
-
-      let updatedUser = user;
-
-      if (Object.keys(basicUpdates).length > 0) {
-        updatedUser = await userService.editUser(user._id, basicUpdates);
-      }
-
-      // Update roles if changed
-      const rolesChanged =
-        formData.roles.length !== user.roles.length ||
-        formData.roles.some((role) => !user.roles.includes(role));
-
-      if (rolesChanged) {
-        updatedUser = await userService.changeUserRoles(user._id, formData.roles);
-      }
-
-      if (Object.keys(basicUpdates).length === 0 && !rolesChanged) {
+      if (Object.keys(basicUpdates).length === 0 && !rolesChanged && !activationChanged) {
         throw new Error(t('no_changes_made'));
       }
 
-      toast.success(t('user_updated_successfully'));
-      onUserUpdated(updatedUser);
-      onOpenChange(false);
-      setShowPassword(false);
+      if (activationChanged) {
+        setPendingSubmitEvent(e);
+        setConfirmStatusDialogOpen(true);
+        return;
+      }
+
+      await executeSubmit();
     } catch (error: any) {
       toast.error(error.message || t('failed_to_update_user'));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -122,7 +190,7 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
       open={open}
       onOpenChange={(open) => {
         onOpenChange(open);
-        if (!open) setShowPassword(false);
+        if (!open) resetDialogState();
       }}
     >
       <DialogContent className="max-w-md">
@@ -207,13 +275,28 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="isActive">{t('activation_label')}</Label>
+            <div className="flex items-center justify-between border rounded-md p-3">
+              <div>
+                <p className="text-sm font-medium">{t('activation_toggle_title')}</p>
+                <p className="text-xs text-muted-foreground">{t('activation_toggle_hint')}</p>
+              </div>
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+            </div>
+          </div>
+
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => {
                 onOpenChange(false);
-                setShowPassword(false);
+                resetDialogState();
               }}
               disabled={loading}
             >
@@ -228,6 +311,52 @@ export function EditUserDialog({ user, open, onOpenChange, onUserUpdated }: Edit
           </div>
         </form>
       </DialogContent>
+
+      <AlertDialog
+        open={confirmStatusDialogOpen}
+        onOpenChange={setConfirmStatusDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {formData.isActive ? t('activate_user_title') : t('deactivate_user_title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {formData.isActive ? t('activate_on_save_message') : t('deactivate_on_save_message')}
+              <br />
+              <br />
+              <span className="font-semibold">
+                {formData.isActive
+                  ? t('activate_user_warning', { name: user.name })
+                  : t('deactivate_user_warning', { name: user.name })}
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={loading}
+              onClick={() => setPendingSubmitEvent(null)}
+            >
+              {t('cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={loading}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!pendingSubmitEvent) {
+                  return;
+                }
+
+                setConfirmStatusDialogOpen(false);
+                setPendingSubmitEvent(null);
+                await executeSubmit();
+              }}
+            >
+              {loading ? t('processing') : t('confirm_save')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
