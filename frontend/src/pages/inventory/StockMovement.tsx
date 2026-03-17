@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   stockMovementService,
   type StockMovement,
@@ -119,18 +119,33 @@ export function StockMovementPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.6fr)_220px_220px] md:items-center">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder={t('movements.searchPlaceholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setCurrentPage(1); // Reset to first page on search
                 }}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  aria-label={t('clearSearch')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
             <Select
               value={typeFilter}
@@ -139,7 +154,7 @@ export function StockMovementPage() {
                 setCurrentPage(1); // Reset to first page on filter change
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('movements.filters.allTypes')} />
               </SelectTrigger>
               <SelectContent>
@@ -161,7 +176,7 @@ export function StockMovementPage() {
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('movements.filters.execution.all')} />
               </SelectTrigger>
               <SelectContent>

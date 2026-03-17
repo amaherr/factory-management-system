@@ -51,203 +51,210 @@ export function StockMovementDetailsDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="flex max-w-2xl max-h-[85vh] flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b bg-background px-6 py-4 pr-12">
           <DialogTitle>{t('movements.details.title')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
-          {/* Product Section */}
-          <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">
-              {t('movements.details.product')}
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.product')}</p>
-                <p className="font-medium">{movement.productId?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.code')}</p>
-                <p className="font-mono">{movement.productId?.code || '-'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Movement Details */}
-          <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">
-              {t('movements.details.movement')}
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.flow')}</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <Badge variant={getBucketColor(movement.from)}>
-                    {t(`movements.buckets.${movement.from}`)}
-                  </Badge>
-                  <span className="text-muted-foreground text-sm">{t('movements.table.to')}</span>
-                  <Badge variant={getBucketColor(movement.to)}>
-                    {t(`movements.buckets.${movement.to}`)}
-                  </Badge>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.quantity')}</p>
-                <div className="mt-1">
-                  <Badge variant={getQuantityColor(movement.quantityChange)}>
-                    {movement.quantityChange > 0 ? '+' : ''}
-                    {movement.quantityChange}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.warehouseAction')}
-                </p>
-                <div className="mt-1">
-                  <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
-                    {movement.warehouseAction
-                      ? t(`movements.warehouseActions.${movement.warehouseAction}`)
-                      : t('movements.warehouseActions.none')}
-                  </Badge>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.executionStatus')}
-                </p>
-                <div className="mt-1">
-                  <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
-                    {movement.isExecuted
-                      ? t('movements.execution.executed')
-                      : t('movements.execution.pending')}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.sourceLocation')}
-                </p>
-                <p className="font-medium">
-                  {movement.sourceLocation
-                    ? t(`locations.${movement.sourceLocation.toLowerCase()}`)
-                    : t('movements.details.noLocation')}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.destinationLocation')}
-                </p>
-                <p className="font-medium">
-                  {movement.destinationLocation
-                    ? t(`locations.${movement.destinationLocation.toLowerCase()}`)
-                    : t('movements.details.noLocation')}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* References Section */}
-          <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">
-              {t('movements.details.references')}
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              {movement.orderId && (
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('movements.details.relatedOrder')}
-                  </p>
-                  <p className="font-mono text-sm">ORD-{movement.orderId.orderNumber}</p>
-                </div>
-              )}
-              {movement.returnId && (
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('movements.details.relatedReturn')}
-                  </p>
-                  <p className="font-mono text-sm">RET-{movement.returnId.returnNumber}</p>
-                </div>
-              )}
-              {movement.batchId && (
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    {t('movements.details.relatedBatch')}
-                  </p>
-                  <p className="font-mono text-sm">BATCH-{movement.batchId.batchNumber}</p>
-                </div>
-              )}
-              {!movement.orderId && !movement.returnId && !movement.batchId && (
-                <p className="text-xs text-gray-400">{t('movements.details.noReferences')}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Audit Information */}
-          <div className="border-b pb-4">
-            <h3 className="font-semibold mb-3 text-sm text-gray-700">
-              {t('movements.details.audit')}
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.performedBy')}
-                </p>
-                <div>
-                  <p className="font-medium">
-                    {movement.createdByUserId?.name || t('movements.unknownUser')}
-                  </p>
-                  <p className="text-xs text-gray-500">{movement.createdByUserId?.email || '-'}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{t('movements.details.createdAt')}</p>
-                <p className="text-sm">{new Date(movement.createdAt!).toLocaleString()}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.physicalExecutedBy')}
-                </p>
-                <div>
-                  <p className="font-medium">
-                    {movement.physicalExecutedByUserId?.name ||
-                      t('movements.details.notExecutedYet')}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {movement.physicalExecutedByUserId?.email || '-'}
-                  </p>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t('movements.details.physicalExecutedAt')}
-                </p>
-                <p className="text-sm">
-                  {movement.physicalExecutedAt
-                    ? new Date(movement.physicalExecutedAt).toLocaleString()
-                    : t('movements.details.notExecutedYet')}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes Section */}
-          {movement.notes && (
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-6">
+            {/* Product Section */}
             <div className="border-b pb-4">
               <h3 className="font-semibold mb-3 text-sm text-gray-700">
-                {t('movements.table.notes')}
+                {t('movements.details.product')}
               </h3>
-              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">{movement.notes}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('movements.details.product')}</p>
+                  <p className="font-medium">{movement.productId?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('movements.details.code')}</p>
+                  <p className="font-mono">{movement.productId?.code || '-'}</p>
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Close Button */}
+            {/* Movement Details */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold mb-3 text-sm text-gray-700">
+                {t('movements.details.movement')}
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('movements.details.flow')}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge variant={getBucketColor(movement.from)}>
+                      {t(`movements.buckets.${movement.from}`)}
+                    </Badge>
+                    <span className="text-muted-foreground text-sm">{t('movements.table.to')}</span>
+                    <Badge variant={getBucketColor(movement.to)}>
+                      {t(`movements.buckets.${movement.to}`)}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('movements.details.quantity')}</p>
+                  <div className="mt-1">
+                    <Badge variant={getQuantityColor(movement.quantityChange)}>
+                      {movement.quantityChange > 0 ? '+' : ''}
+                      {movement.quantityChange}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.warehouseAction')}
+                  </p>
+                  <div className="mt-1">
+                    <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
+                      {movement.warehouseAction
+                        ? t(`movements.warehouseActions.${movement.warehouseAction}`)
+                        : t('movements.warehouseActions.none')}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.executionStatus')}
+                  </p>
+                  <div className="mt-1">
+                    <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
+                      {movement.isExecuted
+                        ? t('movements.execution.executed')
+                        : t('movements.execution.pending')}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.sourceLocation')}
+                  </p>
+                  <p className="font-medium">
+                    {movement.sourceLocation
+                      ? t(`locations.${movement.sourceLocation.toLowerCase()}`)
+                      : t('movements.details.noLocation')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.destinationLocation')}
+                  </p>
+                  <p className="font-medium">
+                    {movement.destinationLocation
+                      ? t(`locations.${movement.destinationLocation.toLowerCase()}`)
+                      : t('movements.details.noLocation')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* References Section */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold mb-3 text-sm text-gray-700">
+                {t('movements.details.references')}
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {movement.orderId && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('movements.details.relatedOrder')}
+                    </p>
+                    <p className="font-mono text-sm">ORD-{movement.orderId.orderNumber}</p>
+                  </div>
+                )}
+                {movement.returnId && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('movements.details.relatedReturn')}
+                    </p>
+                    <p className="font-mono text-sm">RET-{movement.returnId.returnNumber}</p>
+                  </div>
+                )}
+                {movement.batchId && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('movements.details.relatedBatch')}
+                    </p>
+                    <p className="font-mono text-sm">BATCH-{movement.batchId.batchNumber}</p>
+                  </div>
+                )}
+                {!movement.orderId && !movement.returnId && !movement.batchId && (
+                  <p className="text-xs text-gray-400">{t('movements.details.noReferences')}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Audit Information */}
+            <div className="border-b pb-4">
+              <h3 className="font-semibold mb-3 text-sm text-gray-700">
+                {t('movements.details.audit')}
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.performedBy')}
+                  </p>
+                  <div>
+                    <p className="font-medium">
+                      {movement.createdByUserId?.name || t('movements.unknownUser')}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {movement.createdByUserId?.email || '-'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.createdAt')}
+                  </p>
+                  <p className="text-sm">{new Date(movement.createdAt!).toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.physicalExecutedBy')}
+                  </p>
+                  <div>
+                    <p className="font-medium">
+                      {movement.physicalExecutedByUserId?.name ||
+                        t('movements.details.notExecutedYet')}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {movement.physicalExecutedByUserId?.email || '-'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.physicalExecutedAt')}
+                  </p>
+                  <p className="text-sm">
+                    {movement.physicalExecutedAt
+                      ? new Date(movement.physicalExecutedAt).toLocaleString()
+                      : t('movements.details.notExecutedYet')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes Section */}
+            {movement.notes && (
+              <div className="border-b pb-4">
+                <h3 className="font-semibold mb-3 text-sm text-gray-700">
+                  {t('movements.table.notes')}
+                </h3>
+                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">{movement.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t bg-background px-6 py-4">
           <div className="flex justify-end">
             <Button
               onClick={() => onOpenChange(false)}

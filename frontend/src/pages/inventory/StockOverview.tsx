@@ -97,9 +97,20 @@ export function StockOverview() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">{t('title')}</h1>
-        <p className="text-gray-500">{t('description')}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold">{t('title')}</h1>
+          <p className="text-gray-500">{t('description')}</p>
+        </div>
+        <Button
+          variant="default"
+          size="sm"
+          className="h-11 rounded-md bg-[#1f4f86] px-5 text-white shadow-sm hover:bg-[#1b4678]"
+          onClick={() => setLocationOverviewOpen(true)}
+        >
+          <MapPinned className="mr-2 size-4" />
+          {t('actions.locationStock')}
+        </Button>
       </div>
 
       <Card>
@@ -148,15 +159,6 @@ export function StockOverview() {
               aria-label={t('actions.refresh')}
             >
               <RefreshCw className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9"
-              onClick={() => setLocationOverviewOpen(true)}
-            >
-              <MapPinned className="size-4 mr-1.5" />
-              {t('actions.locationStock')}
             </Button>
           </div>
         </CardContent>
