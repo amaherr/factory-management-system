@@ -11,13 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Plus } from 'lucide-react';
 import { issueService, type Issue } from '../../services/issues';
 import { IssueType } from '../../services/enums/issue.enums';
@@ -96,17 +90,21 @@ export function AddIssueDialog({ onIssueAdded }: AddIssueDialogProps) {
             <Label htmlFor="issueType">{t('issue_type_label')}</Label>
             <Select
               value={formData.issueType}
-              onValueChange={(value) => setFormData({ ...formData, issueType: value as IssueTypeValue })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, issueType: value as IssueTypeValue })
+              }
             >
               <SelectTrigger id="issueType">
                 <SelectValue placeholder={t('select_issue_type')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={IssueType.INVENTORY_DISCREPANCY}>
-                  {t('inventory_discrepancy')}
+                  {t(IssueType.INVENTORY_DISCREPANCY)}
                 </SelectItem>
-                <SelectItem value={IssueType.DAMAGED_GOODS}>{t('damaged_goods')}</SelectItem>
-                <SelectItem value={IssueType.SYSTEM_BUG}>{t('system_bug')}</SelectItem>
+                <SelectItem value={IssueType.DAMAGED_GOODS}>
+                  {t(IssueType.DAMAGED_GOODS)}
+                </SelectItem>
+                <SelectItem value={IssueType.SYSTEM_BUG}>{t(IssueType.SYSTEM_BUG)}</SelectItem>
               </SelectContent>
             </Select>
           </div>

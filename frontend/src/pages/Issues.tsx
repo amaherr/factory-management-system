@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Search, Eye, Loader2, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import { Search, Eye, Loader2, Pencil, Trash2, CheckCircle, X } from 'lucide-react';
 import { AddIssueDialog } from '../components/issues/AddIssueDialog';
 import { IssueDetailsDialog } from '../components/issues/IssueDetailsDialog';
 import { EditIssueDialog } from '../components/issues/EditIssueDialog';
@@ -176,22 +176,34 @@ export function Issues() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_220px] gap-3">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder={t('search_placeholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={loading}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  aria-label={t('clear_search')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
             <Select
               value={statusFilter}
               onValueChange={setStatusFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('filter_by_status')} />
               </SelectTrigger>
               <SelectContent>
@@ -206,7 +218,7 @@ export function Issues() {
               value={typeFilter}
               onValueChange={setTypeFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('filter_by_type')} />
               </SelectTrigger>
               <SelectContent>
@@ -287,6 +299,8 @@ export function Issues() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewDetails(issue)}
+                            title={t('issue_details')}
+                            className="text-black hover:bg-black/10"
                           >
                             <Eye className="size-4" />
                           </Button>
@@ -295,6 +309,8 @@ export function Issues() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleEditIssue(issue)}
+                              title={t('edit_issue')}
+                              className="text-blue-700 hover:bg-blue-50"
                             >
                               <Pencil className="size-4" />
                             </Button>
@@ -304,6 +320,8 @@ export function Issues() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleChangeStatus(issue)}
+                              title={t('change_status')}
+                              className="text-emerald-700 hover:bg-emerald-50"
                             >
                               <CheckCircle className="size-4" />
                             </Button>
@@ -313,6 +331,8 @@ export function Issues() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteIssue(issue)}
+                              title={t('delete_issue')}
+                              className="text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="size-4" />
                             </Button>
