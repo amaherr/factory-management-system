@@ -368,17 +368,24 @@ const productController = {
                 }
 
                 const totalPhysicalStock = Number(currentProduct.totalPhysicalStock || 0);
+                const totalTheoreticalStock = Number(currentProduct.totalTheoreticalStock || 0);
 
                 if (adjustmentType === "add") {
                     loc.quantityInStock += quantity;
                     currentProduct.totalPhysicalStock = totalPhysicalStock + quantity;
+                    currentProduct.totalTheoreticalStock = totalTheoreticalStock + quantity;
                 } else if (adjustmentType === "subtract") {
                     if (loc.quantityInStock < quantity) {
                         throw createError("Insufficient stock in location", 400);
                     }
 
+                    if (totalPhysicalStock < quantity || totalTheoreticalStock < quantity) {
+                        throw createError("Stock totals cannot become negative", 409);
+                    }
+
                     loc.quantityInStock -= quantity;
                     currentProduct.totalPhysicalStock = totalPhysicalStock - quantity;
+                    currentProduct.totalTheoreticalStock = totalTheoreticalStock - quantity;
                 }
 
                 await currentProduct.save({ session });
@@ -432,11 +439,16 @@ const productController = {
                 loc.quantityInStock = qty;
 
                 const nextTotalPhysical = Number(product.totalPhysicalStock || 0) + delta;
+                const nextTotalTheoretical = Number(product.totalTheoreticalStock || 0) + delta;
                 if (nextTotalPhysical < 0) {
                     throw createError("totalPhysicalStock cannot become negative", 409);
                 }
+                if (nextTotalTheoretical < 0) {
+                    throw createError("totalTheoreticalStock cannot become negative", 409);
+                }
 
                 product.totalPhysicalStock = nextTotalPhysical;
+                product.totalTheoreticalStock = nextTotalTheoretical;
 
                 await product.save({ session });
 
@@ -461,6 +473,7 @@ const productController = {
                     newQuantity: qty,
                     delta,
                     totalPhysicalStock: product.totalPhysicalStock,
+                    totalTheoreticalStock: product.totalTheoreticalStock,
                     locations: product.locations,
                 };
             });

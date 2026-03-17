@@ -12,9 +12,11 @@
   "cancelOrderWarning": "Cancelling this order will return any reserved stock to inventory.",
   "finalize": "Finalize",
   "searchPlaceholder": "Search products by name or code...",
+  "clearSearch": "Clear search",
   "loadingProducts": "Loading products...",
   "noProducts": "No products found",
   "currency": "EGP",
+  "linePrice": "Line Price",
   "stockAvailable": "{{count}} in stock",
   "outOfStock": "Out of stock",
   "cartTitle": "Cart ({{count}})",
@@ -32,12 +34,21 @@
   "pricing": {
     "subtotal": "Subtotal",
     "discount": "Discount",
+    "amount": "Amount",
+    "percentage": "Percentage",
     "tax": "Tax",
     "total": "Total",
     "itemTotal": "Item Total"
   },
   "notes": "Notes",
   "notesPlaceholder": "Add notes...",
+  "placeholders": {
+    "quantity": "Qty",
+    "discountAmount": "Enter discount amount",
+    "discountPercentage": "Enter discount %",
+    "taxAmount": "Enter tax amount",
+    "taxPercentage": "Enter tax %"
+  },
   "ac-title": "Actions",
   "actions": {
     "finalize": "Finalize Sale",

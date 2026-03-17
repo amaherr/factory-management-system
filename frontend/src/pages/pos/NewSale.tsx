@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { Separator } from '../../components/ui/separator';
-import { Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { customerService, type Customer } from '../../services/customers';
@@ -27,12 +27,14 @@ interface CartItem {
   productName: string;
   productCode: string;
   productDetails: string;
+  sku: number;
   quantity: number;
   unitPrice: number;
   stock: number;
 }
 
 type UiOrderType = 'on-shelf' | 'on-demand';
+type ValueMode = 'amount' | 'percentage';
 
 export function NewSale() {
   const { t } = useTranslation('pos');
@@ -41,7 +43,9 @@ export function NewSale() {
   const [orderType, setOrderType] = useState<UiOrderType>('on-shelf');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
+  const [discountMode, setDiscountMode] = useState<ValueMode>('amount');
   const [tax, setTax] = useState(0);
+  const [taxMode, setTaxMode] = useState<ValueMode>('amount');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
@@ -98,6 +102,7 @@ export function NewSale() {
           productName: product.name,
           productCode: product.code,
           productDetails: `${product.color}${product.season ? `, ${product.season}` : ''}`,
+          sku: product.sku,
           quantity: 1,
           unitPrice: product.salePrice,
           stock: product.totalTheoreticalStock,
@@ -115,7 +120,7 @@ export function NewSale() {
     setCart(
       cart.map((item) => {
         if (item.productId === productId) {
-          if (orderType === 'on-shelf' && newQuantity > item.stock) {
+          if (orderType === 'on-shelf' && newQuantity * item.sku > item.stock) {
             toast.error(t('errors.onlyStockAvailable', { stock: item.stock }));
             return item;
           }
@@ -134,7 +139,9 @@ export function NewSale() {
     setCart([]);
     setSelectedCustomer('');
     setDiscount(0);
+    setDiscountMode('amount');
     setTax(0);
+    setTaxMode('amount');
     setNotes('');
   };
 
@@ -155,7 +162,7 @@ export function NewSale() {
     }
 
     if (orderType === 'on-shelf') {
-      const outOfStock = cart.find((item) => item.quantity > item.stock);
+      const outOfStock = cart.find((item) => item.quantity * item.sku > item.stock);
       if (outOfStock) {
         toast.error(t('errors.outOfStock', { product: outOfStock.productName }));
         return false;
@@ -173,8 +180,8 @@ export function NewSale() {
         productId: item.productId,
         quantity: item.quantity,
       })),
-      discountAmount: discount,
-      taxAmount: tax,
+      discountAmount,
+      taxAmount,
       notes: notes.trim() ? notes.trim() : undefined,
     });
   };
@@ -196,8 +203,11 @@ export function NewSale() {
     }
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const total = subtotal - discount + tax;
+  const getItemTotal = (item: CartItem) => item.quantity * item.sku * item.unitPrice;
+  const subtotal = cart.reduce((sum, item) => sum + getItemTotal(item), 0);
+  const discountAmount = discountMode === 'percentage' ? (subtotal * discount) / 100 : discount;
+  const taxAmount = taxMode === 'percentage' ? (subtotal * tax) / 100 : tax;
+  const total = subtotal - discountAmount + taxAmount;
 
   return (
     <div className="p-6">
@@ -206,51 +216,64 @@ export function NewSale() {
         <p className="text-gray-500">{t('description')}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+              <div className="relative max-w-xl">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   placeholder={t('searchPlaceholder')}
-                  className="pl-10"
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {searchQuery && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                    onClick={() => setSearchQuery('')}
+                    aria-label={t('clearSearch')}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
-            <CardContent className="max-h-[calc(100vh-300px)] overflow-y-auto">
+            <CardContent className="max-h-[calc(100vh-220px)] overflow-y-auto">
               {loading ? (
                 <p className="text-sm text-gray-500 text-center py-8">{t('loadingProducts')}</p>
               ) : filteredProducts.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">{t('noProducts')}</p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {filteredProducts.map((product) => (
                     <Card
                       key={product._id}
                       className="overflow-hidden"
                     >
-                      <div className="p-4">
+                      <div className="p-3">
                         <ImageWithFallback
                           src={getProductImageSrc(product.defaultImage)}
                           alt={product.name}
-                          className="w-full h-32 object-cover rounded-md mb-3"
+                          className="mb-2 h-24 w-full rounded-md object-cover"
                         />
-                        <h3 className="font-medium">{product.name}</h3>
-                        <p className="text-sm text-gray-500">{product.code}</p>
-                        <p className="font-semibold mt-2">
-                          {t('currency')} {product.salePrice}
+                        <h3 className="line-clamp-1 text-sm font-medium">{product.name}</h3>
+                        <p className="text-xs text-gray-500">{product.code}</p>
+                        <p className="mt-1 text-sm font-semibold">
+                          {t('linePrice')}: {t('currency')}{' '}
+                          {(product.salePrice * product.sku).toFixed(2)}
                         </p>
 
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between text-sm">
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-xs">
                             <div>
                               <span>{product.color}</span>
                               <Badge
                                 variant="secondary"
-                                className="ml-2 text-xs"
+                                className="ml-1 text-[10px]"
                               >
                                 {product.totalTheoreticalStock > 0
                                   ? t('stockAvailable', { count: product.totalTheoreticalStock })
@@ -259,10 +282,12 @@ export function NewSale() {
                             </div>
                             <Button
                               size="sm"
+                              className="h-7 px-2"
                               onClick={() => addToCart(product)}
                               disabled={
                                 processingAction ||
-                                (orderType === 'on-shelf' && product.totalTheoreticalStock === 0)
+                                (orderType === 'on-shelf' &&
+                                  product.totalTheoreticalStock < product.sku)
                               }
                             >
                               <Plus className="size-4" />
@@ -288,28 +313,6 @@ export function NewSale() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>{t('customer')}</Label>
-                <Select
-                  value={selectedCustomer}
-                  onValueChange={setSelectedCustomer}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectCustomer')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem
-                        key={customer._id}
-                        value={customer._id!}
-                      >
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>{t('orderType.label')}</Label>
                 <Tabs
                   value={orderType}
@@ -331,6 +334,28 @@ export function NewSale() {
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label>{t('customer')}</Label>
+                <Select
+                  value={selectedCustomer}
+                  onValueChange={setSelectedCustomer}
+                >
+                  <SelectTrigger className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30">
+                    <SelectValue placeholder={t('selectCustomer')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem
+                        key={customer._id}
+                        value={customer._id!}
+                      >
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Separator />
 
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -348,7 +373,7 @@ export function NewSale() {
                           <p className="text-xs text-gray-500">
                             {item.productCode} • {item.productDetails}
                           </p>
-                          {orderType === 'on-shelf' && item.quantity > item.stock && (
+                          {orderType === 'on-shelf' && item.quantity * item.sku > item.stock && (
                             <p className="text-xs text-red-600 mt-1">
                               {t('onlyStockAvailable', { count: item.stock })}
                             </p>
@@ -373,7 +398,26 @@ export function NewSale() {
                           >
                             <Minus className="size-3" />
                           </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Input
+                            type="number"
+                            min="1"
+                            className="h-8 w-16 px-2 text-center"
+                            value={item.quantity}
+                            placeholder={t('placeholders.quantity')}
+                            onFocus={(e) => e.currentTarget.select()}
+                            onClick={(e) => e.currentTarget.select()}
+                            onChange={(e) => {
+                              if (e.target.value === '') {
+                                return;
+                              }
+                              const parsed = Number.parseInt(e.target.value, 10);
+                              if (Number.isNaN(parsed)) {
+                                return;
+                              }
+                              updateQuantity(item.productId, parsed);
+                            }}
+                            disabled={processingAction}
+                          />
                           <Button
                             variant="outline"
                             size="sm"
@@ -384,7 +428,7 @@ export function NewSale() {
                           </Button>
                         </div>
                         <span className="font-medium">
-                          {t('currency')} {(item.quantity * item.unitPrice).toFixed(2)}
+                          {t('currency')} {getItemTotal(item).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -403,21 +447,67 @@ export function NewSale() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-sm">{t('pricing.discount')}</Label>
+                  <Tabs
+                    value={discountMode}
+                    onValueChange={(value) => {
+                      if (value === 'amount' || value === 'percentage') {
+                        setDiscountMode(value);
+                      }
+                    }}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="amount">{t('pricing.amount')}</TabsTrigger>
+                      <TabsTrigger value="percentage">{t('pricing.percentage')}</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                   <Input
                     type="number"
-                    value={discount}
-                    onChange={(e) => setDiscount(Number(e.target.value))}
+                    className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
+                    value={discount === 0 ? '' : discount}
+                    placeholder={
+                      discountMode === 'percentage'
+                        ? t('placeholders.discountPercentage')
+                        : t('placeholders.discountAmount')
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setDiscount(raw === '' ? 0 : Number(raw));
+                    }}
                     min="0"
+                    step={discountMode === 'percentage' ? '0.01' : '1'}
                     disabled={processingAction}
                   />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-sm">{t('pricing.tax')}</Label>
+                  <Tabs
+                    value={taxMode}
+                    onValueChange={(value) => {
+                      if (value === 'amount' || value === 'percentage') {
+                        setTaxMode(value);
+                      }
+                    }}
+                  >
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="amount">{t('pricing.amount')}</TabsTrigger>
+                      <TabsTrigger value="percentage">{t('pricing.percentage')}</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                   <Input
                     type="number"
-                    value={tax}
-                    onChange={(e) => setTax(Number(e.target.value))}
+                    className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
+                    value={tax === 0 ? '' : tax}
+                    placeholder={
+                      taxMode === 'percentage'
+                        ? t('placeholders.taxPercentage')
+                        : t('placeholders.taxAmount')
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setTax(raw === '' ? 0 : Number(raw));
+                    }}
                     min="0"
+                    step={taxMode === 'percentage' ? '0.01' : '1'}
                     disabled={processingAction}
                   />
                 </div>
@@ -433,6 +523,7 @@ export function NewSale() {
               <div className="space-y-1">
                 <Label className="text-sm">{t('notes')}</Label>
                 <Input
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                   placeholder={t('notesPlaceholder')}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}

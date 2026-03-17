@@ -222,6 +222,7 @@ export function ProductsList() {
                 <TableHead>{t('color')}</TableHead>
                 <TableHead>{t('cost_price')}</TableHead>
                 <TableHead>{t('sale_price')}</TableHead>
+                <TableHead>{t('line_price')}</TableHead>
                 <TableHead>{t('status')}</TableHead>
                 <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
@@ -230,7 +231,7 @@ export function ProductsList() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="text-center py-12"
                   >
                     <div className="text-gray-500">
@@ -241,7 +242,7 @@ export function ProductsList() {
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={9}
                     className="text-center py-12"
                   >
                     <div className="text-gray-500">
@@ -276,6 +277,12 @@ export function ProductsList() {
                         style: 'currency',
                         currency: 'EGP',
                       }).format(product.salePrice)}
+                    </TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat('en-EG', {
+                        style: 'currency',
+                        currency: 'EGP',
+                      }).format(product.salePrice * product.sku)}
                     </TableCell>
                     <TableCell>
                       <Badge

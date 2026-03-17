@@ -14,6 +14,8 @@
   "searchPlaceholder": "ابحث عن المنتجات بالاسم أو الكود...",
   "loadingProducts": "جاري تحميل المنتجات...",
   "noProducts": "لم يتم العثور على منتجات",
+  "clearSearch": "مسح البحث",
+  "linePrice": "سعر الخط",
   "currency": "ج.م",
   "stockAvailable": "{{count}} متاح",
   "outOfStock": "نفدت الكمية",
@@ -32,12 +34,21 @@
   "pricing": {
     "subtotal": "الإجمالي الفرعي",
     "discount": "الخصم",
+    "amount": "مبلغ",
+    "percentage": "نسبة مئوية",
     "tax": "الضريبة",
     "total": "الإجمالي",
     "itemTotal": "إجمالي الصنف"
   },
   "notes": "ملاحظات",
   "notesPlaceholder": "أضف ملاحظات...",
+  "placeholders": {
+    "quantity": "الكمية",
+    "discountAmount": "أدخل مبلغ الخصم",
+    "discountPercentage": "أدخل نسبة الخصم %",
+    "taxAmount": "أدخل مبلغ الضريبة",
+    "taxPercentage": "أدخل نسبة الضريبة %"
+  },
   "ac-title": "الإجراءات",
   "actions": {
     "finalize": "إنهاء البيع",
