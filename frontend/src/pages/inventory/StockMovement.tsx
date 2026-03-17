@@ -54,7 +54,7 @@ export function StockMovementPage() {
 
         const response = await stockMovementService.getStockMovements({
           productCode: searchQuery || undefined,
-          movementType: typeFilter !== 'all' ? (typeFilter as StockBucket) : undefined,
+          bucketType: typeFilter !== 'all' ? (typeFilter as StockBucket) : undefined,
           isExecuted:
             executionFilter === 'all' ? undefined : executionFilter === 'executed' ? true : false,
           page: currentPage,
@@ -80,7 +80,7 @@ export function StockMovementPage() {
     setDetailsOpen(true);
   };
 
-  const getMovementTypeColor = (type: StockBucket) => {
+  const getBucketColor = (type: StockBucket) => {
     const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       reserve: 'secondary',
       sales: 'destructive',
@@ -213,11 +213,11 @@ export function StockMovementPage() {
                       <TableCell>{new Date(movement.createdAt!).toLocaleString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant={getMovementTypeColor(movement.from)}>
+                          <Badge variant={getBucketColor(movement.from)}>
                             {t(`movements.buckets.${movement.from}`)}
                           </Badge>
                           <span className="text-muted-foreground">{t('movements.table.to')}</span>
-                          <Badge variant={getMovementTypeColor(movement.to)}>
+                          <Badge variant={getBucketColor(movement.to)}>
                             {t(`movements.buckets.${movement.to}`)}
                           </Badge>
                         </div>

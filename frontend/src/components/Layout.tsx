@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -46,6 +46,8 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 
+type NavigationItem = ReturnType<typeof getFilteredNavigation>[number];
+
 const iconMap: Record<string, any> = {
   LayoutDashboard,
   TrendingUp,
@@ -70,6 +72,14 @@ const iconMap: Record<string, any> = {
   ShieldAlert,
 };
 
+function getSectionForPath(navigation: NavigationItem[], pathname: string) {
+  const matchingGroup = navigation.find(
+    (item) => item.children && item.children.some((child) => pathname.startsWith(child.path)),
+  );
+
+  return matchingGroup?.path ?? null;
+}
+
 export function Layout() {
   const { user, logout } = useAuth();
   const { unreadCount, refreshUnreadCount } = useNotification();
@@ -77,8 +87,13 @@ export function Layout() {
   const location = useLocation();
   const { t: tCommon } = useTranslation('common');
   const { t: tNav } = useTranslation('nav');
-  const [expandedItems, setExpandedItems] = useState<string[]>(['/dashboards']);
+  const navigation = useMemo(() => getFilteredNavigation(user?.roles ?? []), [user?.roles]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedSection, setExpandedSection] = useState<string | null>(
+    () => getSectionForPath(navigation, location.pathname) ?? '/dashboards',
+  );
+
+  if (!user) return null;
 
   useEffect(() => {
     refreshUnreadCount();
@@ -88,9 +103,12 @@ export function Layout() {
     return () => clearInterval(interval);
   }, [refreshUnreadCount]);
 
-  if (!user) return null;
-
-  const navigation = getFilteredNavigation(user.roles);
+  useEffect(() => {
+    const activeSection = getSectionForPath(navigation, location.pathname);
+    if (activeSection && activeSection !== expandedSection) {
+      setExpandedSection(activeSection);
+    }
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -98,9 +116,7 @@ export function Layout() {
   };
 
   const toggleExpanded = (path: string) => {
-    setExpandedItems((prev) =>
-      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path],
-    );
+    setExpandedSection((prev) => (prev === path ? null : path));
   };
 
   return (
@@ -216,38 +232,35 @@ export function Layout() {
             <nav className="p-4 space-y-1">
               {navigation.map((item) => {
                 const Icon = iconMap[item.icon];
-                const isExpanded = expandedItems.includes(item.path);
+                const isExpanded = expandedSection === item.path;
                 const hasChildren = item.children && item.children.length > 0;
-                const isGroupActive =
-                  location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+                const isPageActive = location.pathname === item.path;
 
                 return (
                   <div key={item.path}>
                     {hasChildren ? (
                       <button
                         onClick={() => toggleExpanded(item.path)}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+                        className="w-full flex items-center gap-2 rounded-md px-3 py-2 transition-colors duration-200"
                         style={{
                           color: 'var(--text-on-dark)',
-                          backgroundColor:
-                            isExpanded || isGroupActive ? 'var(--sidebar-hover)' : 'transparent',
+                          backgroundColor: 'transparent',
                         }}
                         onMouseEnter={(e) => {
-                          if (!isExpanded && !isGroupActive)
-                            e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
+                          e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
                         }}
                         onMouseLeave={(e) => {
-                          if (!isExpanded && !isGroupActive)
-                            e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <Icon className="size-4" />
                         <span className="flex-1 text-left">{tNav(item.label.toLowerCase())}</span>
-                        {isExpanded ? (
-                          <ChevronDown className="size-4" />
-                        ) : (
+                        <span
+                          className="transition-transform duration-300 ease-out"
+                          style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                        >
                           <ChevronRight className="size-4" />
-                        )}
+                        </span>
                       </button>
                     ) : (
                       <Link
@@ -255,14 +268,14 @@ export function Layout() {
                         className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
                         style={{
                           color: 'var(--text-on-dark)',
-                          backgroundColor: isGroupActive ? 'var(--sidebar-hover)' : 'transparent',
+                          backgroundColor: isPageActive ? 'var(--sidebar-hover)' : 'transparent',
                         }}
                         onMouseEnter={(e) => {
-                          if (!isGroupActive)
+                          if (!isPageActive)
                             e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
                         }}
                         onMouseLeave={(e) => {
-                          if (!isGroupActive) e.currentTarget.style.backgroundColor = 'transparent';
+                          if (!isPageActive) e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <Icon className="size-4" />
@@ -270,41 +283,50 @@ export function Layout() {
                       </Link>
                     )}
 
-                    {hasChildren && isExpanded && (
-                      <div className="ml-4 mt-1 space-y-1">
-                        {item.children?.map((child) => {
-                          const ChildIcon = iconMap[child.icon];
-                          const isChildActive =
-                            location.pathname === child.path ||
-                            location.pathname.startsWith(`${child.path}/`);
-                          return (
-                            <Link
-                              key={child.path}
-                              to={child.path}
-                              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors"
-                              style={{
-                                color: 'var(--text-on-dark)',
-                                opacity: isChildActive ? 1 : 0.85,
-                                backgroundColor: isChildActive
-                                  ? 'var(--sidebar-hover)'
-                                  : 'transparent',
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
-                                e.currentTarget.style.opacity = '1';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = isChildActive
-                                  ? 'var(--sidebar-hover)'
-                                  : 'transparent';
-                                e.currentTarget.style.opacity = isChildActive ? '1' : '0.85';
-                              }}
-                            >
-                              <ChildIcon className="size-4" />
-                              <span>{tNav(child.label.toLowerCase())}</span>
-                            </Link>
-                          );
-                        })}
+                    {hasChildren && (
+                      <div
+                        className="ml-4 grid overflow-hidden transition-all duration-300 ease-out"
+                        style={{
+                          gridTemplateRows: isExpanded ? '1fr' : '0fr',
+                          opacity: isExpanded ? 1 : 0,
+                          marginTop: isExpanded ? '0.25rem' : '0',
+                        }}
+                      >
+                        <div className="min-h-0 space-y-1">
+                          {item.children?.map((child) => {
+                            const ChildIcon = iconMap[child.icon];
+                            const isChildActive =
+                              location.pathname === child.path ||
+                              location.pathname.startsWith(`${child.path}/`);
+                            return (
+                              <Link
+                                key={child.path}
+                                to={child.path}
+                                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200"
+                                style={{
+                                  color: 'var(--text-on-dark)',
+                                  opacity: isChildActive ? 1 : 0.85,
+                                  backgroundColor: isChildActive
+                                    ? 'var(--sidebar-hover)'
+                                    : 'transparent',
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--sidebar-hover)';
+                                  e.currentTarget.style.opacity = '1';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = isChildActive
+                                    ? 'var(--sidebar-hover)'
+                                    : 'transparent';
+                                  e.currentTarget.style.opacity = isChildActive ? '1' : '0.85';
+                                }}
+                              >
+                                <ChildIcon className="size-4" />
+                                <span>{tNav(child.label.toLowerCase())}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

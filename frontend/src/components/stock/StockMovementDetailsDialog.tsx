@@ -19,7 +19,7 @@ export function StockMovementDetailsDialog({
 
   if (!movement) return null;
 
-  const getMovementTypeColor = (type: StockBucket) => {
+  const getBucketColor = (type: StockBucket) => {
     const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       reserve: 'secondary',
       sales: 'destructive',
@@ -82,11 +82,11 @@ export function StockMovementDetailsDialog({
               <div>
                 <p className="text-xs text-muted-foreground">{t('movements.details.flow')}</p>
                 <div className="mt-1 flex items-center gap-2">
-                  <Badge variant={getMovementTypeColor(movement.from)}>
+                  <Badge variant={getBucketColor(movement.from)}>
                     {t(`movements.buckets.${movement.from}`)}
                   </Badge>
                   <span className="text-muted-foreground text-sm">{t('movements.table.to')}</span>
-                  <Badge variant={getMovementTypeColor(movement.to)}>
+                  <Badge variant={getBucketColor(movement.to)}>
                     {t(`movements.buckets.${movement.to}`)}
                   </Badge>
                 </div>

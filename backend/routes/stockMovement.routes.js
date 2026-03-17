@@ -31,4 +31,12 @@ router.get(
     stockMovementController.getStockMovement,
 );
 
+// Execute a specific stock movement (Admin, Inventory)
+router.patch(
+    "/:movementId",
+    authorizor([ROLES.ADMIN, ROLES.ACCOUNTING]),
+    validator({ bodySchema: stockMovementDtos.executeStockMovement }),
+    stockMovementController.executeStockMovement,
+);
+
 module.exports = router;

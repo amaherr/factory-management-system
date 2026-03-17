@@ -551,9 +551,16 @@ const orderController = {
                     await StockMovement.deleteMany(
                         {
                             orderId: order._id,
-                            movementType: {
-                                $in: [STOCK_MOVEMENT_TYPE.RESERVE, STOCK_MOVEMENT_TYPE.UNRESERVE],
-                            },
+                            $or: [
+                                {
+                                    from: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                    to: STOCK_MOVEMENT_TYPE.RESERVE,
+                                },
+                                {
+                                    from: STOCK_MOVEMENT_TYPE.RESERVE,
+                                    to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                },
+                            ],
                         },
                         { session },
                     );

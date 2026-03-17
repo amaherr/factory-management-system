@@ -1,9 +1,67 @@
+const mongoose = require("mongoose");
+
 const Product = require("../models/product.model");
 const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../enums/product.enums");
+const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const { saveUploadedFile, deleteUploadedFile } = require("../utils/helpers");
+const { saveUploadedFile, deleteUploadedFile, createStockMovement } = require("../utils/helpers");
+
+function findLocation(product, location) {
+    return product.locations.find((entry) => entry.location === location);
+}
+
+function ensureLocation(product, location) {
+    let existingLocation = findLocation(product, location);
+
+    if (!existingLocation) {
+        product.locations.push({
+            location,
+            quantityInStock: 0,
+        });
+        existingLocation = product.locations[product.locations.length - 1];
+    }
+
+    return existingLocation;
+}
+
+function buildPhysicalAdjustmentMovement({
+    productId,
+    location,
+    quantity,
+    createdByUserId,
+    notes,
+    delta,
+}) {
+    const commonPayload = {
+        productId,
+        quantityChange: quantity,
+        createdByUserId,
+        notes,
+        isExecuted: true,
+        physicalExecutedAt: new Date(),
+        physicalExecutedByUserId: createdByUserId,
+    };
+
+    if (delta > 0) {
+        return {
+            ...commonPayload,
+            from: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
+            to: STOCK_MOVEMENT_TYPE.INVENTORY,
+            warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
+            destinationLocation: location,
+        };
+    }
+
+    return {
+        ...commonPayload,
+        from: STOCK_MOVEMENT_TYPE.INVENTORY,
+        to: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
+        warehouseAction: WAREHOUSE_ACTIONS.PICK,
+        sourceLocation: location,
+    };
+}
 
 const productController = {
     createProduct: async (req, res, next) => {
@@ -226,133 +284,177 @@ const productController = {
 
     // Transfer stock between locations
     transferProductStock: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
         try {
             const { productId } = req.params;
             const { fromLocation, toLocation, quantity } = req.body;
+            const userId = req.user.id;
 
-            const product = await Product.findById(productId);
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
+            const product = await session.withTransaction(async () => {
+                const currentProduct = await Product.findById(productId).session(session);
+                if (!currentProduct) {
+                    throw createError("Product not found", 404);
+                }
 
-            // Find source location
-            const fromLoc = product.locations.find((loc) => loc.location === fromLocation);
-            if (!fromLoc) {
-                return next(
-                    createError(`Source location ${fromLocation} not found in product`, 404),
+                const fromLoc = findLocation(currentProduct, fromLocation);
+                if (!fromLoc) {
+                    throw createError(`Source location ${fromLocation} not found in product`, 404);
+                }
+
+                if (fromLoc.quantityInStock < quantity) {
+                    throw createError("Insufficient stock in source location", 400);
+                }
+
+                const toLoc = ensureLocation(currentProduct, toLocation);
+
+                fromLoc.quantityInStock -= quantity;
+                toLoc.quantityInStock += quantity;
+
+                await currentProduct.save({ session });
+
+                await createStockMovement(
+                    {
+                        productId: currentProduct._id,
+                        quantityChange: quantity,
+                        from: STOCK_MOVEMENT_TYPE.INVENTORY,
+                        to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                        createdByUserId: userId,
+                        notes: `Transferred ${quantity} units from ${fromLocation} to ${toLocation}`,
+                        warehouseAction: WAREHOUSE_ACTIONS.TRANSFER,
+                        isExecuted: true,
+                        sourceLocation: fromLocation,
+                        destinationLocation: toLocation,
+                        physicalExecutedAt: new Date(),
+                        physicalExecutedByUserId: userId,
+                    },
+                    session,
                 );
-            }
 
-            if (fromLoc.quantityInStock < quantity) {
-                return next(createError("Insufficient stock in source location", 400));
-            }
+                return currentProduct;
+            });
 
-            // Find or create destination location
-            let toLoc = product.locations.find((loc) => loc.location === toLocation);
-            if (!toLoc) {
-                product.locations.push({
-                    location: toLocation,
-                    quantityInStock: 0,
-                });
-                toLoc = product.locations[product.locations.length - 1];
-            }
-
-            // Perform transfer
-            fromLoc.quantityInStock -= quantity;
-            toLoc.quantityInStock += quantity;
-
-            await product.save();
-
-            res.status(200).json(response("Stock transferred successfully", product));
+            return res.status(200).json(response("Stock transferred successfully", product));
         } catch (err) {
             return next(err);
+        } finally {
+            await session.endSession();
         }
     },
 
     // Manual Physical Stock Adjustment
     manualPhysicalStockAdjustment: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
         try {
             const { productId } = req.params;
             const { location, adjustmentType, quantity } = req.body;
+            const userId = req.user.id;
 
-            const product = await Product.findById(productId);
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
-
-            // Find or create location
-            let loc = product.locations.find((l) => l.location === location);
-
-            if (!loc) {
-                if (adjustmentType === "subtract") {
-                    return next(createError(`Location ${location} not found in product`, 404));
+            const product = await session.withTransaction(async () => {
+                const currentProduct = await Product.findById(productId).session(session);
+                if (!currentProduct) {
+                    throw createError("Product not found", 404);
                 }
-                // If 'add', create the location
-                product.locations.push({
-                    location: location,
-                    quantityInStock: 0,
-                });
-                loc = product.locations[product.locations.length - 1];
-            }
 
-            if (adjustmentType === "add") {
-                loc.quantityInStock += quantity;
-                product.totalPhysicalStock += quantity;
-            } else if (adjustmentType === "subtract") {
-                if (loc.quantityInStock < quantity) {
-                    return next(createError("Insufficient stock in location", 400));
+                let loc = findLocation(currentProduct, location);
+
+                if (!loc) {
+                    if (adjustmentType === "subtract") {
+                        throw createError(`Location ${location} not found in product`, 404);
+                    }
+
+                    loc = ensureLocation(currentProduct, location);
                 }
-                loc.quantityInStock -= quantity;
-                product.totalPhysicalStock -= quantity;
-            }
 
-            await product.save();
+                const totalPhysicalStock = Number(currentProduct.totalPhysicalStock || 0);
 
-            res.status(200).json(response("Product stock adjusted manually successfully", product));
+                if (adjustmentType === "add") {
+                    loc.quantityInStock += quantity;
+                    currentProduct.totalPhysicalStock = totalPhysicalStock + quantity;
+                } else if (adjustmentType === "subtract") {
+                    if (loc.quantityInStock < quantity) {
+                        throw createError("Insufficient stock in location", 400);
+                    }
+
+                    loc.quantityInStock -= quantity;
+                    currentProduct.totalPhysicalStock = totalPhysicalStock - quantity;
+                }
+
+                await currentProduct.save({ session });
+
+                await createStockMovement(
+                    buildPhysicalAdjustmentMovement({
+                        productId: currentProduct._id,
+                        location,
+                        quantity,
+                        createdByUserId: userId,
+                        notes: `Manual physical stock ${adjustmentType} of ${quantity} units at ${location}`,
+                        delta: adjustmentType === "add" ? quantity : -quantity,
+                    }),
+                    session,
+                );
+
+                return currentProduct;
+            });
+
+            return res
+                .status(200)
+                .json(response("Product stock adjusted manually successfully", product));
         } catch (err) {
             return next(err);
+        } finally {
+            await session.endSession();
         }
     },
 
     // function to set the phyiscal stock to a new number
     setPhysicalStock: async (req, res, next) => {
+        const session = await mongoose.startSession();
+
         try {
             const productId = req.params.productId;
             const { location, newQuantity } = req.body;
+            const userId = req.user.id;
 
             const qty = Number(newQuantity);
 
-            const product = await Product.findById(productId);
-            if (!product) {
-                return next(createError("Product not found", 404));
-            }
+            const result = await session.withTransaction(async () => {
+                const product = await Product.findById(productId).session(session);
+                if (!product) {
+                    throw createError("Product not found", 404);
+                }
 
-            // find or create location
-            let loc = product.locations.find((l) => l.location === location);
-            if (!loc) {
-                product.locations.push({ location, quantityInStock: 0 });
-                loc = product.locations[product.locations.length - 1];
-            }
+                const loc = ensureLocation(product, location);
+                const prevQty = Number(loc.quantityInStock || 0);
+                const delta = qty - prevQty;
 
-            const prevQty = Number(loc.quantityInStock || 0);
-            const delta = qty - prevQty;
+                loc.quantityInStock = qty;
 
-            // apply updates
-            loc.quantityInStock = qty;
+                const nextTotalPhysical = Number(product.totalPhysicalStock || 0) + delta;
+                if (nextTotalPhysical < 0) {
+                    throw createError("totalPhysicalStock cannot become negative", 409);
+                }
 
-            // update totalPhysicalStock based on delta
-            const nextTotalPhysical = Number(product.totalPhysicalStock || 0) + delta;
-            if (nextTotalPhysical < 0) {
-                // should never happen, but protects against corrupted data
-                return next(createError("totalPhysicalStock cannot become negative", 409));
-            }
+                product.totalPhysicalStock = nextTotalPhysical;
 
-            product.totalPhysicalStock = nextTotalPhysical;
+                await product.save({ session });
 
-            await product.save();
+                if (delta !== 0) {
+                    await createStockMovement(
+                        buildPhysicalAdjustmentMovement({
+                            productId: product._id,
+                            location,
+                            quantity: Math.abs(delta),
+                            createdByUserId: userId,
+                            notes: `Physical stock set from ${prevQty} to ${qty} at ${location}`,
+                            delta,
+                        }),
+                        session,
+                    );
+                }
 
-            return res.status(200).json(
-                response("Physical stock updated successfully", {
+                return {
                     productId: product._id,
                     location,
                     previousQuantity: prevQty,
@@ -360,10 +462,14 @@ const productController = {
                     delta,
                     totalPhysicalStock: product.totalPhysicalStock,
                     locations: product.locations,
-                }),
-            );
+                };
+            });
+
+            return res.status(200).json(response("Physical stock updated successfully", result));
         } catch (err) {
-            next(err);
+            return next(err);
+        } finally {
+            await session.endSession();
         }
     },
 };

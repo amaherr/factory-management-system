@@ -56,7 +56,7 @@ export interface GetStockMovementsFilters {
   productCode?: string;
   fromType?: StockBucket;
   toType?: StockBucket;
-  movementType?: StockBucket;
+  bucketType?: StockBucket;
   warehouseAction?: WarehouseAction;
   isExecuted?: boolean;
   createdFrom?: string;
@@ -96,7 +96,7 @@ export const stockMovementService = {
         productCode,
         fromType,
         toType,
-        movementType,
+        bucketType,
         warehouseAction,
         isExecuted,
         createdFrom,
@@ -107,7 +107,7 @@ export const stockMovementService = {
 
       const params: any = { page, limit };
       if (productCode) params.q = productCode;
-      if (movementType) params.movementType = movementType;
+      if (bucketType) params.bucketType = bucketType;
       if (fromType) params.fromType = fromType;
       if (toType) params.toType = toType;
       if (warehouseAction) params.warehouseAction = warehouseAction;
