@@ -10,6 +10,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Label } from '../ui/label';
 import { Loader2 } from 'lucide-react';
 import type { Order } from '../../services/orders';
 import { orderService } from '../../services/orders';
@@ -57,22 +58,22 @@ export function ChangeOrderStatusDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="overflow-hidden p-0 sm:max-w-[520px]">
+        <DialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <DialogTitle>{t('changeOrderStatus')}</DialogTitle>
           <DialogDescription>
             {t('changeOrderStatusDescription')} #{order.orderNumber}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 px-6 py-5">
           <div>
-            <label className="text-sm font-medium text-gray-700">{t('newStatus')}</label>
+            <Label className="text-sm">{t('newStatus')}</Label>
             <Select
               value={selectedStatus}
               onValueChange={(value) => setSelectedStatus(value as 'finalized' | 'cancelled')}
             >
-              <SelectTrigger className="mt-2">
+              <SelectTrigger className="mt-2 h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30">
                 <SelectValue placeholder={t('selectStatus')} />
               </SelectTrigger>
               <SelectContent>
@@ -83,19 +84,19 @@ export function ChangeOrderStatusDialog({
           </div>
 
           {selectedStatus === 'finalized' && (
-            <div className="rounded-md bg-blue-50 p-3">
-              <p className="text-sm text-blue-700">{t('finalizeOrderWarning')}</p>
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-sm text-emerald-800">{t('finalizeOrderWarning')}</p>
             </div>
           )}
 
           {selectedStatus === 'cancelled' && (
-            <div className="rounded-md bg-amber-50 p-3">
-              <p className="text-sm text-amber-700">{t('cancelOrderWarning')}</p>
+            <div className="rounded-md border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-800">{t('cancelOrderWarning')}</p>
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-[--border-default] bg-[--bg-secondary] px-6 py-3">
           <Button
             variant="outline"
             onClick={() => {
@@ -111,8 +112,8 @@ export function ChangeOrderStatusDialog({
             disabled={loading || !selectedStatus}
             className={
               selectedStatus === 'finalized'
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-amber-600 hover:bg-amber-700'
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-red-600 hover:bg-red-700'
             }
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

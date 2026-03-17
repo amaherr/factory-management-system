@@ -16,16 +16,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import {
-  Search,
-  AlertTriangle,
-  PackagePlus,
-  Settings2,
-  RefreshCw,
-  Eye,
-  X,
-  MapPinned,
-} from 'lucide-react';
+import { Search, PackagePlus, Settings2, RefreshCw, Eye, X, MapPinned } from 'lucide-react';
 import { AdjustStockDialog } from '../../components/stock/AdjustStockDialog';
 import { SetStockDialog } from '../../components/stock/SetStockDialog';
 import { ProductStockDetailsDialog } from '../../components/stock/ProductStockDetailsDialog';
@@ -179,7 +170,6 @@ export function StockOverview() {
                   <TableHead>{t('table.product')}</TableHead>
                   <TableHead>{t('table.code')}</TableHead>
                   <TableHead>{t('table.sku')}</TableHead>
-                  <TableHead>{t('table.stockLevel')}</TableHead>
                   <TableHead>{t('table.totalPhysical')}</TableHead>
                   <TableHead>{t('table.totalTheoretical')}</TableHead>
                   <TableHead>{t('table.totalReserved')}</TableHead>
@@ -192,7 +182,7 @@ export function StockOverview() {
                 {filteredProducts.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={10}
+                      colSpan={9}
                       className="text-center py-12 text-muted-foreground"
                     >
                       {t('noResults')}
@@ -219,16 +209,6 @@ export function StockOverview() {
                       </TableCell>
                       <TableCell className="font-mono text-sm">{product.code}</TableCell>
                       <TableCell>{product.sku}</TableCell>
-                      <TableCell>
-                        {product.totalPhysicalStock < LOW_STOCK_THRESHOLD ? (
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle className="size-4 text-orange-500" />
-                            <Badge variant="destructive">{product.totalPhysicalStock}</Badge>
-                          </div>
-                        ) : (
-                          <span className="font-medium">{product.totalPhysicalStock}</span>
-                        )}
-                      </TableCell>
                       <TableCell className="font-medium">{product.totalPhysicalStock}</TableCell>
                       <TableCell className="font-medium">{product.totalTheoreticalStock}</TableCell>
                       <TableCell>{product.totalReserved}</TableCell>

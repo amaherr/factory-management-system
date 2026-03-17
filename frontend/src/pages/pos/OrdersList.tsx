@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, Eye, Settings, Trash2, Loader2 } from 'lucide-react';
+import { Search, Eye, Pencil, Trash2, Loader2, X } from 'lucide-react';
 import type { Order } from '../../services/orders';
 import { orderService, CURRENCY } from '../../services/orders';
 import { OrderDetailsDialog } from '../../components/orders/OrderDetailsDialog';
@@ -80,21 +80,33 @@ export function OrdersList() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.6fr)_180px_180px] md:items-center">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t('searchPlaceholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  title={t('clearSearch')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
             <Select
               value={statusFilter}
               onValueChange={setStatusFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('status')} />
               </SelectTrigger>
               <SelectContent>
@@ -108,7 +120,7 @@ export function OrdersList() {
               value={typeFilter}
               onValueChange={setTypeFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('orderType.label')} />
               </SelectTrigger>
               <SelectContent>
@@ -188,6 +200,7 @@ export function OrdersList() {
                             setDetailsSelectedOrderId(order._id);
                             setDetailsOpen(true);
                           }}
+                          className="text-black hover:bg-black/10"
                           title={t('viewDetails')}
                         >
                           <Eye className="size-4" />
@@ -200,9 +213,10 @@ export function OrdersList() {
                               setStatusChangeOrder(order);
                               setStatusChangeOpen(true);
                             }}
+                            className="text-blue-700 hover:bg-blue-50"
                             title={t('changeStatus')}
                           >
-                            <Settings className="size-4" />
+                            <Pencil className="size-4" />
                           </Button>
                         )}
                         <Button
@@ -213,7 +227,7 @@ export function OrdersList() {
                             setDeleteOpen(true);
                           }}
                           title={t('delete')}
-                          className="text-destructive hover:text-destructive"
+                          className="text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="size-4" />
                         </Button>
