@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Product, FactoryLocation } from '../../services/products';
+import type { Product } from '../../services/products';
 import { productService } from '../../services/products';
-import { FACTORY_LOCATIONS_VALUES } from '../../services/enums/product.enums';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card, CardContent } from '../../components/ui/card';
@@ -18,47 +17,34 @@ import {
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
-import {
   Search,
   AlertTriangle,
   PackagePlus,
-  ArrowLeftRight,
   Settings2,
   RefreshCw,
   Eye,
+  X,
+  MapPinned,
 } from 'lucide-react';
 import { AdjustStockDialog } from '../../components/stock/AdjustStockDialog';
-import { TransferStockDialog } from '../../components/stock/TransferStockDialog';
 import { SetStockDialog } from '../../components/stock/SetStockDialog';
 import { ProductStockDetailsDialog } from '../../components/stock/ProductStockDetailsDialog';
+import { LocationStockOverviewDialog } from '../../components/stock/LocationStockOverviewDialog';
 import { toast } from 'sonner';
 import { getProductImageSrc } from '../../utils/imageUpload';
-
-interface StockItem {
-  product: Product;
-  location: string;
-  quantityInStock: number;
-}
 
 export function StockOverview() {
   const { t } = useTranslation('stock');
   const [searchQuery, setSearchQuery] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
-  const [locationFilter, setLocationFilter] = useState<FactoryLocation | 'all'>('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Dialog states
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [setStockDialogOpen, setSetStockDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [locationOverviewOpen, setLocationOverviewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const LOW_STOCK_THRESHOLD = 50;
@@ -79,49 +65,20 @@ export function StockOverview() {
     }
   };
 
-  // Transform products into stock items (one row per product-location pair)
-  // If a product has no locations, show it once with empty location data
-  const stockItems: StockItem[] = products.flatMap((product) => {
-    if (product.locations.length === 0) {
-      // Product has no locations defined yet, show it once
-      return [
-        {
-          product,
-          location: '',
-          quantityInStock: 0,
-        },
-      ];
-    }
-    return product.locations.map((loc) => ({
-      product,
-      location: loc.location,
-      quantityInStock: loc.quantityInStock,
-    }));
-  });
-
-  const filteredStockItems = stockItems.filter((item) => {
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      item.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.product.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.product.sku.toString().includes(searchQuery);
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toString().includes(searchQuery);
 
-    const matchesLowStock = !lowStockOnly || item.quantityInStock < LOW_STOCK_THRESHOLD;
+    const matchesLowStock = !lowStockOnly || product.totalPhysicalStock < LOW_STOCK_THRESHOLD;
 
-    // If locationFilter is 'all', show everything including items with no location
-    // If locationFilter is specific, only show items with that location
-    const matchesLocation = locationFilter === 'all' || item.location === locationFilter;
-
-    return matchesSearch && matchesLowStock && matchesLocation;
+    return matchesSearch && matchesLowStock;
   });
 
   const handleAdjustStock = (product: Product) => {
     setSelectedProduct(product);
     setAdjustDialogOpen(true);
-  };
-
-  const handleTransferStock = (product: Product) => {
-    setSelectedProduct(product);
-    setTransferDialogOpen(true);
   };
 
   const handleSetStock = (product: Product) => {
@@ -147,52 +104,60 @@ export function StockOverview() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.6fr)_auto_auto_auto] md:items-center">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder={t('searchPlaceholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  aria-label={t('clearSearch')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
-            <div className="flex items-center gap-4">
-              <Select
-                value={locationFilter}
-                onValueChange={(value) => setLocationFilter(value as FactoryLocation | 'all')}
+            <div className="flex h-9 items-center gap-2 rounded-md border px-3">
+              <Switch
+                id="low-stock"
+                checked={lowStockOnly}
+                onCheckedChange={setLowStockOnly}
+              />
+              <Label
+                htmlFor="low-stock"
+                className="text-sm"
               >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('filters.allLocations')}</SelectItem>
-                  {FACTORY_LOCATIONS_VALUES.map((loc) => (
-                    <SelectItem
-                      key={loc}
-                      value={loc}
-                    >
-                      {t(`locations.${loc}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="low-stock"
-                  checked={lowStockOnly}
-                  onCheckedChange={setLowStockOnly}
-                />
-                <Label htmlFor="low-stock">{t('filters.lowStockOnly')}</Label>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadProducts}
-              >
-                <RefreshCw className="size-4" />
-              </Button>
+                {t('filters.lowStockOnly')}
+              </Label>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={loadProducts}
+              title={t('actions.refresh')}
+              aria-label={t('actions.refresh')}
+            >
+              <RefreshCw className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => setLocationOverviewOpen(true)}
+            >
+              <MapPinned className="size-4 mr-1.5" />
+              {t('actions.locationStock')}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -212,7 +177,6 @@ export function StockOverview() {
                   <TableHead>{t('table.product')}</TableHead>
                   <TableHead>{t('table.code')}</TableHead>
                   <TableHead>{t('table.sku')}</TableHead>
-                  <TableHead>{t('table.location')}</TableHead>
                   <TableHead>{t('table.stockLevel')}</TableHead>
                   <TableHead>{t('table.totalPhysical')}</TableHead>
                   <TableHead>{t('table.totalTheoretical')}</TableHead>
@@ -223,80 +187,70 @@ export function StockOverview() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStockItems.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={11}
+                      colSpan={10}
                       className="text-center py-12 text-muted-foreground"
                     >
                       {t('noResults')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredStockItems.map((item, index) => (
-                    <TableRow key={`${item.product._id}-${item.location}-${index}`}>
+                  filteredProducts.map((product) => (
+                    <TableRow key={product._id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <img
-                            src={getProductImageSrc(item.product.defaultImage)}
-                            alt={item.product.name}
+                            src={getProductImageSrc(product.defaultImage)}
+                            alt={product.name}
                             className="size-10 rounded object-cover"
                           />
                           <div>
-                            <p className="font-medium">{item.product.name}</p>
+                            <p className="font-medium">{product.name}</p>
                             <p className="text-sm text-gray-500">
-                              {t(`colors.${item.product.color}`)}
-                              {item.product.season && `, ${t(`seasons.${item.product.season}`)}`}
+                              {t(`colors.${product.color}`)}
+                              {product.season && `, ${t(`seasons.${product.season}`)}`}
                             </p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{item.product.code}</TableCell>
-                      <TableCell>{item.product.sku}</TableCell>
+                      <TableCell className="font-mono text-sm">{product.code}</TableCell>
+                      <TableCell>{product.sku}</TableCell>
                       <TableCell>
-                        {item.location ? (
-                          <Badge variant="outline">{t(`locations.${item.location}`)}</Badge>
-                        ) : (
-                          <Badge variant="secondary">{t('noLocation')}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {item.quantityInStock < LOW_STOCK_THRESHOLD ? (
+                        {product.totalPhysicalStock < LOW_STOCK_THRESHOLD ? (
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="size-4 text-orange-500" />
-                            <Badge variant="destructive">{item.quantityInStock}</Badge>
+                            <Badge variant="destructive">{product.totalPhysicalStock}</Badge>
                           </div>
                         ) : (
-                          <span className="font-medium">{item.quantityInStock}</span>
+                          <span className="font-medium">{product.totalPhysicalStock}</span>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product.totalPhysicalStock}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product.totalTheoreticalStock}
-                      </TableCell>
-                      <TableCell>{item.product.totalReserved}</TableCell>
-                      <TableCell>{item.product.totalSold}</TableCell>
+                      <TableCell className="font-medium">{product.totalPhysicalStock}</TableCell>
+                      <TableCell className="font-medium">{product.totalTheoreticalStock}</TableCell>
+                      <TableCell>{product.totalReserved}</TableCell>
+                      <TableCell>{product.totalSold}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            item.product.status === 'active'
+                            product.status === 'active'
                               ? 'default'
-                              : item.product.status === 'pending'
+                              : product.status === 'pending'
                                 ? 'secondary'
                                 : 'outline'
                           }
                         >
-                          {t(`statuses.${item.product.status}`)}
+                          {t(`statuses.${product.status}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => handleViewDetails(item.product)}
+                            className="text-black hover:bg-black/10"
+                            onClick={() => handleViewDetails(product)}
                             title={t('actions.view')}
                           >
                             <Eye className="size-4" />
@@ -304,26 +258,22 @@ export function StockOverview() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleAdjustStock(item.product)}
+                            className="h-8 text-blue-700 hover:bg-blue-50"
+                            onClick={() => handleAdjustStock(product)}
                             title={t('actions.adjust')}
                           >
-                            <PackagePlus className="size-4" />
+                            <PackagePlus className="size-4 mr-1.5" />
+                            {t('actions.adjust')}
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleTransferStock(item.product)}
-                            title={t('actions.transfer')}
-                          >
-                            <ArrowLeftRight className="size-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSetStock(item.product)}
+                            className="h-8 text-emerald-700 hover:bg-emerald-50"
+                            onClick={() => handleSetStock(product)}
                             title={t('actions.setStock')}
                           >
-                            <Settings2 className="size-4" />
+                            <Settings2 className="size-4 mr-1.5" />
+                            {t('actions.setStock')}
                           </Button>
                         </div>
                       </TableCell>
@@ -348,17 +298,16 @@ export function StockOverview() {
         onClose={() => setAdjustDialogOpen(false)}
         onSuccess={handleDialogSuccess}
       />
-      <TransferStockDialog
-        product={selectedProduct}
-        open={transferDialogOpen}
-        onClose={() => setTransferDialogOpen(false)}
-        onSuccess={handleDialogSuccess}
-      />
       <SetStockDialog
         product={selectedProduct}
         open={setStockDialogOpen}
         onClose={() => setSetStockDialogOpen(false)}
         onSuccess={handleDialogSuccess}
+      />
+      <LocationStockOverviewDialog
+        open={locationOverviewOpen}
+        onOpenChange={setLocationOverviewOpen}
+        products={products}
       />
     </div>
   );

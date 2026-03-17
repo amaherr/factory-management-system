@@ -2,6 +2,7 @@
   "title": "نظرة عامة على المخزون",
   "description": "مستويات ومواقع المخزون في الوقت الفعلي",
   "searchPlaceholder": "البحث بالاسم أو الكود أو SKU...",
+  "clearSearch": "مسح البحث",
   "loading": "جاري تحميل بيانات المخزون...",
   "noResults": "لا توجد عناصر مخزون",
   "noLocation": "لا يوجد موقع",
@@ -29,7 +30,17 @@
     "view": "عرض التفاصيل",
     "adjust": "تعديل المخزون",
     "transfer": "نقل المخزون",
-    "setStock": "تعيين المخزون"
+    "setStock": "تعيين المخزون",
+    "refresh": "تحديث",
+    "locationStock": "مخزون المواقع"
+  },
+  "locationOverview": {
+    "title": "نظرة عامة على مخزون مواقع المصنع",
+    "summaryTitle": "ملخص المواقع",
+    "productsCount": "عدد المنتجات في الموقع",
+    "totalStock": "إجمالي المخزون",
+    "perProductTitle": "توزيع كل منتج",
+    "noProductsInLocation": "لا توجد منتجات حاليًا في هذا الموقع"
   },
   "productDetails": {
     "title": "بيانات مخزون المنتج",
@@ -128,7 +139,7 @@
   "setStock": {
     "title": "تعيين مستوى المخزون",
     "description": "تعيين الكمية الدقيقة للمخزون لـ {{productName}} ({{productCode}})",
-    "warning": "⚠️ سيؤدي هذا إلى تجاوز مستوى المخزون الحالي. استخدم بحذر!",
+    "warning": " سيؤدي هذا إلى تجاوز مستوى المخزون الحالي. استخدم بحذر!",
     "location": "الموقع",
     "selectLocation": "اختر الموقع",
     "current": "الحالي",

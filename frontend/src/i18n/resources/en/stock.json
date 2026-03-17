@@ -2,6 +2,7 @@
   "title": "Stock Overview",
   "description": "Real-time inventory levels and locations",
   "searchPlaceholder": "Search by product name, code, or SKU...",
+  "clearSearch": "Clear search",
   "loading": "Loading stock data...",
   "noResults": "No stock items found",
   "noLocation": "No Location",
@@ -29,7 +30,17 @@
     "view": "View Details",
     "adjust": "Adjust Stock",
     "transfer": "Transfer Stock",
-    "setStock": "Set Stock"
+    "setStock": "Set Stock",
+    "refresh": "Refresh",
+    "locationStock": "Location Stock"
+  },
+  "locationOverview": {
+    "title": "Factory Location Stock Overview",
+    "summaryTitle": "Location Summary",
+    "productsCount": "Products in Location",
+    "totalStock": "Total Stock",
+    "perProductTitle": "Per Product Distribution",
+    "noProductsInLocation": "No products currently in this location"
   },
   "productDetails": {
     "title": "Product Stock Details",
@@ -128,7 +139,7 @@
   "setStock": {
     "title": "Set Stock Level",
     "description": "Set exact stock quantity for {{productName}} ({{productCode}})",
-    "warning": "⚠️ This will override the current stock level. Use with caution!",
+    "warning": "This will override the current stock level. Use with caution!",
     "location": "Location",
     "selectLocation": "Select location",
     "current": "Current",
