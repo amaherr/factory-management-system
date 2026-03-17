@@ -20,13 +20,12 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Plus, Search, Eye, Pencil, Ban, Trash2, Shield } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, X } from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { getProductImageSrc } from '../../utils/imageUpload';
 import { AddProductDialog } from '../../components/products/AddProductDialog';
 import { EditProductDialog } from '../../components/products/EditProductDialog';
 import { DeleteProductDialog } from '../../components/products/DeleteProductDialog';
-import { ChangeProductStatusDialog } from '../../components/products/ChangeProductStatusDialog';
 import { ProductDetailsDialog } from '../../components/products/ProductDetailsDialog';
 import { productService } from '../../services/products';
 import type { Product } from '../../services/products';
@@ -48,11 +47,9 @@ export function ProductsList() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [statusChangeTarget, setStatusChangeTarget] = useState<'active' | 'deactive' | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -102,14 +99,6 @@ export function ProductsList() {
     setDeleteDialogOpen(true);
   };
 
-  const handleStatusClick = (product: Product) => {
-    setSelectedProduct(product);
-    const newStatus =
-      product.status === PRODUCT_STATUS.ACTIVE ? PRODUCT_STATUS.DEACTIVE : PRODUCT_STATUS.ACTIVE;
-    setStatusChangeTarget(newStatus as 'active' | 'deactive');
-    setStatusDialogOpen(true);
-  };
-
   const handleProductAdded = (product: Product) => {
     setProducts([...products, product]);
   };
@@ -122,10 +111,6 @@ export function ProductsList() {
     if (selectedProduct) {
       setProducts(products.filter((p) => p._id !== selectedProduct._id));
     }
-  };
-
-  const handleStatusChanged = (product: Product) => {
-    setProducts(products.map((p) => (p._id === product._id ? product : p)));
   };
 
   return (
@@ -147,21 +132,33 @@ export function ProductsList() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.6fr)_180px_180px_180px] md:items-center">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t('search_products')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  title={t('clear_search')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
             <Select
               value={colorFilter}
               onValueChange={setColorFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('color')} />
               </SelectTrigger>
               <SelectContent>
@@ -180,7 +177,7 @@ export function ProductsList() {
               value={seasonFilter}
               onValueChange={setSeasonFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('season')} />
               </SelectTrigger>
               <SelectContent>
@@ -199,7 +196,7 @@ export function ProductsList() {
               value={statusFilter}
               onValueChange={setStatusFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('status')} />
               </SelectTrigger>
               <SelectContent>
@@ -299,6 +296,8 @@ export function ProductsList() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleViewDetails(product)}
+                          className="text-black hover:bg-black/10"
+                          title={t('view_details')}
                         >
                           <Eye className="size-4" />
                         </Button>
@@ -308,24 +307,17 @@ export function ProductsList() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleEditClick(product)}
+                              className="text-blue-700 hover:bg-blue-50"
+                              title={t('edit_product')}
                             >
                               <Pencil className="size-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleStatusClick(product)}
-                            >
-                              {product.status === PRODUCT_STATUS.ACTIVE ? (
-                                <Ban className="size-4" />
-                              ) : (
-                                <Shield className="size-4" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
                               onClick={() => handleDeleteClick(product)}
+                              className="text-red-700 hover:bg-red-50"
+                              title={t('delete_product')}
                             >
                               <Trash2 className="size-4" />
                             </Button>
@@ -358,13 +350,6 @@ export function ProductsList() {
         onOpenChange={setDeleteDialogOpen}
         product={selectedProduct}
         onSuccess={handleProductDeleted}
-      />
-      <ChangeProductStatusDialog
-        open={statusDialogOpen}
-        onOpenChange={setStatusDialogOpen}
-        product={selectedProduct}
-        newStatus={statusChangeTarget}
-        onSuccess={handleStatusChanged}
       />
       <ProductDetailsDialog
         open={detailsDialogOpen}

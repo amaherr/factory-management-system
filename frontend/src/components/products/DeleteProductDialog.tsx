@@ -52,7 +52,7 @@ export function DeleteProductDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <AlertDialogContent>
+      <AlertDialogContent className="sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{t('delete_product_title')}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -66,6 +66,7 @@ export function DeleteProductDialog({
           <AlertDialogAction
             onClick={handleDelete}
             disabled={loading}
+            className="bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-300"
           >
             {loading ? t('deleting') : t('delete')}
           </AlertDialogAction>

@@ -146,184 +146,188 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b bg-background px-6 py-4 pr-12">
           <DialogTitle>{t('add_product_title')}</DialogTitle>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label>{t('product_image')}</Label>
-            {imagePreview ? (
-              <div className="relative">
-                <ImageWithFallback
-                  src={imagePreview}
-                  alt={formData.name || 'Product'}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={handleRemoveImage}
-                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  id="image-input"
-                />
-                <label
-                  htmlFor="image-input"
-                  className="cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <Upload className="size-8 text-gray-400" />
-                  <span className="text-sm text-gray-600">{t('click_to_upload')}</span>
-                </label>
-              </div>
-            )}
-            <p className="text-xs text-gray-500">{t('image_format_help')}</p>
-          </div>
-
-          {/* Code and Name */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">{t('product_code')} *</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder={t('enter_code')}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku">{t('sku')} *</Label>
-              <Input
-                id="sku"
-                type="number"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                placeholder={t('enter_sku')}
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="name">{t('name')} *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={t('enter_name')}
-              disabled={loading}
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">{t('description')}</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder={t('enter_description')}
-              disabled={loading}
-              rows={3}
-            />
-          </div>
-
-          {/* Color and Season */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="color">{t('color')} *</Label>
-              <Select
-                value={formData.color}
-                onValueChange={(value) => setFormData({ ...formData, color: value as Color })}
-              >
-                <SelectTrigger
-                  id="color"
-                  disabled={loading}
-                >
-                  <SelectValue placeholder={t('select_color')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {COLORS_VALUES.map((color) => (
-                    <SelectItem
-                      key={color}
-                      value={color}
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div className="space-y-6">
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <Label>{t('product_image')}</Label>
+                {imagePreview ? (
+                  <div className="relative">
+                    <ImageWithFallback
+                      src={imagePreview}
+                      alt={formData.name || 'Product'}
+                      className="h-40 w-full rounded-lg object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                     >
-                      {t(`color_${color}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="season">{t('season')}</Label>
-              <Select
-                value={formData.season}
-                onValueChange={(value) => setFormData({ ...formData, season: value as Season })}
-              >
-                <SelectTrigger
-                  id="season"
-                  disabled={loading}
-                >
-                  <SelectValue placeholder={t('select_season')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEASONS_VALUES.map((season) => (
-                    <SelectItem
-                      key={season}
-                      value={season}
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition hover:border-primary">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="image-input"
+                    />
+                    <label
+                      htmlFor="image-input"
+                      className="flex cursor-pointer flex-col items-center gap-2"
                     >
-                      {t(`season_${season}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      <Upload className="size-8 text-gray-400" />
+                      <span className="text-sm text-gray-600">{t('click_to_upload')}</span>
+                    </label>
+                  </div>
+                )}
+                <p className="text-xs text-gray-500">{t('image_format_help')}</p>
+              </div>
+
+              {/* Code and Name */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="code">{t('product_code')} *</Label>
+                  <Input
+                    id="code"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    placeholder={t('enter_code')}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sku">{t('sku')} *</Label>
+                  <Input
+                    id="sku"
+                    type="number"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder={t('enter_sku')}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">{t('name')} *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder={t('enter_name')}
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">{t('description')}</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder={t('enter_description')}
+                  disabled={loading}
+                  rows={3}
+                />
+              </div>
+
+              {/* Color and Season */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="color">{t('color')} *</Label>
+                  <Select
+                    value={formData.color}
+                    onValueChange={(value) => setFormData({ ...formData, color: value as Color })}
+                  >
+                    <SelectTrigger
+                      id="color"
+                      disabled={loading}
+                    >
+                      <SelectValue placeholder={t('select_color')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COLORS_VALUES.map((color) => (
+                        <SelectItem
+                          key={color}
+                          value={color}
+                        >
+                          {t(`color_${color}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="season">{t('season')}</Label>
+                  <Select
+                    value={formData.season}
+                    onValueChange={(value) => setFormData({ ...formData, season: value as Season })}
+                  >
+                    <SelectTrigger
+                      id="season"
+                      disabled={loading}
+                    >
+                      <SelectValue placeholder={t('select_season')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEASONS_VALUES.map((season) => (
+                        <SelectItem
+                          key={season}
+                          value={season}
+                        >
+                          {t(`season_${season}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Prices */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="costPrice">{t('cost_price')}</Label>
+                  <Input
+                    id="costPrice"
+                    type="number"
+                    step="0.01"
+                    value={formData.costPrice}
+                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    placeholder={t('enter_cost_price')}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salePrice">{t('sale_price')} *</Label>
+                  <Input
+                    id="salePrice"
+                    type="number"
+                    step="0.01"
+                    value={formData.salePrice}
+                    onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                    placeholder={t('enter_sale_price')}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Prices */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="costPrice">{t('cost_price')}</Label>
-              <Input
-                id="costPrice"
-                type="number"
-                step="0.01"
-                value={formData.costPrice}
-                onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                placeholder={t('enter_cost_price')}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="salePrice">{t('sale_price')} *</Label>
-              <Input
-                id="salePrice"
-                type="number"
-                step="0.01"
-                value={formData.salePrice}
-                onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                placeholder={t('enter_sale_price')}
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t bg-background px-6 py-4">
             <Button
               type="button"
               variant="outline"
