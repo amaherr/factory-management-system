@@ -1,6 +1,8 @@
 import axios from 'axios';
+import type { FactoryLocation } from './enums/product.enums';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export type StockBucket =
   | 'reserve'
@@ -79,6 +81,11 @@ export interface GetStockMovementsResponse {
 export interface StockMovementResponse {
   message: string;
   data: StockMovement;
+}
+
+export interface ExecuteStockMovementPayload {
+  sourceLocation: FactoryLocation;
+  destinationLocation: FactoryLocation;
 }
 
 export const stockMovementService = {
@@ -163,6 +170,25 @@ export const stockMovementService = {
       return response.data.data;
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Failed to fetch product stock movements';
+      throw new Error(message);
+    }
+  },
+
+  async executeStockMovement(
+    movementId: string,
+    payload: ExecuteStockMovementPayload,
+  ): Promise<StockMovement> {
+    try {
+      axios.defaults.withCredentials = true;
+
+      const response = await axios.patch<StockMovementResponse>(
+        `${API_URL}/stock-movements/${movementId}`,
+        payload,
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to execute stock movement';
       throw new Error(message);
     }
   },

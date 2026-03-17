@@ -4,6 +4,7 @@ import { Login } from './pages/Login';
 import { ProductsList } from './pages/inventory/ProductsList';
 import { StockOverview } from './pages/inventory/StockOverview';
 import { StockMovementPage } from './pages/inventory/StockMovement';
+import { WarehouseManagementPage } from './pages/inventory/WarehouseManagement';
 import { Export } from './pages/Export';
 import { ExecutiveDashboard } from './pages/dashboards/ExecutiveDashboard';
 import { SalesDashboard } from './pages/dashboards/SalesDashboard';
@@ -123,6 +124,10 @@ export const router = createBrowserRouter([
       {
         path: 'inventory/movements',
         element: <StockMovementPage />,
+      },
+      {
+        path: 'inventory/warehouse',
+        element: <WarehouseManagementPage />,
       },
       {
         path: 'export',

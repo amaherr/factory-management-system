@@ -86,6 +86,12 @@ export const navigationItems: NavItem[] = [
         icon: 'History',
         roles: [ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING],
       },
+      {
+        label: 'Warehouse Management',
+        path: '/inventory/warehouse',
+        icon: 'Sliders',
+        roles: [ROLES.ADMIN, ROLES.INVENTORY],
+      },
     ],
   },
   {

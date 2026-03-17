@@ -1,0 +1,69 @@
+{
+  "badge": "Inventory and Admin workspace",
+  "title": "Warehouse Management",
+  "description": "Execute pending warehouse tasks and move stock between physical locations.",
+  "summary": {
+    "pendingTitle": "Pending executions",
+    "pendingDescription": "Warehouse actions still waiting for physical confirmation.",
+    "productsTitle": "Transfer-ready products",
+    "productsDescription": "Products with physical stock available for internal movement.",
+    "units": "items"
+  },
+  "filters": {
+    "title": "Warehouse queue filters",
+    "description": "Narrow the pending task list by product code or warehouse action.",
+    "searchPlaceholder": "Search pending movements by product code...",
+    "allActions": "All warehouse actions",
+    "refresh": "Refresh"
+  },
+  "pending": {
+    "title": "Pending warehouse actions",
+    "description": "Only stock movements that still require physical execution are listed here.",
+    "loading": "Loading pending warehouse actions...",
+    "empty": "No warehouse actions are waiting for execution.",
+    "execute": "Execute",
+    "referenceNone": "No reference",
+    "showing": "Showing {{from}} to {{to}} of {{total}} pending actions",
+    "page": "Page {{current}} of {{total}}"
+  },
+  "table": {
+    "product": "Product",
+    "action": "Action",
+    "flow": "Flow",
+    "quantity": "Quantity",
+    "reference": "Reference",
+    "requestedBy": "Requested By",
+    "createdAt": "Created At",
+    "actions": "Actions"
+  },
+  "transfer": {
+    "title": "Transfer stock",
+    "description": "Move physical inventory between showroom and warehouse locations.",
+    "product": "Product",
+    "selectProduct": "Select a product",
+    "distribution": "Current stock distribution",
+    "noProduct": "Select a product to start a transfer."
+  },
+  "execute": {
+    "title": "Execute stock movement",
+    "description": "Confirm the physical warehouse action for {{productName}} ({{productCode}}).",
+    "sourceLocation": "Source location",
+    "destinationLocation": "Destination location",
+    "selectLocation": "Select location",
+    "currentLocations": "Recorded locations",
+    "notSet": "Not set",
+    "cancel": "Cancel",
+    "submit": "Execute movement",
+    "submitting": "Executing...",
+    "success": "Stock movement executed successfully",
+    "errors": {
+      "fillAllFields": "Please select both source and destination locations.",
+      "sameLocation": "Source and destination locations must be different.",
+      "failed": "Failed to execute stock movement."
+    }
+  },
+  "errors": {
+    "pendingLoadFailed": "Failed to load pending warehouse actions.",
+    "productsLoadFailed": "Failed to load products with stock."
+  }
+}
