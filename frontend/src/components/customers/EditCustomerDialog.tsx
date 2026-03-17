@@ -103,17 +103,22 @@ export function EditCustomerDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('edit_customer')}</DialogTitle>
           <DialogDescription>{t('update_customer_details')}</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={handleSubmit}
-          className="space-y-4"
+          className="space-y-5"
         >
-          <div>
-            <Label htmlFor="name">{t('customer_name_label')}</Label>
+          <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+            <Label
+              htmlFor="name"
+              className="sm:pb-0.5"
+            >
+              {t('customer_name_label')}
+            </Label>
             <Input
               id="name"
               name="name"
@@ -125,8 +130,13 @@ export function EditCustomerDialog({
             />
           </div>
 
-          <div>
-            <Label htmlFor="company">{t('company_label')}</Label>
+          <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+            <Label
+              htmlFor="company"
+              className="sm:pb-0.5"
+            >
+              {t('company_label')}
+            </Label>
             <Input
               id="company"
               name="company"
@@ -137,8 +147,13 @@ export function EditCustomerDialog({
             />
           </div>
 
-          <div>
-            <Label htmlFor="phoneNumber">{t('phone_number_label')}</Label>
+          <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+            <Label
+              htmlFor="phoneNumber"
+              className="sm:pb-0.5"
+            >
+              {t('phone_number_label')}
+            </Label>
             <Input
               id="phoneNumber"
               name="phoneNumber"
@@ -153,8 +168,13 @@ export function EditCustomerDialog({
           <div className="space-y-3 border-t pt-4">
             <p className="text-sm font-semibold">{t('address_information')}</p>
 
-            <div>
-              <Label htmlFor="country">{t('country_label')}</Label>
+            <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+              <Label
+                htmlFor="country"
+                className="sm:pb-0.5"
+              >
+                {t('country_label')}
+              </Label>
               <Input
                 id="country"
                 name="address.country"
@@ -166,8 +186,13 @@ export function EditCustomerDialog({
               />
             </div>
 
-            <div>
-              <Label htmlFor="governate">{t('governate_label')}</Label>
+            <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+              <Label
+                htmlFor="governate"
+                className="sm:pb-0.5"
+              >
+                {t('governate_label')}
+              </Label>
               <Input
                 id="governate"
                 name="address.governate"
@@ -179,8 +204,13 @@ export function EditCustomerDialog({
               />
             </div>
 
-            <div>
-              <Label htmlFor="city">{t('city_label')}</Label>
+            <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+              <Label
+                htmlFor="city"
+                className="sm:pb-0.5"
+              >
+                {t('city_label')}
+              </Label>
               <Input
                 id="city"
                 name="address.city"
@@ -192,8 +222,13 @@ export function EditCustomerDialog({
               />
             </div>
 
-            <div>
-              <Label htmlFor="street">{t('street_label')}</Label>
+            <div className="grid gap-2 sm:grid-cols-[170px_1fr] sm:items-center">
+              <Label
+                htmlFor="street"
+                className="sm:pb-0.5"
+              >
+                {t('street_label')}
+              </Label>
               <Input
                 id="street"
                 name="address.street"

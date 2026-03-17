@@ -49,7 +49,7 @@ export function DeleteCustomerDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="bg-destructive/10 border border-destructive/20 rounded p-4">
-            <p className="text-sm">{t('delete_confirmation_warning', { name: customer.name })}</p>
+            <p className="text-sm">{t('delete_confirmation_warning')}</p>
           </div>
           <div className="flex gap-2 justify-end">
             <Button

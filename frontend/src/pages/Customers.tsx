@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Search, Eye, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Search, Eye, Loader2, Pencil, Trash2, X } from 'lucide-react';
 import { AddCustomerDialog } from '../components/customers/AddCustomerDialog';
 import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog';
 import { EditCustomerDialog } from '../components/customers/EditCustomerDialog';
@@ -97,15 +97,27 @@ export function Customers() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder={t('search_placeholder')}
-              className="pl-10"
+              className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               disabled={loading}
             />
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                onClick={() => setSearchQuery('')}
+                aria-label={t('clear_search')}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -157,6 +169,8 @@ export function Customers() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleViewDetails(customer)}
+                          title={t('customer_details')}
+                          className="text-black hover:bg-black/10"
                         >
                           <Eye className="size-4" />
                         </Button>
@@ -164,6 +178,8 @@ export function Customers() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditCustomer(customer)}
+                          title={t('edit_customer')}
+                          className="text-blue-700 hover:bg-blue-50"
                         >
                           <Pencil className="size-4" />
                         </Button>
@@ -171,8 +187,10 @@ export function Customers() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteCustomer(customer)}
+                          title={t('delete_customer')}
+                          className="text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="size-4 text-destructive" />
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     </TableCell>

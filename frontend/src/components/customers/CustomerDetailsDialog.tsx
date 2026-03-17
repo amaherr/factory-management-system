@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import type { Customer } from '../../services/customers';
 
 interface CustomerDetailsDialogProps {
@@ -22,53 +23,64 @@ export function CustomerDetailsDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('customer_details')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">{t('customer_name')}</p>
-              <p className="font-semibold">{customer.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{t('phone')}</p>
-              <p className="font-semibold">{customer.phoneNumber}</p>
+
+        <div className="space-y-5">
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              {t('customer_profile')}
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-muted-foreground">{t('customer_name')}</p>
+                <p className="font-semibold">{customer.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('phone')}</p>
+                <p className="font-semibold">{customer.phoneNumber}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground">{t('company')}</p>
+                <p className="font-semibold">{customer.company || '-'}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground">{t('city')}</p>
+                <Badge variant="outline">{customer.address.city}</Badge>
+              </div>
             </div>
           </div>
 
-          {customer.company && (
-            <div>
-              <p className="text-sm text-muted-foreground">{t('company')}</p>
-              <p className="font-semibold">{customer.company}</p>
-            </div>
-          )}
-
-          <div className="border-t pt-4">
-            <p className="text-sm font-semibold mb-3">Address</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="rounded-lg border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+              {t('address_information')}
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 text-sm">
               <div>
-                <p className="text-muted-foreground">Country</p>
+                <p className="text-xs text-muted-foreground">{t('country')}</p>
                 <p>{customer.address.country}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Governate</p>
+                <p className="text-xs text-muted-foreground">{t('governate')}</p>
                 <p>{customer.address.governate}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">City</p>
+                <p className="text-xs text-muted-foreground">{t('city')}</p>
                 <p>{customer.address.city}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Street</p>
+                <p className="text-xs text-muted-foreground">{t('street')}</p>
                 <p>{customer.address.street}</p>
               </div>
             </div>
           </div>
 
           {customer.createdAt && (
-            <div className="text-xs text-muted-foreground pt-4 border-t">
+            <div className="rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
               <p>
                 {t('created')}: {new Date(customer.createdAt).toLocaleDateString()}
               </p>
@@ -80,13 +92,14 @@ export function CustomerDetailsDialog({
             </div>
           )}
 
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="w-full"
-          >
-            {t('close')}
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              {t('close')}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
