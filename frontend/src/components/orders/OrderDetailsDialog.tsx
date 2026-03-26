@@ -128,13 +128,13 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                   <CardTitle className="text-sm">{t('items')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {order.items.map((item: any, idx: number) => (
                       <div
                         key={idx}
-                        className="rounded-md border border-[--border-default] bg-[--bg-secondary] px-3 py-2"
+                        className="rounded-md border border-[--border-default] bg-[--bg-secondary] px-4 py-3"
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start justify-between gap-3 mb-2">
                           <div className="min-w-0">
                             {typeof item.productId === 'string' ? (
                               <p className="truncate text-sm font-medium">
@@ -151,19 +151,42 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                               </>
                             )}
                           </div>
-                          <div className="text-right text-sm">
-                            <p>
-                              {item.quantity} x {CURRENCY}
+                        </div>
+
+                        {/* Quantity Section */}
+                        <div className="grid grid-cols-2 gap-3 mb-2">
+                          <div className="text-sm">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {t('lineQuantity', 'Lines')}
+                            </p>
+                            <p className="font-medium">{item.lineQuantity}</p>
+                          </div>
+                          <div className="text-sm">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {t('actualQuantity', 'Units')}
+                            </p>
+                            <p className="font-medium">{item.actualQuantity}</p>
+                          </div>
+                        </div>
+
+                        {/* Pricing Section */}
+                        <div className="grid grid-cols-2 gap-3 border-t border-[--border-default] pt-2">
+                          <div className="text-sm">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {t('unitPrice', 'Unit Price')}
+                            </p>
+                            <p className="font-medium">
+                              {CURRENCY}
                               {item.unitPrice.toFixed(2)}
                             </p>
-                            {item.actualQuantity != null && (
-                              <p className="text-xs text-muted-foreground">
-                                {t('actualQuantity')}: {item.actualQuantity}
-                              </p>
-                            )}
-                            <p className="text-xs font-medium text-foreground">
-                              {t('pricing.itemTotal')}: {CURRENCY}
-                              {(item.totalPrice ?? item.actualQuantity * item.unitPrice).toFixed(2)}
+                          </div>
+                          <div className="text-sm">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {t('pricing.itemTotal', 'Item Total')}
+                            </p>
+                            <p className="font-bold text-foreground">
+                              {CURRENCY}
+                              {item.totalPrice.toFixed(2)}
                             </p>
                           </div>
                         </div>

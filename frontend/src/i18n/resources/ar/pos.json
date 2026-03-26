@@ -101,7 +101,8 @@
   "deleteOrderDescription": "هل أنت متأكد من رغبتك في حذف الطلب رقم {{orderNumber}}؟ لا يمكن التراجع عن هذا الإجراء.",
   "loading": "جاري التحميل...",
   "generalError": "حدث خطأ ما",
-  "actualQuantity": "الكمية الفعلية",
+  "lineQuantity": "العدد",
+  "actualQuantity": "الوحدات",
   "returns": {
     "title": "المرتجعات",
     "description": "إنشاء وإدارة مرتجعات المنتجات",

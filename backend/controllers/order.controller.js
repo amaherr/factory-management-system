@@ -61,14 +61,16 @@ const orderController = {
                         throw createError(`Product ${it.productId} is not activated`, 409);
                     }
 
-                    const actualQuantity = Number(it.quantity) * Number(product.sku);
-                    const totalPrice = actualQuantity * product.salePrice;
+                    const lineQuantity = Number(it.quantity);
+                    const actualQuantity = lineQuantity * Number(product.sku);
+                    const unitPrice = product.salePrice;
+                    const totalPrice = actualQuantity * unitPrice;
 
                     return {
                         productId: it.productId,
-                        quantity: it.quantity,
+                        lineQuantity,
                         actualQuantity,
-                        unitPrice: product.salePrice, // snapshot
+                        unitPrice, // snapshot
                         totalPrice,
                     };
                 });
@@ -499,14 +501,16 @@ const orderController = {
                             throw createError(`Product ${it.productId} is not activated`, 409);
                         }
 
-                        const actualQuantity = Number(it.quantity) * Number(product.sku);
-                        const totalPrice = actualQuantity * product.salePrice;
+                        const lineQuantity = Number(it.quantity);
+                        const actualQuantity = lineQuantity * Number(product.sku);
+                        const unitPrice = product.salePrice;
+                        const totalPrice = actualQuantity * unitPrice;
 
                         return {
                             productId: it.productId,
-                            quantity: Number(it.quantity),
+                            lineQuantity,
                             actualQuantity,
-                            unitPrice: product.salePrice, // snapshot
+                            unitPrice, // snapshot
                             totalPrice,
                         };
                     });

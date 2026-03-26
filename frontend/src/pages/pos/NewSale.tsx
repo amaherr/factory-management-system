@@ -28,7 +28,7 @@ interface CartItem {
   productCode: string;
   productDetails: string;
   sku: number;
-  quantity: number;
+  lineQuantity: number; // lines of the product ordered
   unitPrice: number;
   stock: number;
 }
@@ -93,7 +93,7 @@ export function NewSale() {
     const existingItem = cart.find((item) => item.productId === product._id);
 
     if (existingItem) {
-      updateQuantity(product._id, existingItem.quantity + 1);
+      updateQuantity(product._id, existingItem.lineQuantity + 1);
     } else {
       setCart([
         ...cart,
@@ -103,7 +103,7 @@ export function NewSale() {
           productCode: product.code,
           productDetails: `${product.color}${product.season ? `, ${product.season}` : ''}`,
           sku: product.sku,
-          quantity: 1,
+          lineQuantity: 1,
           unitPrice: product.salePrice,
           stock: product.totalTheoreticalStock,
         },
@@ -120,11 +120,12 @@ export function NewSale() {
     setCart(
       cart.map((item) => {
         if (item.productId === productId) {
-          if (orderType === 'on-shelf' && newQuantity * item.sku > item.stock) {
+          const actualQuantity = newQuantity * item.sku;
+          if (orderType === 'on-shelf' && actualQuantity > item.stock) {
             toast.error(t('errors.onlyStockAvailable', { stock: item.stock }));
             return item;
           }
-          return { ...item, quantity: newQuantity };
+          return { ...item, lineQuantity: newQuantity };
         }
         return item;
       }),
@@ -162,7 +163,7 @@ export function NewSale() {
     }
 
     if (orderType === 'on-shelf') {
-      const outOfStock = cart.find((item) => item.quantity * item.sku > item.stock);
+      const outOfStock = cart.find((item) => item.lineQuantity * item.sku > item.stock);
       if (outOfStock) {
         toast.error(t('errors.outOfStock', { product: outOfStock.productName }));
         return false;
@@ -178,7 +179,7 @@ export function NewSale() {
       orderType: mapUiTypeToApiType(orderType),
       items: cart.map((item) => ({
         productId: item.productId,
-        quantity: item.quantity,
+        quantity: item.lineQuantity,
       })),
       discountAmount,
       taxAmount,
@@ -203,8 +204,11 @@ export function NewSale() {
     }
   };
 
-  const getItemTotal = (item: CartItem) => item.quantity * item.sku * item.unitPrice;
-  const subtotal = cart.reduce((sum, item) => sum + getItemTotal(item), 0);
+  // Helper functions for quantity calculations
+  const getActualQuantity = (item: CartItem) => item.lineQuantity * item.sku;
+  const getTotalPrice = (item: CartItem) => getActualQuantity(item) * item.unitPrice;
+
+  const subtotal = cart.reduce((sum, item) => sum + getTotalPrice(item), 0);
   const discountAmount = discountMode === 'percentage' ? (subtotal * discount) / 100 : discount;
   const taxAmount = taxMode === 'percentage' ? (subtotal * tax) / 100 : tax;
   const total = subtotal - discountAmount + taxAmount;
@@ -373,7 +377,13 @@ export function NewSale() {
                           <p className="text-xs text-gray-500">
                             {item.productCode} • {item.productDetails}
                           </p>
-                          {orderType === 'on-shelf' && item.quantity * item.sku > item.stock && (
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-gray-600">
+                              {t('lineQuantity')}: {item.lineQuantity} • {t('actualQuantity')}:{' '}
+                              {getActualQuantity(item)}
+                            </p>
+                          </div>
+                          {orderType === 'on-shelf' && getActualQuantity(item) > item.stock && (
                             <p className="text-xs text-red-600 mt-1">
                               {t('onlyStockAvailable', { count: item.stock })}
                             </p>
@@ -393,7 +403,7 @@ export function NewSale() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.productId, item.lineQuantity - 1)}
                             disabled={processingAction}
                           >
                             <Minus className="size-3" />
@@ -402,7 +412,7 @@ export function NewSale() {
                             type="number"
                             min="1"
                             className="h-8 w-16 px-2 text-center"
-                            value={item.quantity}
+                            value={item.lineQuantity}
                             placeholder={t('placeholders.quantity')}
                             onFocus={(e) => e.currentTarget.select()}
                             onClick={(e) => e.currentTarget.select()}
@@ -421,14 +431,14 @@ export function NewSale() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.productId, item.lineQuantity + 1)}
                             disabled={processingAction}
                           >
                             <Plus className="size-3" />
                           </Button>
                         </div>
                         <span className="font-medium">
-                          {t('currency')} {getItemTotal(item).toFixed(2)}
+                          {t('currency')} {getTotalPrice(item).toFixed(2)}
                         </span>
                       </div>
                     </div>

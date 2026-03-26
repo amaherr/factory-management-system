@@ -49,22 +49,24 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
             throw createError(`Product ${pid} was not sold in this order`, 409);
         }
 
-        if (qty > Number(sold.quantity)) {
+        if (qty > Number(sold.lineQuantity)) {
             throw createError(
-                `Cannot set return qty ${qty} for product ${pid}. Sold quantity: ${sold.quantity}`,
+                `Cannot set return qty ${qty} for product ${pid}. Sold quantity: ${sold.lineQuantity}`,
                 409,
             );
         }
 
-        // Calculate actualQuantity based on the ratio from order (actualQuantity / quantity)
-        const skuRatio = Number(sold.actualQuantity) / Number(sold.quantity);
+        // Calculate actualQuantity based on the ratio from order (actualQuantity / lineQuantity)
+        const skuRatio = Number(sold.actualQuantity) / Number(sold.lineQuantity);
         const actualQuantity = qty * skuRatio;
+        const totalPrice = actualQuantity * sold.unitPrice;
 
         snapshot.push({
             productId: sold.productId,
-            quantity: qty,
+            lineQuantity: qty,
             actualQuantity,
             unitPrice: sold.unitPrice,
+            totalPrice,
         });
     }
 

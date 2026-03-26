@@ -1,6 +1,38 @@
 const mongoose = require("mongoose");
 const { ORDER_TYPE, ORDER_STATUS } = require("../enums/order.enums");
 
+const itemSchema = mongoose.Schema({
+    productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+    },
+    lineQuantity: {
+        // number of lines ordered by user
+        type: Number,
+        required: true,
+        min: 1,
+    },
+    actualQuantity: {
+        // lineQuantity times product sku (total individual units)
+        type: Number,
+        required: true,
+        min: 1,
+    },
+    unitPrice: {
+        // price per unit (snapshot at order time)
+        type: Number,
+        required: true,
+        min: 0,
+    },
+    totalPrice: {
+        // total price for this line item = actualQuantity * unitPrice
+        type: Number,
+        required: true,
+        min: 0,
+    },
+});
+
 const orderSchema = mongoose.Schema(
     {
         orderNumber: {
@@ -8,6 +40,7 @@ const orderSchema = mongoose.Schema(
             required: true,
             unique: true,
         },
+
         createdByUserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -23,36 +56,9 @@ const orderSchema = mongoose.Schema(
             enum: Object.values(ORDER_TYPE),
             required: true,
         },
-        items: [
-            {
-                productId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Product",
-                    required: true,
-                },
-                quantity: {
-                    type: Number,
-                    required: true,
-                    min: 1,
-                },
-                actualQuantity: {
-                    // quantity times product sku
-                    type: Number,
-                    required: true,
-                    min: 1,
-                },
-                unitPrice: {
-                    type: Number,
-                    required: true,
-                    min: 0,
-                },
-                totalPrice: {
-                    type: Number,
-                    required: true,
-                    min: 0,
-                },
-            },
-        ],
+
+        // order items and price data
+        items: [itemSchema],
         subTotal: {
             type: Number,
             required: true,
@@ -73,14 +79,17 @@ const orderSchema = mongoose.Schema(
             required: true,
             min: 0,
         },
+
+        notes: {
+            type: String,
+        },
+
+        // status-related data
         status: {
             type: String,
             required: true,
             enum: Object.values(ORDER_STATUS),
             default: ORDER_STATUS.DRAFT,
-        },
-        notes: {
-            type: String,
         },
         finalizedAt: {
             type: Date,

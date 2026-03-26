@@ -101,7 +101,8 @@
   "deleteOrderDescription": "Are you sure you want to delete order #{{orderNumber}}? This action cannot be undone.",
   "loading": "Loading...",
   "generalError": "An error occurred",
-  "actualQuantity": "Actual Qty",
+  "lineQuantity": "Lines",
+  "actualQuantity": "Units",
   "returns": {
     "title": "Returns",
     "description": "Create and manage product returns",

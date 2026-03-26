@@ -47,16 +47,26 @@ const returnSchema = new mongoose.Schema(
                     ref: "Product",
                     required: true,
                 },
-                quantity: {
+                lineQuantity: {
+                    // number of lines being returned
                     type: Number,
                     required: true,
                     min: 1,
                 },
                 actualQuantity: {
+                    // lineQuantity times product sku (total individual units)
                     type: Number,
+                    required: true,
                     min: 1,
                 },
                 unitPrice: {
+                    // snapshot from order
+                    type: Number,
+                    required: true,
+                    min: 0,
+                },
+                totalPrice: {
+                    // total refund for this line = actualQuantity * unitPrice
                     type: Number,
                     required: true,
                     min: 0,

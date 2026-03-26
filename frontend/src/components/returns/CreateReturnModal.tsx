@@ -102,13 +102,10 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
 
         return {
           productId,
-          quantity: qty,
-          unitPrice: Number(orderItem.unitPrice),
+          quantity: qty, // lineQuantity - number of lines being returned
         };
       })
-      .filter((item): item is { productId: string; quantity: number; unitPrice: number } =>
-        Boolean(item),
-      );
+      .filter((item): item is { productId: string; quantity: number } => Boolean(item));
 
     if (itemsPayload.length === 0) {
       toast.error(t('returns.toasts.selectAtLeastOneItem'));
@@ -233,7 +230,7 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
                       <div className="md:col-span-2">
                         <p className="text-sm font-medium">{productName}</p>
                         <p className="text-xs text-gray-500">
-                          {t('returns.createDialog.soldQty')}: {orderItem.quantity}
+                          {t('returns.createDialog.soldQty')}: {orderItem.lineQuantity}
                           {orderItem.actualQuantity != null &&
                             ` (${t('returns.createDialog.actualQty')}: ${orderItem.actualQuantity})`}
                         </p>
@@ -245,11 +242,12 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
                         </p>
                         <p className="text-sm font-medium">
                           {CURRENCY}
-                          {Number(orderItem.unitPrice).toFixed(2)}
+                          {Number(orderItem.unitPrice ?? 0).toFixed(2)}
                         </p>
                         {orderItem.totalPrice != null && (
                           <p className="text-xs text-gray-500">
-                            {t('returns.createDialog.itemTotal')}: {CURRENCY}{Number(orderItem.totalPrice).toFixed(2)}
+                            {t('returns.createDialog.itemTotal')}: {CURRENCY}
+                            {Number(orderItem.totalPrice ?? 0).toFixed(2)}
                           </p>
                         )}
                       </div>
@@ -261,7 +259,7 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
                         <Input
                           type="number"
                           min={0}
-                          max={orderItem.quantity}
+                          max={orderItem.lineQuantity}
                           value={quantities[productId] ?? ''}
                           onChange={(e) => {
                             const raw = e.target.value;
@@ -271,7 +269,7 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
                             }
 
                             const num = Number(raw);
-                            const clamped = Math.max(0, Math.min(orderItem.quantity, num));
+                            const clamped = Math.max(0, Math.min(orderItem.lineQuantity, num));
                             setQuantities((prev) => ({
                               ...prev,
                               [productId]: String(Number.isNaN(clamped) ? 0 : clamped),
@@ -289,7 +287,93 @@ export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateRetur
               </div>
             )}
           </div>
+
+          {selectedOrder?.items?.length ? (
+            <div className="space-y-2 border-t pt-4">
+              <p className="text-sm font-medium">
+                {t('returns.createDialog.returnSummary', 'Return Summary')}
+              </p>
+              <div className="space-y-2">
+                {selectedOrder.items
+                  .filter((item) => {
+                    const productId =
+                      typeof item.productId === 'string' ? item.productId : item.productId._id;
+                    return Number(quantities[productId] || 0) > 0;
+                  })
+                  .map((item) => {
+                    const productId =
+                      typeof item.productId === 'string' ? item.productId : item.productId._id;
+                    const productName =
+                      typeof item.productId === 'string'
+                        ? item.productId
+                        : item.productId.name || item.productId.productCode || productId;
+                    const returnLineQty = Number(quantities[productId] || 0);
+                    const unitPriceVal = Number(item.unitPrice ?? 0);
+                    const returnTotalPrice = returnLineQty * unitPriceVal;
+
+                    return (
+                      <div
+                        key={productId}
+                        className="flex justify-between text-sm bg-blue-50 p-3 rounded-md"
+                      >
+                        <div>
+                          <p className="font-medium">{productName}</p>
+                          <p className="text-xs text-gray-600">
+                            {t('returns.createDialog.returnQty', 'Return qty')}: {returnLineQty}{' '}
+                            {t('lineQuantity', 'Lines')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">
+                            {CURRENCY}
+                            {returnTotalPrice.toFixed(2)}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            @ {CURRENCY}
+                            {unitPriceVal.toFixed(2)}/line
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {selectedOrder.items.every((item) => {
+                  const productId =
+                    typeof item.productId === 'string' ? item.productId : item.productId._id;
+                  return Number(quantities[productId] || 0) === 0;
+                }) && (
+                  <p className="text-sm text-gray-500 italic">
+                    {t(
+                      'returns.createDialog.selectItemsToReturn',
+                      'Select items to see return summary',
+                    )}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
+
+        {selectedOrder?.items?.length ? (
+          <div className="border-t pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 font-medium">
+                {t('returns.createDialog.totalRefund', 'Total Refund')}:
+              </span>
+              <span className="font-bold text-lg">
+                {CURRENCY}
+                {selectedOrder.items
+                  .reduce((sum, item) => {
+                    const productId =
+                      typeof item.productId === 'string' ? item.productId : item.productId._id;
+                    const returnQty = Number(quantities[productId] || 0);
+                    const unitPrice = Number(item.unitPrice ?? 0);
+                    return sum + returnQty * unitPrice;
+                  }, 0)
+                  .toFixed(2)}
+              </span>
+            </div>
+          </div>
+        ) : null}
 
         <DialogFooter>
           <Button

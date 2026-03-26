@@ -38,7 +38,7 @@ export interface ChangeOrderStatusPayload {
 
 export interface OrderItem {
   productId: string | { _id: string; name: string; productCode: string };
-  quantity: number;
+  lineQuantity: number;
   actualQuantity: number;
   unitPrice: number;
   totalPrice: number;

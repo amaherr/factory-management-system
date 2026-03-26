@@ -13,6 +13,7 @@ const productSchema = new mongoose.Schema(
             maxLength: 50,
         },
 
+        // product info
         name: {
             type: String,
             required: true,
@@ -20,25 +21,21 @@ const productSchema = new mongoose.Schema(
             minLength: 1,
             maxLength: 200,
         },
-
         description: {
             type: String,
             trim: true,
             minLength: 1,
             maxLength: 2000,
         },
-
         color: {
             type: String,
             enum: Object.values(COLORS),
             required: true,
         },
-
         season: {
             type: String,
             enum: Object.values(SEASONS),
         },
-
         defaultImage: {
             type: String,
             trim: true,
@@ -51,23 +48,21 @@ const productSchema = new mongoose.Schema(
             min: 1,
         },
 
+        // price-related data
         costPrice: {
             type: Number,
             min: 1,
         },
-
         salePrice: {
             type: Number,
             required: true,
             min: 1,
         },
-
         lineCostPrice: {
             type: Number,
             required: true,
             min: 1,
         },
-
         lineSalePrice: {
             type: Number,
             required: true,

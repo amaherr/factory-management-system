@@ -20,9 +20,10 @@ export interface ReturnItem {
         productCode?: string;
         code?: string;
       };
-  quantity: number;
+  lineQuantity: number;
   actualQuantity: number;
   unitPrice: number;
+  totalPrice: number;
 }
 
 export interface ReturnRecord {
