@@ -62,6 +62,18 @@ const productSchema = new mongoose.Schema(
             min: 1,
         },
 
+        lineCostPrice: {
+            type: Number,
+            required: true,
+            min: 1,
+        },
+
+        lineSalePrice: {
+            type: Number,
+            required: true,
+            min: 1,
+        },
+
         status: {
             type: String,
             required: true,

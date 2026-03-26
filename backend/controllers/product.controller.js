@@ -86,15 +86,21 @@ const productController = {
             const uploadedImageUrl = req.file ? saveUploadedFile(req.file) : null;
             const resolvedImage = uploadedImageUrl || defaultImage;
 
+            const resolvedSku = Number(sku);
+            const resolvedCostPrice = Number(costPrice);
+            const resolvedSalePrice = Number(salePrice);
+
             const newProduct = new Product({
                 code,
                 name,
                 description,
                 color,
                 defaultImage: resolvedImage,
-                sku,
-                costPrice,
-                salePrice,
+                sku: resolvedSku,
+                costPrice: resolvedCostPrice,
+                salePrice: resolvedSalePrice,
+                lineCostPrice: resolvedSku * resolvedCostPrice,
+                lineSalePrice: resolvedSku * resolvedSalePrice,
                 season,
                 activatedByUserId: req.user.id,
                 activatedAt: Date.now(),
@@ -141,6 +147,7 @@ const productController = {
                 return next(createError("Product code cannot be updated for this product", 409));
             }
 
+            // perform the updates
             if (shouldRemoveImage && product.defaultImage) {
                 deleteUploadedFile(product.defaultImage);
                 updates.defaultImage = null;
@@ -157,6 +164,35 @@ const productController = {
             }
 
             delete updates.removeImage;
+
+            const nextSku = updates.sku !== undefined ? Number(updates.sku) : Number(product.sku);
+            const nextCostPrice =
+                updates.costPrice !== undefined
+                    ? Number(updates.costPrice)
+                    : Number(product.costPrice);
+            const nextSalePrice =
+                updates.salePrice !== undefined
+                    ? Number(updates.salePrice)
+                    : Number(product.salePrice);
+
+            if (
+                !Number.isFinite(nextSku) ||
+                !Number.isFinite(nextCostPrice) ||
+                !Number.isFinite(nextSalePrice)
+            ) {
+                return next(
+                    createError(
+                        "sku, costPrice, and salePrice must be valid numbers to compute line prices",
+                        400,
+                    ),
+                );
+            }
+
+            updates.sku = nextSku;
+            updates.costPrice = nextCostPrice;
+            updates.salePrice = nextSalePrice;
+            updates.lineCostPrice = nextSku * nextCostPrice;
+            updates.lineSalePrice = nextSku * nextSalePrice;
 
             const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
                 new: true,

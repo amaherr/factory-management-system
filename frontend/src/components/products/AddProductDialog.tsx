@@ -103,6 +103,11 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         setLoading(false);
         return;
       }
+      if (!formData.costPrice) {
+        toast.error(t('cost_price_required'));
+        setLoading(false);
+        return;
+      }
       if (!formData.salePrice) {
         toast.error(t('sale_price_required'));
         setLoading(false);
@@ -114,6 +119,7 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
       payload.append('name', formData.name.trim());
       payload.append('color', formData.color);
       payload.append('sku', formData.sku);
+      payload.append('costPrice', formData.costPrice);
       payload.append('salePrice', formData.salePrice);
 
       if (formData.description.trim()) {
@@ -121,9 +127,6 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
       }
       if (formData.season) {
         payload.append('season', formData.season);
-      }
-      if (formData.costPrice) {
-        payload.append('costPrice', formData.costPrice);
       }
       if (imageFile) {
         payload.append('image', imageFile);
@@ -300,7 +303,7 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
               {/* Prices */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="costPrice">{t('cost_price')}</Label>
+                  <Label htmlFor="costPrice">{t('cost_price')} *</Label>
                   <Input
                     id="costPrice"
                     type="number"

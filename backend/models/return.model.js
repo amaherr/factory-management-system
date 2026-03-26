@@ -52,6 +52,10 @@ const returnSchema = new mongoose.Schema(
                     required: true,
                     min: 1,
                 },
+                actualQuantity: {
+                    type: Number,
+                    min: 1,
+                },
                 unitPrice: {
                     type: Number,
                     required: true,

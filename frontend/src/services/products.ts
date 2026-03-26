@@ -12,8 +12,10 @@ interface Product {
   season?: Season;
   defaultImage?: string;
   sku: number;
-  costPrice?: number;
+  costPrice: number;
   salePrice: number;
+  lineCostPrice: number;
+  lineSalePrice: number;
   status: ProductStatus;
   totalTheoreticalStock: number;
   totalPhysicalStock: number;
@@ -41,7 +43,7 @@ interface CreateProductPayload {
   season?: Season;
   defaultImage?: string;
   sku: number;
-  costPrice?: number;
+  costPrice: number;
   salePrice: number;
 }
 

@@ -222,7 +222,8 @@ export function ProductsList() {
                 <TableHead>{t('color')}</TableHead>
                 <TableHead>{t('cost_price')}</TableHead>
                 <TableHead>{t('sale_price')}</TableHead>
-                <TableHead>{t('line_price')}</TableHead>
+                <TableHead>{t('line_cost_price')}</TableHead>
+                <TableHead>{t('line_sale_price')}</TableHead>
                 <TableHead>{t('status')}</TableHead>
                 <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
@@ -231,7 +232,7 @@ export function ProductsList() {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="text-center py-12"
                   >
                     <div className="text-gray-500">
@@ -242,7 +243,7 @@ export function ProductsList() {
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="text-center py-12"
                   >
                     <div className="text-gray-500">
@@ -265,12 +266,10 @@ export function ProductsList() {
                     <TableCell>{product.code}</TableCell>
                     <TableCell>{t(`color_${product.color}`)}</TableCell>
                     <TableCell>
-                      {product.costPrice
-                        ? new Intl.NumberFormat('en-EG', {
-                            style: 'currency',
-                            currency: 'EGP',
-                          }).format(product.costPrice)
-                        : '-'}
+                      {new Intl.NumberFormat('en-EG', {
+                        style: 'currency',
+                        currency: 'EGP',
+                      }).format(product.costPrice)}
                     </TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('en-EG', {
@@ -282,7 +281,13 @@ export function ProductsList() {
                       {new Intl.NumberFormat('en-EG', {
                         style: 'currency',
                         currency: 'EGP',
-                      }).format(product.salePrice * product.sku)}
+                      }).format(product.lineCostPrice)}
+                    </TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat('en-EG', {
+                        style: 'currency',
+                        currency: 'EGP',
+                      }).format(product.lineSalePrice)}
                     </TableCell>
                     <TableCell>
                       <Badge

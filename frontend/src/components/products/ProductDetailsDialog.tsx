@@ -141,12 +141,10 @@ export function ProductDetailsDialog({ open, onOpenChange, product }: ProductDet
                 <div>
                   <p className="text-xs text-muted-foreground">{t('cost_price')}</p>
                   <p className="font-medium">
-                    {product.costPrice
-                      ? new Intl.NumberFormat('en-EG', {
-                          style: 'currency',
-                          currency: 'EGP',
-                        }).format(product.costPrice)
-                      : '-'}
+                    {new Intl.NumberFormat('en-EG', {
+                      style: 'currency',
+                      currency: 'EGP',
+                    }).format(product.costPrice)}
                   </p>
                 </div>
                 <div>
@@ -156,6 +154,24 @@ export function ProductDetailsDialog({ open, onOpenChange, product }: ProductDet
                       style: 'currency',
                       currency: 'EGP',
                     }).format(product.salePrice)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('line_cost_price')}</p>
+                  <p className="font-medium">
+                    {new Intl.NumberFormat('en-EG', {
+                      style: 'currency',
+                      currency: 'EGP',
+                    }).format(product.lineCostPrice)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{t('line_sale_price')}</p>
+                  <p className="font-medium">
+                    {new Intl.NumberFormat('en-EG', {
+                      style: 'currency',
+                      currency: 'EGP',
+                    }).format(product.lineSalePrice)}
                   </p>
                 </div>
               </div>

@@ -297,12 +297,26 @@ const returnController = {
                 const movementTime = returnDoc.returnDate || new Date();
                 const stockMovements = [];
                 for (const item of returnDoc.items) {
+                    const sold = orderItemMap.get(String(item.productId));
+                    const skuRatio = Number(sold.actualQuantity) / Number(sold.quantity);
+                    const actualQuantity = Number(item.actualQuantity) || item.quantity * skuRatio;
+
+                    if (!Number.isFinite(actualQuantity) || actualQuantity <= 0) {
+                        throw createError(
+                            `Invalid actual quantity for product ${item.productId}`,
+                            409,
+                        );
+                    }
+
+                    // Backfill missing values on old draft returns before status save.
+                    item.actualQuantity = actualQuantity;
+
                     const r = await Product.updateOne(
-                        { _id: item.productId, totalSold: { $gte: item.actualQuantity } },
+                        { _id: item.productId, totalSold: { $gte: actualQuantity } },
                         {
                             $inc: {
-                                totalSold: -item.actualQuantity,
-                                totalTheoreticalStock: +item.actualQuantity,
+                                totalSold: -actualQuantity,
+                                totalTheoreticalStock: +actualQuantity,
                             },
                         },
                         { session },
@@ -315,7 +329,7 @@ const returnController = {
                     const stockMovement = await createStockMovement(
                         {
                             productId: item.productId,
-                            quantityChange: item.actualQuantity,
+                            quantityChange: actualQuantity,
                             from: STOCK_MOVEMENT_TYPE.RETURN,
                             to: STOCK_MOVEMENT_TYPE.INVENTORY,
                             createdByUserId: userId,

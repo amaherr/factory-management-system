@@ -134,47 +134,82 @@ export function EditProductDialog({
         setLoading(false);
         return;
       }
+      if (!formData.costPrice) {
+        toast.error(t('cost_price_required'));
+        setLoading(false);
+        return;
+      }
       if (!formData.salePrice) {
         toast.error(t('sale_price_required'));
         setLoading(false);
         return;
       }
 
-      let updatedProduct: Product;
+      const trimmedCode = formData.code.trim();
+      const trimmedName = formData.name.trim();
+      const trimmedDescription = formData.description.trim();
+      const parsedSku = Number(formData.sku);
+      const parsedCostPrice = Number(formData.costPrice);
+      const parsedSalePrice = Number(formData.salePrice);
+
+      const nextDescription = trimmedDescription || undefined;
+      const currentDescription = product.description?.trim() || undefined;
+      const nextSeason = formData.season || undefined;
+
+      const codeChanged = trimmedCode !== product.code;
+      const nameChanged = trimmedName !== product.name;
+      const descriptionChanged = nextDescription !== currentDescription;
+      const colorChanged = formData.color !== product.color;
+      const seasonChanged = nextSeason !== product.season;
+      const skuChanged = parsedSku !== product.sku;
+      const costPriceChanged = parsedCostPrice !== product.costPrice;
+      const salePriceChanged = parsedSalePrice !== product.salePrice;
+
+      let updatedProduct: Product = product;
 
       if (imageFile) {
         const payload = new FormData();
-        payload.append('code', formData.code.trim());
-        payload.append('name', formData.name.trim());
-        payload.append('color', formData.color);
-        payload.append('sku', formData.sku);
-        payload.append('salePrice', formData.salePrice);
-
-        if (formData.description.trim()) {
-          payload.append('description', formData.description.trim());
+        if (codeChanged) payload.append('code', trimmedCode);
+        if (nameChanged) payload.append('name', trimmedName);
+        if (descriptionChanged) {
+          payload.append('description', nextDescription || '');
         }
-        if (formData.season) {
-          payload.append('season', formData.season);
+        if (colorChanged) payload.append('color', formData.color);
+        if (seasonChanged) {
+          payload.append('season', nextSeason || '');
         }
-        if (formData.costPrice) {
-          payload.append('costPrice', formData.costPrice);
-        }
+        if (skuChanged) payload.append('sku', String(parsedSku));
+        if (costPriceChanged) payload.append('costPrice', String(parsedCostPrice));
+        if (salePriceChanged) payload.append('salePrice', String(parsedSalePrice));
         payload.append('image', imageFile);
 
         updatedProduct = await productService.updateProduct(product._id, payload);
       } else {
-        updatedProduct = await productService.updateProduct(product._id, {
-          code: formData.code.trim(),
-          name: formData.name.trim(),
-          description: formData.description.trim() || undefined,
-          color: formData.color,
-          season: formData.season || undefined,
-          defaultImage: removeImage ? undefined : imagePreview || undefined,
-          removeImage: removeImage || undefined,
-          sku: parseInt(formData.sku),
-          costPrice: formData.costPrice ? parseFloat(formData.costPrice) : undefined,
-          salePrice: parseFloat(formData.salePrice),
-        });
+        const payload: {
+          code?: string;
+          name?: string;
+          description?: string;
+          color?: Color;
+          season?: Season;
+          removeImage?: boolean;
+          sku?: number;
+          costPrice?: number;
+          salePrice?: number;
+        } = {};
+
+        if (codeChanged) payload.code = trimmedCode;
+        if (nameChanged) payload.name = trimmedName;
+        if (descriptionChanged) payload.description = nextDescription;
+        if (colorChanged) payload.color = formData.color;
+        if (seasonChanged) payload.season = nextSeason as Season | undefined;
+        if (skuChanged) payload.sku = parsedSku;
+        if (costPriceChanged) payload.costPrice = parsedCostPrice;
+        if (salePriceChanged) payload.salePrice = parsedSalePrice;
+        if (removeImage) payload.removeImage = true;
+
+        if (Object.keys(payload).length > 0) {
+          updatedProduct = await productService.updateProduct(product._id, payload);
+        }
       }
 
       if (activationChanged) {
@@ -398,7 +433,7 @@ export function EditProductDialog({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="costPrice">{t('cost_price')}</Label>
+                  <Label htmlFor="costPrice">{t('cost_price')} *</Label>
                   <Input
                     id="costPrice"
                     type="number"
