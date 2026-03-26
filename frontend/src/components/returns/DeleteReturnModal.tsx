@@ -29,6 +29,8 @@ export function DeleteReturnModal({
 }: DeleteReturnModalProps) {
   const { t } = useTranslation('pos');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const formatReturnNumber = (returnNumber: number | string) =>
+    `${t('returns.numberPrefix')} - ${returnNumber}`;
 
   const handleDelete = async () => {
     if (!returnRecord) return;
@@ -37,7 +39,9 @@ export function DeleteReturnModal({
     try {
       await returnService.deleteReturn(returnRecord._id);
       toast.success(
-        t('returns.toasts.deletedSuccess', { returnNumber: returnRecord.returnNumber }),
+        t('returns.toasts.deletedSuccess', {
+          returnNumber: formatReturnNumber(returnRecord.returnNumber),
+        }),
       );
       onOpenChange(false);
       onSuccess();
@@ -53,17 +57,17 @@ export function DeleteReturnModal({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
+      <AlertDialogContent className="overflow-hidden p-0">
+        <AlertDialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <AlertDialogTitle>{t('returns.deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>
             {t('returns.deleteDialog.description', {
-              returnNumber: returnRecord?.returnNumber,
+              returnNumber: returnRecord ? formatReturnNumber(returnRecord.returnNumber) : '-',
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t border-[--border-default] bg-[--bg-secondary] px-6 py-3">
           <AlertDialogCancel disabled={deleteLoading}>
             {t('returns.common.cancel')}
           </AlertDialogCancel>

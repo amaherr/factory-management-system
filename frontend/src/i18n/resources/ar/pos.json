@@ -106,6 +106,7 @@
   "returns": {
     "title": "المرتجعات",
     "description": "إنشاء وإدارة مرتجعات المنتجات",
+    "numberPrefix": "RET",
     "createButton": "إنشاء مرتجع",
     "searchPlaceholder": "ابحث برقم المرتجع أو رقم الطلب أو الملاحظة أو المستخدم...",
     "statusFilterLabel": "تصفية حسب الحالة",
@@ -148,6 +149,11 @@
       "unitPrice": "سعر الوحدة",
       "itemTotal": "إجمالي الصنف",
       "returnQty": "كمية المرتجع",
+      "line": "خط",
+      "lines": "خطوط",
+      "returnSummary": "ملخص المرتجع",
+      "totalRefund": "إجمالي الاسترداد",
+      "selectItemsToReturn": "اختر العناصر لعرض ملخص المرتجع",
       "noOrderItems": "لا توجد عناصر في هذا الطلب",
       "submit": "إنشاء مرتجع",
       "creating": "جاري الإنشاء..."

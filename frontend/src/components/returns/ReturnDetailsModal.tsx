@@ -32,40 +32,44 @@ function getOrderNumber(orderId: ReturnRecord['orderId']): string {
 
 export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnDetailsModalProps) {
   const { t } = useTranslation('pos');
+  const formatReturnNumber = (returnNumber: number | string) =>
+    `${t('returns.numberPrefix')} - ${returnNumber}`;
 
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[760px]">
+        <DialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <DialogTitle>{t('returns.detailsDialog.title')}</DialogTitle>
           <DialogDescription>
-            {returnRecord ? `#${returnRecord.returnNumber}` : t('returns.common.loading')}
+            {returnRecord
+              ? formatReturnNumber(returnRecord.returnNumber)
+              : t('returns.common.loading')}
           </DialogDescription>
         </DialogHeader>
 
         {returnRecord && (
-          <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
-            <div className="grid grid-cols-2 gap-4 border-b pb-4">
-              <div>
-                <p className="text-xs text-gray-500">{t('returns.table.returnNumber')}</p>
-                <p className="font-medium">#{returnRecord.returnNumber}</p>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
+                <p className="text-xs text-muted-foreground">{t('returns.table.returnNumber')}</p>
+                <p className="mt-1 font-medium">#{formatReturnNumber(returnRecord.returnNumber)}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-500">{t('returns.table.orderNumber')}</p>
-                <p className="font-medium">{getOrderNumber(returnRecord.orderId)}</p>
+              <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
+                <p className="text-xs text-muted-foreground">{t('returns.table.orderNumber')}</p>
+                <p className="mt-1 font-medium">{getOrderNumber(returnRecord.orderId)}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-500">{t('returns.table.status')}</p>
+              <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
+                <p className="text-xs text-muted-foreground">{t('returns.table.status')}</p>
                 <Badge className={getStatusColor(returnRecord.status)}>
                   {t(`returns.status.${returnRecord.status}`)}
                 </Badge>
               </div>
-              <div>
-                <p className="text-xs text-gray-500">{t('returns.table.returnDate')}</p>
-                <p className="font-medium">
+              <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
+                <p className="text-xs text-muted-foreground">{t('returns.table.returnDate')}</p>
+                <p className="mt-1 font-medium">
                   {new Date(returnRecord.returnDate).toLocaleDateString()}
                 </p>
               </div>
@@ -81,15 +85,15 @@ export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnD
                 return (
                   <div
                     key={`${name}-${index}`}
-                    className="flex justify-between border rounded-md p-3"
+                    className="flex justify-between rounded-md border border-[--border-default] bg-[--bg-secondary] p-3"
                   >
                     <div>
                       <p className="font-medium text-sm">{name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {t('returns.detailsDialog.qty')}: {item.quantity}
                       </p>
                       {item.actualQuantity != null && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {t('returns.detailsDialog.actualQty')}: {item.actualQuantity}
                         </p>
                       )}
@@ -106,13 +110,15 @@ export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnD
             {returnRecord.note && (
               <div>
                 <p className="text-sm font-medium mb-1">{t('returns.detailsDialog.note')}</p>
-                <p className="text-sm text-gray-700 border rounded-md p-3">{returnRecord.note}</p>
+                <p className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3 text-sm text-muted-foreground">
+                  {returnRecord.note}
+                </p>
               </div>
             )}
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-[--border-default] bg-[--bg-secondary] px-6 py-3">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

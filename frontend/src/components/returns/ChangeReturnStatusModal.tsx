@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Label } from '../ui/label';
 
 interface ChangeReturnStatusModalProps {
   open: boolean;
@@ -31,6 +32,8 @@ export function ChangeReturnStatusModal({
   const { t } = useTranslation('pos');
   const [statusValue, setStatusValue] = useState<'finalized' | 'cancelled' | ''>('');
   const [statusLoading, setStatusLoading] = useState(false);
+  const formatReturnNumber = (returnNumber: number | string) =>
+    `${t('returns.numberPrefix')} - ${returnNumber}`;
 
   const handleStatusChange = async () => {
     if (!returnRecord || !statusValue) return;
@@ -59,44 +62,47 @@ export function ChangeReturnStatusModal({
         if (!nextOpen) setStatusValue('');
       }}
     >
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="overflow-hidden p-0 sm:max-w-[520px]">
+        <DialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <DialogTitle>{t('returns.statusDialog.title')}</DialogTitle>
           <DialogDescription>
             {t('returns.statusDialog.description', {
-              returnNumber: returnRecord?.returnNumber,
+              returnNumber: returnRecord ? formatReturnNumber(returnRecord.returnNumber) : '-',
             })}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <Select
-            value={statusValue}
-            onValueChange={(value) => setStatusValue(value as 'finalized' | 'cancelled')}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('returns.statusDialog.selectStatus')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="finalized">{t('returns.status.finalized')}</SelectItem>
-              <SelectItem value="cancelled">{t('returns.status.cancelled')}</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-4 px-6 py-5">
+          <div className="space-y-2">
+            <Label className="text-sm">{t('returns.statusDialog.selectStatus')}</Label>
+            <Select
+              value={statusValue}
+              onValueChange={(value) => setStatusValue(value as 'finalized' | 'cancelled')}
+            >
+              <SelectTrigger className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30">
+                <SelectValue placeholder={t('returns.statusDialog.selectStatus')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="finalized">{t('returns.status.finalized')}</SelectItem>
+                <SelectItem value="cancelled">{t('returns.status.cancelled')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {statusValue === 'finalized' && (
-            <div className="rounded-md bg-blue-50 p-3 text-sm text-blue-700">
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
               {t('returns.statusDialog.finalizeWarning')}
             </div>
           )}
 
           {statusValue === 'cancelled' && (
-            <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-700">
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               {t('returns.statusDialog.cancelWarning')}
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-[--border-default] bg-[--bg-secondary] px-6 py-3">
           <Button
             variant="outline"
             disabled={statusLoading}
@@ -112,8 +118,8 @@ export function ChangeReturnStatusModal({
             onClick={handleStatusChange}
             className={
               statusValue === 'finalized'
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-amber-600 hover:bg-amber-700'
+                ? 'bg-emerald-600 hover:bg-emerald-700'
+                : 'bg-red-600 hover:bg-red-700'
             }
           >
             {statusLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

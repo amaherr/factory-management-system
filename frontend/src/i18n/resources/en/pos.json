@@ -106,6 +106,7 @@
   "returns": {
     "title": "Returns",
     "description": "Create and manage product returns",
+    "numberPrefix": "RET",
     "createButton": "Create Return",
     "searchPlaceholder": "Search by return #, order #, note, or user...",
     "statusFilterLabel": "Filter by status",
@@ -148,6 +149,11 @@
       "unitPrice": "Unit Price",
       "itemTotal": "Item Total",
       "returnQty": "Return Qty",
+      "line": "line",
+      "lines": "lines",
+      "returnSummary": "Return Summary",
+      "totalRefund": "Total Refund",
+      "selectItemsToReturn": "Select items to see return summary",
       "noOrderItems": "No items found in this order",
       "submit": "Create Return",
       "creating": "Creating..."

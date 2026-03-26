@@ -41,6 +41,8 @@ export function EditReturnModal({
   onSuccess,
 }: EditReturnModalProps) {
   const { t } = useTranslation('pos');
+  const formatReturnNumber = (returnNumber: number | string) =>
+    `${t('returns.numberPrefix')} - ${returnNumber}`;
 
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -129,20 +131,23 @@ export function EditReturnModal({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className="sm:max-w-[850px]">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[88vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[900px]">
+        <DialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <DialogTitle>{t('returns.editDialog.title')}</DialogTitle>
           <DialogDescription>
-            {t('returns.editDialog.description', { returnNumber: returnRecord?.returnNumber })}
+            {t('returns.editDialog.description', {
+              returnNumber: returnRecord ? formatReturnNumber(returnRecord.returnNumber) : '-',
+            })}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <p className="text-sm font-medium">{t('returns.createDialog.returnDate')}</p>
               <Input
                 type="date"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
               />
@@ -154,6 +159,7 @@ export function EditReturnModal({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t('returns.createDialog.notePlaceholder')}
+                className="border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 rows={3}
               />
             </div>
@@ -162,7 +168,7 @@ export function EditReturnModal({
           <div className="space-y-2">
             <p className="text-sm font-medium">{t('returns.createDialog.itemsTitle')}</p>
             {loadingOrder ? (
-              <div className="rounded-md border p-6 flex justify-center">
+              <div className="flex justify-center rounded-md border border-[--border-default] bg-[--bg-secondary] p-6">
                 <Loader2 className="size-5 animate-spin text-primary" />
               </div>
             ) : orderDetails?.items?.length ? (
@@ -180,11 +186,11 @@ export function EditReturnModal({
                   return (
                     <div
                       key={productId}
-                      className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end rounded-md border p-3"
+                      className="grid grid-cols-1 items-end gap-3 rounded-md border border-[--border-default] bg-[--bg-secondary] p-3 md:grid-cols-4"
                     >
                       <div className="md:col-span-2">
                         <p className="text-sm font-medium">{productName}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {t('returns.createDialog.soldQty')}: {orderItem.quantity}
                           {orderItem.actualQuantity != null &&
                             ` (${t('returns.createDialog.actualQty')}: ${orderItem.actualQuantity})`}
@@ -192,7 +198,7 @@ export function EditReturnModal({
                       </div>
 
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">
+                        <p className="mb-1 text-xs text-muted-foreground">
                           {t('returns.createDialog.unitPrice')}
                         </p>
                         <p className="text-sm font-medium">
@@ -200,20 +206,22 @@ export function EditReturnModal({
                           {Number(orderItem.unitPrice).toFixed(2)}
                         </p>
                         {orderItem.totalPrice != null && (
-                          <p className="text-xs text-gray-500">
-                            {t('returns.createDialog.itemTotal')}: {CURRENCY}{Number(orderItem.totalPrice).toFixed(2)}
+                          <p className="text-xs text-muted-foreground">
+                            {t('returns.createDialog.itemTotal')}: {CURRENCY}
+                            {Number(orderItem.totalPrice).toFixed(2)}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">
+                        <p className="mb-1 text-xs text-muted-foreground">
                           {t('returns.createDialog.returnQty')}
                         </p>
                         <Input
                           type="number"
                           min={0}
                           max={orderItem.quantity}
+                          className="h-9 rounded-md border-[--border-default] bg-white text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                           value={quantities[productId] ?? ''}
                           onChange={(e) => {
                             const raw = e.target.value;
@@ -236,14 +244,14 @@ export function EditReturnModal({
                 })}
               </div>
             ) : (
-              <div className="rounded-md border p-4 text-sm text-gray-500">
+              <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-4 text-sm text-muted-foreground">
                 {t('returns.createDialog.noOrderItems')}
               </div>
             )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-[--border-default] bg-[--bg-secondary] px-6 py-3">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

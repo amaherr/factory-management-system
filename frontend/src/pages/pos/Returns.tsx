@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, FilePenLine, Loader2, Plus, Search, Settings, Trash2 } from 'lucide-react';
+import { Eye, Loader2, Pencil, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ReturnRecord } from '../../services/returns';
@@ -92,25 +92,30 @@ export function Returns() {
   const filteredReturns = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return returns.filter((item) => {
-      const statusMatch = statusFilter === 'all' || item.status === statusFilter;
-      if (!statusMatch) return false;
+    return returns
+      .filter((item) => {
+        const statusMatch = statusFilter === 'all' || item.status === statusFilter;
+        if (!statusMatch) return false;
 
-      if (!query) return true;
+        if (!query) return true;
 
-      const returnNumber = String(item.returnNumber).toLowerCase();
-      const orderNumber = getOrderNumber(item.orderId).toLowerCase();
-      const note = (item.note || '').toLowerCase();
-      const createdBy = getCreatedBy(item.userId).toLowerCase();
+        const returnNumber = String(item.returnNumber).toLowerCase();
+        const orderNumber = getOrderNumber(item.orderId).toLowerCase();
+        const note = (item.note || '').toLowerCase();
+        const createdBy = getCreatedBy(item.userId).toLowerCase();
 
-      return (
-        returnNumber.includes(query) ||
-        orderNumber.includes(query) ||
-        note.includes(query) ||
-        createdBy.includes(query)
-      );
-    });
+        return (
+          returnNumber.includes(query) ||
+          orderNumber.includes(query) ||
+          note.includes(query) ||
+          createdBy.includes(query)
+        );
+      })
+      .sort((a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime());
   }, [returns, searchQuery, statusFilter]);
+
+  const formatReturnNumber = (returnNumber: number | string) =>
+    `#${t('returns.numberPrefix')} - ${returnNumber}`;
 
   const refresh = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -134,22 +139,34 @@ export function Returns() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.6fr)_220px] md:items-center">
+            <div className="relative max-w-xl">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('returns.searchPlaceholder')}
-                className="pl-10"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                  onClick={() => setSearchQuery('')}
+                  title={t('clearSearch')}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
             </div>
 
             <Select
               value={statusFilter}
               onValueChange={setStatusFilter}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('returns.statusFilterLabel')} />
               </SelectTrigger>
               <SelectContent>
@@ -187,7 +204,9 @@ export function Returns() {
               <TableBody>
                 {filteredReturns.map((item) => (
                   <TableRow key={item._id}>
-                    <TableCell className="font-medium">#{item.returnNumber}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatReturnNumber(item.returnNumber)}
+                    </TableCell>
                     <TableCell>{getOrderNumber(item.orderId)}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(item.status)}>
@@ -202,6 +221,7 @@ export function Returns() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-black hover:bg-black/10"
                           title={t('returns.actions.viewDetails')}
                           onClick={() => {
                             setSelectedReturn(item);
@@ -215,13 +235,14 @@ export function Returns() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="text-blue-700 hover:bg-blue-50"
                             title={t('returns.actions.edit')}
                             onClick={() => {
                               setSelectedReturn(item);
                               setEditOpen(true);
                             }}
                           >
-                            <FilePenLine className="size-4" />
+                            <Pencil className="size-4" />
                           </Button>
                         )}
 
@@ -229,13 +250,14 @@ export function Returns() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="text-blue-700 hover:bg-blue-50"
                             title={t('returns.actions.changeStatus')}
                             onClick={() => {
                               setSelectedReturn(item);
                               setStatusOpen(true);
                             }}
                           >
-                            <Settings className="size-4" />
+                            <Settings2 className="size-4" />
                           </Button>
                         )}
 
@@ -244,7 +266,7 @@ export function Returns() {
                             variant="ghost"
                             size="sm"
                             title={t('returns.actions.delete')}
-                            className="text-destructive hover:text-destructive"
+                            className="text-red-700 hover:bg-red-50"
                             onClick={() => {
                               setSelectedReturn(item);
                               setDeleteOpen(true);
