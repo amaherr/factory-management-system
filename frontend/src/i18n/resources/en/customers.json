@@ -17,6 +17,12 @@
   "actions": "Actions",
   "loading_customers": "Loading customers...",
   "no_customers_found": "No customers found",
+  "pagination": {
+    "showing": "Showing {{from}} to {{to}} of {{total}} customers",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{current}} of {{total}}"
+  },
   "customer_details": "Customer Details",
   "enter_customer_details": "Enter the customer details below",
   "update_customer_details": "Update customer details",

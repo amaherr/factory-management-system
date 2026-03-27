@@ -17,6 +17,12 @@
   "actions": "الإجراءات",
   "loading_customers": "جاري تحميل العملاء...",
   "no_customers_found": "لم يتم العثور على عملاء",
+  "pagination": {
+    "showing": "عرض {{from}} إلى {{to}} من أصل {{total}} عميل",
+    "previous": "السابق",
+    "next": "التالي",
+    "page": "الصفحة {{current}} من {{total}}"
+  },
   "customer_details": "تفاصيل العميل",
   "enter_customer_details": "أدخل تفاصيل العميل أدناه",
   "update_customer_details": "تحديث تفاصيل العميل",

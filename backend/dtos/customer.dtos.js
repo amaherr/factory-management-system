@@ -33,6 +33,8 @@ const customerDtos = {
 
     getCustomersSchema: Joi.object({
         search: Joi.string().trim().min(1).optional(),
+        page: Joi.number().integer().min(1).optional(),
+        limit: Joi.number().integer().min(1).max(100).optional(),
     }).unknown(false),
 };
 

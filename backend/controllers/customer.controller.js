@@ -3,6 +3,8 @@ const Customer = require("../models/customer.model");
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const customerController = {
     // function to create a new customer
     createCustomer: async (req, res, next) => {
@@ -25,22 +27,40 @@ const customerController = {
     // function to retrieve customers
     getCustomers: async (req, res, next) => {
         try {
-            const { search } = req.query;
+            const { search, page = 1, limit = 20 } = req.query;
+
+            const pageNum = Math.max(1, parseInt(page, 10) || 1);
+            const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+            const skip = (pageNum - 1) * limitNum;
 
             // build filter object
             let filter = {};
             if (search) {
+                const escapedSearch = escapeRegex(search.trim());
                 filter = {
                     $or: [
-                        { name: { $regex: search, $options: 'i' } },
-                        { phoneNumber: { $regex: search, $options: 'i' } },
+                        { name: { $regex: escapedSearch, $options: "i" } },
+                        { phoneNumber: { $regex: escapedSearch, $options: "i" } },
                     ],
                 };
             }
 
-            const customers = await Customer.find(filter);
+            const [total, customers] = await Promise.all([
+                Customer.countDocuments(filter),
+                Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+            ]);
 
-            res.status(200).json(response("Customers retrieved successfully", customers));
+            const pages = Math.ceil(total / limitNum);
+
+            res.status(200).json(
+                response("Customers retrieved successfully", {
+                    total,
+                    page: pageNum,
+                    limit: limitNum,
+                    pages,
+                    customers,
+                }),
+            );
         } catch (err) {
             return next(err);
         }

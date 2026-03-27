@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Search, Eye, Loader2, Pencil, Trash2, X } from 'lucide-react';
+import { Search, Eye, Loader2, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AddCustomerDialog } from '../components/customers/AddCustomerDialog';
 import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog';
 import { EditCustomerDialog } from '../components/customers/EditCustomerDialog';
@@ -24,19 +24,36 @@ export function Customers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [limit] = useState(20);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   // Fetch customers
-  const fetchCustomers = async (search: string = '') => {
+  const fetchCustomers = async (search: string = '', page: number = 1) => {
     setLoading(true);
     try {
-      const data = await customerService.getCustomers(search || undefined);
-      setCustomers(data);
+      const data = await customerService.getCustomers({
+        search: search || undefined,
+        page,
+        limit,
+      });
+
+      setCustomers(data.customers);
+      setTotal(data.total);
+      setTotalPages(Math.max(1, data.pages));
+
+      // If current page is no longer valid (e.g. after delete), automatically recover.
+      if (data.pages > 0 && page > data.pages) {
+        setCurrentPage(data.pages);
+      }
     } catch (error: any) {
       toast.error(error.message || t('failed_to_load_customers'));
     } finally {
@@ -44,22 +61,23 @@ export function Customers() {
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  // Handle search
+  // Debounce search input so we don't hit the API on every keystroke.
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchCustomers(searchQuery);
-    }, 500); // Debounce search
+      setDebouncedSearch(searchQuery.trim());
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const handleCustomerAdded = (newCustomer: Customer) => {
-    setCustomers((prev) => [newCustomer, ...prev]);
+  // Fetch data whenever search or page changes.
+  useEffect(() => {
+    fetchCustomers(debouncedSearch, currentPage);
+  }, [debouncedSearch, currentPage]);
+
+  const handleCustomerAdded = () => {
+    setCurrentPage(1);
+    fetchCustomers(debouncedSearch, 1);
   };
 
   const handleViewDetails = (customer: Customer) => {
@@ -79,11 +97,15 @@ export function Customers() {
 
   const handleCustomerUpdated = (updatedCustomer: Customer) => {
     setCustomers((prev) => prev.map((c) => (c._id === updatedCustomer._id ? updatedCustomer : c)));
+    fetchCustomers(debouncedSearch, currentPage);
   };
 
-  const handleCustomerDeleted = (deletedId: string) => {
-    setCustomers((prev) => prev.filter((c) => c._id !== deletedId));
+  const handleCustomerDeleted = () => {
+    fetchCustomers(debouncedSearch, currentPage);
   };
+
+  const from = total === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const to = Math.min(currentPage * limit, total);
 
   return (
     <div className="p-6 space-y-6">
@@ -103,8 +125,10 @@ export function Customers() {
               placeholder={t('search_placeholder')}
               className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={loading}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
             {searchQuery && (
               <Button
@@ -112,7 +136,10 @@ export function Customers() {
                 variant="ghost"
                 size="sm"
                 className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                }}
                 aria-label={t('clear_search')}
               >
                 <X className="size-4" />
@@ -199,6 +226,46 @@ export function Customers() {
               )}
             </TableBody>
           </Table>
+
+          {!loading && total > 0 && (
+            <div className="border-t p-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {t('pagination.showing', {
+                  from,
+                  to,
+                  total,
+                })}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={loading || currentPage === 1}
+                >
+                  <ChevronLeft className="size-4 mr-1" />
+                  {t('pagination.previous')}
+                </Button>
+                <div className="flex items-center gap-2 px-3 py-1">
+                  <span className="text-sm">
+                    {t('pagination.page', {
+                      current: currentPage,
+                      total: totalPages,
+                    })}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={loading || currentPage === totalPages}
+                >
+                  {t('pagination.next')}
+                  <ChevronRight className="size-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

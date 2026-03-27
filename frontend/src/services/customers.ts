@@ -21,7 +21,13 @@ export interface Customer {
 
 export interface GetCustomersResponse {
   message: string;
-  data: Customer[];
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+    customers: Customer[];
+  };
 }
 
 export interface CustomerResponse {
@@ -30,11 +36,23 @@ export interface CustomerResponse {
 }
 
 export const customerService = {
-  async getCustomers(search?: string): Promise<Customer[]> {
+  async getCustomers({
+    search,
+    page = 1,
+    limit = 20,
+  }: {
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<GetCustomersResponse['data']> {
     try {
       axios.defaults.withCredentials = true;
 
-      const params = search ? { search } : {};
+      const params = {
+        ...(search ? { search } : {}),
+        page,
+        limit,
+      };
       const response = await axios.get<GetCustomersResponse>(`${API_URL}/customers`, { params });
 
       return response.data.data;

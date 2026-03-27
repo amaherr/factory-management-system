@@ -58,10 +58,10 @@ export function NewSale() {
         setLoading(true);
         const [productsData, customersData] = await Promise.all([
           productService.getAllActiveProducts(),
-          customerService.getCustomers(),
+          customerService.getCustomers({ page: 1, limit: 100 }),
         ]);
         setProducts(productsData);
-        setCustomers(customersData);
+        setCustomers(customersData.customers);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t('errors.loadFailed'));
       } finally {
