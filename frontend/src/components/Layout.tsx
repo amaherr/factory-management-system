@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
 import {
   Factory,
   Bell,
@@ -120,7 +119,7 @@ export function Layout() {
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Top App Bar */}
       <header className="h-16 border-b border-[--border-light] bg-white flex items-center justify-between px-6 shadow-sm">
         <Link
@@ -222,13 +221,13 @@ export function Layout() {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <aside
           className="w-64 border-r"
           style={{ backgroundColor: 'var(--bg-sidebar)', borderColor: 'var(--sidebar-border)' }}
         >
-          <ScrollArea className="h-full">
+          <div className="h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <nav className="p-4 space-y-1">
               {navigation.map((item) => {
                 const Icon = iconMap[item.icon];
@@ -333,12 +332,12 @@ export function Layout() {
                 );
               })}
             </nav>
-          </ScrollArea>
+          </div>
         </aside>
 
         {/* Main Content */}
         <main
-          className="flex-1 overflow-auto"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
           style={{ backgroundColor: 'var(--bg-primary)' }}
         >
           <Outlet />

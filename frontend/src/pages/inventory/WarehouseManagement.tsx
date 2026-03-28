@@ -202,7 +202,7 @@ export function WarehouseManagementPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-full overflow-x-hidden p-6 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-sm text-muted-foreground">
@@ -294,23 +294,27 @@ export function WarehouseManagementPage() {
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_420px]">
-        <PendingWarehouseExecutionsTable
-          movements={movements}
-          loading={pendingLoading}
-          total={total}
-          page={page}
-          totalPages={pages}
-          onRefresh={() => void refreshPendingMovements()}
-          onPageChange={setPage}
-          onView={handleView}
-          onExecute={handleExecute}
-        />
+        <div className="min-w-0">
+          <PendingWarehouseExecutionsTable
+            movements={movements}
+            loading={pendingLoading}
+            total={total}
+            page={page}
+            totalPages={pages}
+            onRefresh={() => void refreshPendingMovements()}
+            onPageChange={setPage}
+            onView={handleView}
+            onExecute={handleExecute}
+          />
+        </div>
 
-        <WarehouseTransferPanel
-          products={products}
-          loading={productsLoading}
-          onSuccess={refreshProducts}
-        />
+        <div className="min-w-0">
+          <WarehouseTransferPanel
+            products={products}
+            loading={productsLoading}
+            onSuccess={refreshProducts}
+          />
+        </div>
       </div>
 
       <ExecuteStockMovementDialog
