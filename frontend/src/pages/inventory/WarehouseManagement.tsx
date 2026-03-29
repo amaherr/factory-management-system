@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ClipboardCheck, Package, RefreshCw, Search, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../services/enums/user.enums';
@@ -27,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { Badge } from '../../components/ui/badge';
 import { PendingWarehouseExecutionsTable } from '../../components/warehouse/PendingWarehouseExecutionsTable';
 import { WarehouseTransferPanel } from '../../components/warehouse/WarehouseTransferPanel';
 import { ExecuteStockMovementDialog } from '../../components/warehouse/ExecuteStockMovementDialog';
@@ -186,21 +185,6 @@ export function WarehouseManagementPage() {
     await refreshAll();
   };
 
-  const summaryCards = [
-    {
-      title: t('summary.pendingTitle'),
-      value: total,
-      description: t('summary.pendingDescription'),
-      icon: ClipboardCheck,
-    },
-    {
-      title: t('summary.productsTitle'),
-      value: products.length,
-      description: t('summary.productsDescription'),
-      icon: Package,
-    },
-  ];
-
   return (
     <div className="min-h-full overflow-x-hidden p-6 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -219,33 +203,6 @@ export function WarehouseManagementPage() {
           <RefreshCw className="size-4" />
           {t('filters.refresh')}
         </Button>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-
-          return (
-            <Card
-              key={card.title}
-              className="bg-gradient-to-br from-background to-muted/40"
-            >
-              <CardContent className="flex items-center justify-between py-6">
-                <div>
-                  <p className="text-sm text-muted-foreground">{card.title}</p>
-                  <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-semibold">{card.value}</span>
-                    <Badge variant="outline">{t('summary.units')}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
-                </div>
-                <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-                  <Icon className="size-6" />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
       </div>
 
       <Card>
@@ -293,7 +250,7 @@ export function WarehouseManagementPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_420px]">
+      <div className="space-y-6">
         <div className="min-w-0">
           <PendingWarehouseExecutionsTable
             movements={movements}

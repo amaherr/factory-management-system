@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, X, ArrowRight } from 'lucide-react';
 import {
   stockMovementService,
   type StockMovement,
@@ -78,18 +78,6 @@ export function StockMovementPage() {
   const handleViewDetails = (movement: StockMovement) => {
     setSelectedMovement(movement);
     setDetailsOpen(true);
-  };
-
-  const getBucketColor = (type: StockBucket) => {
-    const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      reserve: 'secondary',
-      sales: 'destructive',
-      batch: 'default',
-      return: 'secondary',
-      manual_adjustment: 'outline',
-      inventory: 'default',
-    };
-    return colorMap[type] || 'outline';
   };
 
   const getWarehouseActionColor = (action?: WarehouseAction | null) => {
@@ -228,13 +216,16 @@ export function StockMovementPage() {
                       <TableCell>{new Date(movement.createdAt!).toLocaleString()}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant={getBucketColor(movement.from)}>
+                          <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                             {t(`movements.buckets.${movement.from}`)}
-                          </Badge>
-                          <span className="text-muted-foreground">{t('movements.table.to')}</span>
-                          <Badge variant={getBucketColor(movement.to)}>
+                          </span>
+                          <ArrowRight
+                            className="size-3.5 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                             {t(`movements.buckets.${movement.to}`)}
-                          </Badge>
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>

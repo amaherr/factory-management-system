@@ -1,6 +1,6 @@
-import { Eye, Play, RefreshCw } from 'lucide-react';
+import { ArrowRight, Eye, Play, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { StockMovement, StockBucket, WarehouseAction } from '../../services/stockMovements';
+import type { StockMovement, WarehouseAction } from '../../services/stockMovements';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -16,19 +16,6 @@ interface PendingWarehouseExecutionsTableProps {
   onPageChange: (page: number) => void;
   onView: (movement: StockMovement) => void;
   onExecute: (movement: StockMovement) => void;
-}
-
-function getBucketColor(type: StockBucket) {
-  const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    reserve: 'secondary',
-    sales: 'destructive',
-    batch: 'default',
-    return: 'secondary',
-    manual_adjustment: 'outline',
-    inventory: 'default',
-  };
-
-  return colorMap[type] || 'outline';
 }
 
 function getWarehouseActionColor(action?: WarehouseAction | null) {
@@ -151,15 +138,13 @@ export function PendingWarehouseExecutionsTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2 text-sm">
-                        <Badge variant={getBucketColor(movement.from)}>
+                        <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                           {tStock(`movements.buckets.${movement.from}`)}
-                        </Badge>
-                        <span className="text-muted-foreground">
-                          {tStock('movements.table.to')}
                         </span>
-                        <Badge variant={getBucketColor(movement.to)}>
+                        <ArrowRight className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                        <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                           {tStock(`movements.buckets.${movement.to}`)}
-                        </Badge>
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
