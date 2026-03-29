@@ -114,7 +114,10 @@ export function WarehouseTransferPanel({
               onValueChange={handleProductChange}
               disabled={loading}
             >
-              <SelectTrigger id="warehouse-product">
+              <SelectTrigger
+                id="warehouse-product"
+                className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+              >
                 <SelectValue placeholder={t('transfer.selectProduct')} />
               </SelectTrigger>
               <SelectContent>
@@ -130,7 +133,7 @@ export function WarehouseTransferPanel({
             </Select>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+          <div className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-start">
             <div className="space-y-2">
               <Label htmlFor="warehouse-from">{tStock('transferStock.fromLocation')}</Label>
               <Select
@@ -138,7 +141,10 @@ export function WarehouseTransferPanel({
                 onValueChange={(value) => setFromLocation(value as FactoryLocation)}
                 disabled={!selectedProduct}
               >
-                <SelectTrigger id="warehouse-from">
+                <SelectTrigger
+                  id="warehouse-from"
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                >
                   <SelectValue placeholder={tStock('transferStock.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,7 +163,7 @@ export function WarehouseTransferPanel({
               </p>
             </div>
 
-            <div className="hidden sm:flex justify-center pb-2 text-muted-foreground">
+            <div className="hidden sm:flex items-center justify-center pt-7 text-muted-foreground">
               <ArrowRightLeft className="size-4" />
             </div>
 
@@ -168,7 +174,10 @@ export function WarehouseTransferPanel({
                 onValueChange={(value) => setToLocation(value as FactoryLocation)}
                 disabled={!selectedProduct}
               >
-                <SelectTrigger id="warehouse-to">
+                <SelectTrigger
+                  id="warehouse-to"
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                >
                   <SelectValue placeholder={tStock('transferStock.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -196,6 +205,7 @@ export function WarehouseTransferPanel({
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
               placeholder={tStock('transferStock.quantityPlaceholder')}
+              className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
               disabled={!selectedProduct}
             />
           </div>
@@ -224,7 +234,7 @@ export function WarehouseTransferPanel({
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-[#1f4f86] hover:bg-[#1b4678]"
             disabled={isSubmitting || !selectedProduct}
           >
             {isSubmitting ? tStock('transferStock.submitting') : tStock('transferStock.submit')}

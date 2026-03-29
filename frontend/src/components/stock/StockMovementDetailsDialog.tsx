@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import type { StockMovement, StockBucket, WarehouseAction } from '../../services/stockMovements';
+import type { StockMovement, WarehouseAction } from '../../services/stockMovements';
 
 interface StockMovementDetailsDialogProps {
   movement: StockMovement | null;
@@ -18,18 +19,6 @@ export function StockMovementDetailsDialog({
   const { t } = useTranslation('stock');
 
   if (!movement) return null;
-
-  const getBucketColor = (type: StockBucket) => {
-    const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      reserve: 'secondary',
-      sales: 'destructive',
-      batch: 'default',
-      return: 'secondary',
-      manual_adjustment: 'outline',
-      inventory: 'default',
-    };
-    return colorMap[type] || 'outline';
-  };
 
   const getWarehouseActionColor = (action?: WarehouseAction | null) => {
     const colorMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -82,14 +71,14 @@ export function StockMovementDetailsDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">{t('movements.details.flow')}</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Badge variant={getBucketColor(movement.from)}>
+                  <div className="mt-1 flex items-center gap-2 text-sm">
+                    <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                       {t(`movements.buckets.${movement.from}`)}
-                    </Badge>
-                    <span className="text-muted-foreground text-sm">{t('movements.table.to')}</span>
-                    <Badge variant={getBucketColor(movement.to)}>
+                    </span>
+                    <ArrowRight className="size-3.5 text-muted-foreground" />
+                    <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                       {t(`movements.buckets.${movement.to}`)}
-                    </Badge>
+                    </span>
                   </div>
                 </div>
                 <div>

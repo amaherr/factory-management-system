@@ -1,9 +1,11 @@
-import { ArrowRight, Eye, Play, RefreshCw } from 'lucide-react';
+import { ArrowRight, Eye, Play, RefreshCw, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { StockMovement, WarehouseAction } from '../../services/stockMovements';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
 interface PendingWarehouseExecutionsTableProps {
@@ -12,6 +14,10 @@ interface PendingWarehouseExecutionsTableProps {
   total: number;
   page: number;
   totalPages: number;
+  searchQuery: string;
+  actionFilter: WarehouseAction | 'all';
+  onSearchChange: (query: string) => void;
+  onActionFilterChange: (value: WarehouseAction | 'all') => void;
   onRefresh: () => void;
   onPageChange: (page: number) => void;
   onView: (movement: StockMovement) => void;
@@ -27,6 +33,10 @@ function getWarehouseActionColor(action?: WarehouseAction | null) {
 
   if (!action) return 'outline';
   return colorMap[action] || 'outline';
+}
+
+function getQuantityColor(quantity: number) {
+  return quantity > 0 ? 'default' : 'destructive';
 }
 
 function getReference(movement: StockMovement) {
@@ -51,6 +61,10 @@ export function PendingWarehouseExecutionsTable({
   total,
   page,
   totalPages,
+  searchQuery,
+  actionFilter,
+  onSearchChange,
+  onActionFilterChange,
   onRefresh,
   onPageChange,
   onView,
@@ -73,6 +87,7 @@ export function PendingWarehouseExecutionsTable({
           <Button
             variant="outline"
             size="sm"
+            className="h-9"
             onClick={onRefresh}
           >
             <RefreshCw className="size-4" />
@@ -81,6 +96,50 @@ export function PendingWarehouseExecutionsTable({
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <div className="relative max-w-xl">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
+              placeholder={t('filters.searchPlaceholder')}
+            />
+            {searchQuery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
+                onClick={() => onSearchChange('')}
+                title={t('filters.clearSearch')}
+                aria-label={t('filters.clearSearch')}
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+
+          <Select
+            value={actionFilter}
+            onValueChange={(value) => onActionFilterChange(value as WarehouseAction | 'all')}
+          >
+            <SelectTrigger className="h-9 rounded-md">
+              <SelectValue placeholder={t('filters.allActions')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('filters.allActions')}</SelectItem>
+              <SelectItem value="pick">{tStock('movements.warehouseActions.pick')}</SelectItem>
+              <SelectItem value="receive">
+                {tStock('movements.warehouseActions.receive')}
+              </SelectItem>
+              <SelectItem value="transfer">
+                {tStock('movements.warehouseActions.transfer')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="rounded-lg bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           {t('pending.showing', { from, to, total })}
         </div>
@@ -141,14 +200,20 @@ export function PendingWarehouseExecutionsTable({
                         <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                           {tStock(`movements.buckets.${movement.from}`)}
                         </span>
-                        <ArrowRight className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                        <ArrowRight
+                          className="size-3.5 text-muted-foreground"
+                          aria-hidden="true"
+                        />
                         <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
                           {tStock(`movements.buckets.${movement.to}`)}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{movement.quantityChange}</Badge>
+                      <Badge variant={getQuantityColor(movement.quantityChange)}>
+                        {movement.quantityChange > 0 ? '+' : ''}
+                        {movement.quantityChange}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">
                       {getReference(movement) || t('pending.referenceNone')}
@@ -169,14 +234,17 @@ export function PendingWarehouseExecutionsTable({
                     <TableCell>
                       <div className="flex justify-end gap-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
+                          className="text-black hover:bg-black/10"
                           onClick={() => onView(movement)}
+                          title={t('table.actions')}
                         >
                           <Eye className="size-4" />
                         </Button>
                         <Button
                           size="sm"
+                          className="bg-[#1f4f86] hover:bg-[#1b4678]"
                           onClick={() => onExecute(movement)}
                         >
                           <Play className="size-4" />

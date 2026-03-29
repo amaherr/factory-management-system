@@ -13,6 +13,7 @@
     "title": "Warehouse queue filters",
     "description": "Narrow the pending task list by product code or warehouse action.",
     "searchPlaceholder": "Search pending movements by product code...",
+    "clearSearch": "Clear search",
     "allActions": "All warehouse actions",
     "refresh": "Refresh"
   },

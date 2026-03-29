@@ -106,8 +106,8 @@ export function ExecuteStockMovementDialog({
       open={open}
       onOpenChange={handleOpenChange}
     >
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
+      <DialogContent className="overflow-hidden p-0 sm:max-w-xl">
+        <DialogHeader className="border-b border-[--border-default] bg-[--bg-secondary] px-6 py-4">
           <DialogTitle>{t('execute.title')}</DialogTitle>
           <DialogDescription>
             {t('execute.description', {
@@ -120,7 +120,7 @@ export function ExecuteStockMovementDialog({
         {movement && (
           <form
             onSubmit={handleSubmit}
-            className="space-y-5"
+            className="space-y-5 px-6 py-5"
           >
             <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
@@ -141,7 +141,10 @@ export function ExecuteStockMovementDialog({
                     value={sourceLocation}
                     onValueChange={(value) => setSourceLocation(value as FactoryLocation)}
                   >
-                    <SelectTrigger id="execute-source-location">
+                    <SelectTrigger
+                      id="execute-source-location"
+                      className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                    >
                       <SelectValue placeholder={t('execute.selectLocation')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -169,7 +172,10 @@ export function ExecuteStockMovementDialog({
                     value={destinationLocation}
                     onValueChange={(value) => setDestinationLocation(value as FactoryLocation)}
                   >
-                    <SelectTrigger id="execute-destination-location">
+                    <SelectTrigger
+                      id="execute-destination-location"
+                      className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                    >
                       <SelectValue placeholder={t('execute.selectLocation')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -215,7 +221,7 @@ export function ExecuteStockMovementDialog({
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="border-t border-[--border-default] bg-[--bg-secondary] px-0 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -225,6 +231,7 @@ export function ExecuteStockMovementDialog({
               </Button>
               <Button
                 type="submit"
+                className="bg-[#1f4f86] hover:bg-[#1b4678]"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? t('execute.submitting') : t('execute.submit')}
