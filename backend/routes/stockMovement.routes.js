@@ -31,12 +31,20 @@ router.get(
     stockMovementController.getStockMovement,
 );
 
-// Execute a specific stock movement (Admin, Inventory)
+// Execute a specific stock movement pick action (Admin, Inventory)
 router.patch(
-    "/:movementId",
+    "/:movementId/pick",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
-    validator({ bodySchema: stockMovementDtos.executeStockMovement }),
-    stockMovementController.executeStockMovement,
+    validator({ bodySchema: stockMovementDtos.executePickStockMovement }),
+    stockMovementController.executePickStockMovement,
+);
+
+// Execute a specific stock movement receive action (Admin, Inventory)
+router.patch(
+    "/:movementId/receive",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    validator({ bodySchema: stockMovementDtos.executeReceiveStockMovement }),
+    stockMovementController.executeReceiveStockMovement,
 );
 
 module.exports = router;

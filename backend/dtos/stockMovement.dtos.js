@@ -33,24 +33,17 @@ const stockMovementDtos = {
         limit: Joi.number().integer().min(1).max(100).optional(),
     }).unknown(false),
 
-    executeStockMovement: Joi.object({
+    executePickStockMovement: Joi.object({
         sourceLocation: Joi.string()
             .valid(...Object.values(FACTORY_LOCATIONS))
             .required(),
+    }).unknown(false),
+
+    executeReceiveStockMovement: Joi.object({
         destinationLocation: Joi.string()
             .valid(...Object.values(FACTORY_LOCATIONS))
             .required(),
-    })
-        .custom((value, helpers) => {
-            if (value.sourceLocation === value.destinationLocation) {
-                return helpers.error("any.invalid");
-            }
-
-            return value;
-        }, "source and destination validation")
-        .messages({
-            "any.invalid": "sourceLocation and destinationLocation must be different",
-        }),
+    }).unknown(false),
 };
 
 module.exports = stockMovementDtos;

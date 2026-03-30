@@ -1,8 +1,150 @@
+const mongoose = require("mongoose");
+
 const StockMovement = require("../models/stockMovement.model");
 const Product = require("../models/product.model");
+const { WAREHOUSE_ACTIONS } = require("../enums/stockMovement.enums");
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
+
+// ------------ Helpers ------------
+
+const populateMovementReferences = (query) =>
+    query
+        .populate("productId", "code name")
+        .populate("createdByUserId", "name email")
+        .populate("physicalExecutedByUserId", "name email")
+        .populate("orderId", "orderNumber")
+        .populate("returnId", "returnNumber")
+        .populate("batchId", "batchNumber");
+
+function findLocation(product, location) {
+    return product.locations.find((entry) => entry.location === location);
+}
+
+function ensureLocation(product, location) {
+    let existingLocation = findLocation(product, location);
+
+    if (!existingLocation) {
+        product.locations.push({
+            location,
+            quantityInStock: 0,
+        });
+        existingLocation = product.locations[product.locations.length - 1];
+    }
+
+    return existingLocation;
+}
+
+const executeWarehouseMovement = async ({
+    movementId,
+    userId,
+    requiredAction,
+    locationField,
+    locationUpdates,
+}) => {
+    const executionLocation = locationUpdates[locationField];
+    const session = await mongoose.startSession();
+
+    try {
+        const stockMovement = await session.withTransaction(async () => {
+            const existingMovement = await StockMovement.findById(movementId)
+                .select("_id isExecuted warehouseAction productId quantityChange")
+                .session(session);
+
+            if (!existingMovement) {
+                throw createError("Stock movement not found", 404);
+            }
+
+            if (existingMovement.isExecuted) {
+                throw createError("Stock movement already executed", 409);
+            }
+
+            if (!existingMovement.warehouseAction) {
+                throw createError("Stock movement does not require physical execution", 400);
+            }
+
+            if (existingMovement.warehouseAction !== requiredAction) {
+                throw createError(
+                    `Stock movement requires '${existingMovement.warehouseAction}' execution action`,
+                    400,
+                );
+            }
+
+            const quantity = Number(existingMovement.quantityChange);
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+                throw createError("Stock movement has invalid quantityChange", 409);
+            }
+
+            const product = await Product.findById(existingMovement.productId).session(session);
+            if (!product) {
+                throw createError("Product not found", 404);
+            }
+
+            const totalPhysicalStock = Number(product.totalPhysicalStock || 0);
+
+            if (requiredAction === WAREHOUSE_ACTIONS.PICK) {
+                const sourceLoc = findLocation(product, executionLocation);
+
+                if (!sourceLoc) {
+                    throw createError(
+                        `Source location ${executionLocation} not found in product`,
+                        404,
+                    );
+                }
+
+                if (sourceLoc.quantityInStock < quantity) {
+                    throw createError("Insufficient stock in source location", 400);
+                }
+
+                if (totalPhysicalStock < quantity) {
+                    throw createError("Stock totals cannot become negative", 409);
+                }
+
+                sourceLoc.quantityInStock -= quantity;
+                product.totalPhysicalStock = totalPhysicalStock - quantity;
+            } else if (requiredAction === WAREHOUSE_ACTIONS.RECEIVE) {
+                const destinationLoc = ensureLocation(product, executionLocation);
+
+                destinationLoc.quantityInStock += quantity;
+                product.totalPhysicalStock = totalPhysicalStock + quantity;
+            }
+
+            await product.save({ session });
+
+            const updatedMovement = await populateMovementReferences(
+                StockMovement.findOneAndUpdate(
+                    {
+                        _id: movementId,
+                        isExecuted: false,
+                    },
+                    {
+                        $set: {
+                            isExecuted: true,
+                            ...locationUpdates,
+                            physicalExecutedAt: new Date(),
+                            physicalExecutedByUserId: userId,
+                        },
+                    },
+                    {
+                        new: true,
+                        session,
+                    },
+                ),
+            );
+
+            if (!updatedMovement) {
+                throw createError("Stock movement already executed", 409);
+            }
+
+            return updatedMovement;
+        });
+
+        return stockMovement;
+    } finally {
+        await session.endSession();
+    }
+};
 
 const stockMovementController = {
     // function to get all stock movements with pagination
@@ -179,61 +321,47 @@ const stockMovementController = {
         }
     },
 
-    // function to execute a specific stock movement
-    executeStockMovement: async (req, res, next) => {
+    // function to execute a pick stock movement
+    executePickStockMovement: async (req, res, next) => {
         try {
-            const { sourceLocation, destinationLocation } = req.body;
+            const { sourceLocation } = req.body;
             const movementId = req.params.movementId;
             const userId = req.user.id;
 
-            const existingMovement = await StockMovement.findById(movementId).select(
-                "_id isExecuted warehouseAction",
-            );
-
-            if (!existingMovement) {
-                return next(createError("Stock movement not found", 404));
-            }
-
-            if (existingMovement.isExecuted) {
-                return next(createError("Stock movement already executed", 409));
-            }
-
-            if (!existingMovement.warehouseAction) {
-                return next(createError("Stock movement does not require physical execution", 400));
-            }
-
-            const stockMovement = await StockMovement.findOneAndUpdate(
-                {
-                    _id: movementId,
-                    isExecuted: false,
-                },
-                {
-                    $set: {
-                        isExecuted: true,
-                        sourceLocation,
-                        destinationLocation,
-                        physicalExecutedAt: new Date(),
-                        physicalExecutedByUserId: userId,
-                    },
-                },
-                {
-                    new: true,
-                },
-            )
-                .populate("productId", "code name")
-                .populate("createdByUserId", "name email")
-                .populate("physicalExecutedByUserId", "name email")
-                .populate("orderId", "orderNumber")
-                .populate("returnId", "returnNumber")
-                .populate("batchId", "batchNumber");
-
-            if (!stockMovement) {
-                return next(createError("Stock movement already executed", 409));
-            }
+            const stockMovement = await executeWarehouseMovement({
+                movementId,
+                userId,
+                requiredAction: WAREHOUSE_ACTIONS.PICK,
+                locationField: "sourceLocation",
+                locationUpdates: { sourceLocation },
+            });
 
             return res
                 .status(200)
-                .json(response("Stock movement executed successfully", stockMovement));
+                .json(response("Stock movement pick executed successfully", stockMovement));
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // function to execute a receive stock movement
+    executeReceiveStockMovement: async (req, res, next) => {
+        try {
+            const { destinationLocation } = req.body;
+            const movementId = req.params.movementId;
+            const userId = req.user.id;
+
+            const stockMovement = await executeWarehouseMovement({
+                movementId,
+                userId,
+                requiredAction: WAREHOUSE_ACTIONS.RECEIVE,
+                locationField: "destinationLocation",
+                locationUpdates: { destinationLocation },
+            });
+
+            return res
+                .status(200)
+                .json(response("Stock movement receive executed successfully", stockMovement));
         } catch (err) {
             return next(err);
         }

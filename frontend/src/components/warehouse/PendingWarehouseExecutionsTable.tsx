@@ -178,82 +178,88 @@ export function PendingWarehouseExecutionsTable({
                   </TableCell>
                 </TableRow>
               ) : (
-                movements.map((movement) => (
-                  <TableRow key={movement._id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{movement.productId?.name || '-'}</p>
-                        <p className="font-mono text-xs text-muted-foreground">
-                          {movement.productId?.code || '-'}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
-                        {movement.warehouseAction
-                          ? tStock(`movements.warehouseActions.${movement.warehouseAction}`)
-                          : tStock('movements.warehouseActions.none')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
-                          {tStock(`movements.buckets.${movement.from}`)}
-                        </span>
-                        <ArrowRight
-                          className="size-3.5 text-muted-foreground"
-                          aria-hidden="true"
-                        />
-                        <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
-                          {tStock(`movements.buckets.${movement.to}`)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getQuantityColor(movement.quantityChange)}>
-                        {movement.quantityChange > 0 ? '+' : ''}
-                        {movement.quantityChange}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {getReference(movement) || t('pending.referenceNone')}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {movement.createdByUserId?.name || tStock('movements.unknownUser')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {movement.createdByUserId?.email || '-'}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {movement.createdAt ? new Date(movement.createdAt).toLocaleString() : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-black hover:bg-black/10"
-                          onClick={() => onView(movement)}
-                          title={t('table.actions')}
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="bg-[#1f4f86] hover:bg-[#1b4678]"
-                          onClick={() => onExecute(movement)}
-                        >
-                          <Play className="size-4" />
-                          {t('pending.execute')}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                movements.map((movement) => {
+                  const canExecute =
+                    movement.warehouseAction === 'pick' || movement.warehouseAction === 'receive';
+
+                  return (
+                    <TableRow key={movement._id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{movement.productId?.name || '-'}</p>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            {movement.productId?.code || '-'}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getWarehouseActionColor(movement.warehouseAction)}>
+                          {movement.warehouseAction
+                            ? tStock(`movements.warehouseActions.${movement.warehouseAction}`)
+                            : tStock('movements.warehouseActions.none')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
+                            {tStock(`movements.buckets.${movement.from}`)}
+                          </span>
+                          <ArrowRight
+                            className="size-3.5 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <span className="font-mono font-bold text-xs uppercase tracking-wide text-foreground">
+                            {tStock(`movements.buckets.${movement.to}`)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getQuantityColor(movement.quantityChange)}>
+                          {movement.quantityChange > 0 ? '+' : ''}
+                          {movement.quantityChange}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {getReference(movement) || t('pending.referenceNone')}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {movement.createdByUserId?.name || tStock('movements.unknownUser')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {movement.createdByUserId?.email || '-'}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {movement.createdAt ? new Date(movement.createdAt).toLocaleString() : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-black hover:bg-black/10"
+                            onClick={() => onView(movement)}
+                            title={t('table.actions')}
+                          >
+                            <Eye className="size-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-[#1f4f86] hover:bg-[#1b4678]"
+                            disabled={!canExecute}
+                            onClick={() => onExecute(movement)}
+                          >
+                            <Play className="size-4" />
+                            {t('pending.execute')}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

@@ -83,8 +83,11 @@ export interface StockMovementResponse {
   data: StockMovement;
 }
 
-export interface ExecuteStockMovementPayload {
+export interface ExecutePickStockMovementPayload {
   sourceLocation: FactoryLocation;
+}
+
+export interface ExecuteReceiveStockMovementPayload {
   destinationLocation: FactoryLocation;
 }
 
@@ -174,21 +177,40 @@ export const stockMovementService = {
     }
   },
 
-  async executeStockMovement(
+  async executePickStockMovement(
     movementId: string,
-    payload: ExecuteStockMovementPayload,
+    payload: ExecutePickStockMovementPayload,
   ): Promise<StockMovement> {
     try {
       axios.defaults.withCredentials = true;
 
       const response = await axios.patch<StockMovementResponse>(
-        `${API_URL}/stock-movements/${movementId}`,
+        `${API_URL}/stock-movements/${movementId}/pick`,
         payload,
       );
 
       return response.data.data;
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to execute stock movement';
+      const message = error?.response?.data?.message || 'Failed to execute pick stock movement';
+      throw new Error(message);
+    }
+  },
+
+  async executeReceiveStockMovement(
+    movementId: string,
+    payload: ExecuteReceiveStockMovementPayload,
+  ): Promise<StockMovement> {
+    try {
+      axios.defaults.withCredentials = true;
+
+      const response = await axios.patch<StockMovementResponse>(
+        `${API_URL}/stock-movements/${movementId}/receive`,
+        payload,
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      const message = error?.response?.data?.message || 'Failed to execute receive stock movement';
       throw new Error(message);
     }
   },

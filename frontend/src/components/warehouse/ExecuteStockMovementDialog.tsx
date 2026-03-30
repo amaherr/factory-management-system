@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ArrowRight, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { FACTORY_LOCATIONS_VALUES, type FactoryLocation } from '../../services/enums/product.enums';
 import {
   stockMovementService,
@@ -51,6 +51,10 @@ export function ExecuteStockMovementDialog({
   const [destinationLocation, setDestinationLocation] = useState<FactoryLocation | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const warehouseAction = movement?.warehouseAction;
+  const requiresSource = warehouseAction === 'pick';
+  const requiresDestination = warehouseAction === 'receive';
+
   useEffect(() => {
     if (!open || !movement) {
       return;
@@ -73,23 +77,36 @@ export function ExecuteStockMovementDialog({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!movement?._id || !sourceLocation || !destinationLocation) {
-      toast.error(t('execute.errors.fillAllFields'));
-      return;
-    }
-
-    if (sourceLocation === destinationLocation) {
-      toast.error(t('execute.errors.sameLocation'));
+    if (!movement?._id || !warehouseAction) {
+      toast.error(t('execute.errors.unsupportedAction'));
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await stockMovementService.executeStockMovement(movement._id, {
-        sourceLocation,
-        destinationLocation,
-      });
+      if (warehouseAction === 'pick') {
+        if (!sourceLocation) {
+          toast.error(t('execute.errors.fillSourceLocation'));
+          return;
+        }
+
+        await stockMovementService.executePickStockMovement(movement._id, {
+          sourceLocation,
+        });
+      } else if (warehouseAction === 'receive') {
+        if (!destinationLocation) {
+          toast.error(t('execute.errors.fillDestinationLocation'));
+          return;
+        }
+
+        await stockMovementService.executeReceiveStockMovement(movement._id, {
+          destinationLocation,
+        });
+      } else {
+        toast.error(t('execute.errors.unsupportedAction'));
+        return;
+      }
 
       toast.success(t('execute.success'));
       await onSuccess();
@@ -134,7 +151,7 @@ export function ExecuteStockMovementDialog({
                     : t('execute.notSet')}
                 </Badge>
               </div>
-              <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr] md:items-end">
+              {requiresSource && (
                 <div className="space-y-2">
                   <Label htmlFor="execute-source-location">{t('execute.sourceLocation')}</Label>
                   <Select
@@ -159,11 +176,9 @@ export function ExecuteStockMovementDialog({
                     </SelectContent>
                   </Select>
                 </div>
+              )}
 
-                <div className="hidden md:flex justify-center pb-2 text-muted-foreground">
-                  <ArrowRight className="size-4" />
-                </div>
-
+              {requiresDestination && (
                 <div className="space-y-2">
                   <Label htmlFor="execute-destination-location">
                     {t('execute.destinationLocation')}
@@ -183,7 +198,6 @@ export function ExecuteStockMovementDialog({
                         <SelectItem
                           key={location}
                           value={location}
-                          disabled={location === sourceLocation}
                         >
                           {tStock(`locations.${location}`)}
                         </SelectItem>
@@ -191,7 +205,7 @@ export function ExecuteStockMovementDialog({
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="rounded-lg border border-dashed p-4 space-y-3">

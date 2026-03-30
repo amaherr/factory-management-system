@@ -59,7 +59,10 @@
     "success": "Stock movement executed successfully",
     "errors": {
       "fillAllFields": "Please select both source and destination locations.",
+      "fillSourceLocation": "Please select source location.",
+      "fillDestinationLocation": "Please select destination location.",
       "sameLocation": "Source and destination locations must be different.",
+      "unsupportedAction": "Only pick and receive actions can be executed from this table.",
       "failed": "Failed to execute stock movement."
     }
   },
