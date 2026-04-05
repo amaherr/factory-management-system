@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MapPin } from 'lucide-react';
-import { FACTORY_LOCATIONS_VALUES, type FactoryLocation } from '../../services/enums/product.enums';
+import {
+  FACTORY_LOCATIONS_VALUES,
+  type FactoryLocation,
+} from '../../../services/enums/product.enums';
 import {
   stockMovementService,
   type StockMovement,
   type WarehouseAction,
-} from '../../services/stockMovements';
+} from '../../../services/stockMovements';
 import {
   Dialog,
   DialogContent,
@@ -15,11 +18,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Badge } from '../ui/badge';
+} from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Badge } from '../../ui/badge';
 
 interface ExecuteStockMovementDialogProps {
   movement: StockMovement | null;

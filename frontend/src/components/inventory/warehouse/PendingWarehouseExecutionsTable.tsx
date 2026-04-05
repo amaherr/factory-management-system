@@ -1,12 +1,19 @@
 import { ArrowRight, Eye, Play, RefreshCw, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { StockMovement, WarehouseAction } from '../../services/stockMovements';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import type { StockMovement, WarehouseAction } from '../../../services/stockMovements';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
 
 interface PendingWarehouseExecutionsTableProps {
   movements: StockMovement[];

@@ -2,14 +2,17 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ArrowRightLeft, Boxes } from 'lucide-react';
-import { productService, type Product } from '../../services/products';
-import { FACTORY_LOCATIONS_VALUES, type FactoryLocation } from '../../services/enums/product.enums';
-import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { productService, type Product } from '../../../services/products';
+import {
+  FACTORY_LOCATIONS_VALUES,
+  type FactoryLocation,
+} from '../../../services/enums/product.enums';
+import { Button } from '../../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Label } from '../../ui/label';
+import { Badge } from '../../ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 interface WarehouseTransferPanelProps {
   products: Product[];
