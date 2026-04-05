@@ -104,7 +104,7 @@ export function NewSale() {
           productDetails: `${product.color}${product.season ? `, ${product.season}` : ''}`,
           sku: product.sku,
           lineQuantity: 1,
-          unitPrice: product.salePrice,
+          unitPrice: product.unitSalePrice,
           stock: product.totalTheoreticalStock,
         },
       ]);
@@ -268,7 +268,7 @@ export function NewSale() {
                         <p className="text-xs text-gray-500">{product.code}</p>
                         <p className="mt-1 text-sm font-semibold">
                           {t('linePrice')}: {t('currency')}{' '}
-                          {(product.salePrice * product.sku).toFixed(2)}
+                          {(product.unitSalePrice * product.sku).toFixed(2)}
                         </p>
 
                         <div className="mt-2">

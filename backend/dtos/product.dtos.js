@@ -18,8 +18,8 @@ const productDtos = {
             .optional(),
         defaultImage: Joi.string().trim().optional(),
         sku: Joi.number().integer().min(1).required(),
-        costPrice: Joi.number().min(1).optional(),
-        salePrice: Joi.number().min(1).required(),
+        unitCostPrice: Joi.number().min(1).optional(),
+        unitSalePrice: Joi.number().min(1).required(),
     }),
 
     updateProductSchema: Joi.object({
@@ -34,8 +34,8 @@ const productDtos = {
             .optional(),
         defaultImage: Joi.string().trim().optional(),
         sku: Joi.number().integer().min(1).optional(),
-        costPrice: Joi.number().min(1).optional(),
-        salePrice: Joi.number().min(1).optional(),
+        unitCostPrice: Joi.number().min(1).optional(),
+        unitSalePrice: Joi.number().min(1).optional(),
         removeImage: Joi.boolean().truthy("true").falsy("false").optional(),
     }).min(1),
 

@@ -269,13 +269,13 @@ export function ProductsList() {
                       {new Intl.NumberFormat('en-EG', {
                         style: 'currency',
                         currency: 'EGP',
-                      }).format(product.costPrice)}
+                      }).format(product.unitCostPrice)}
                     </TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('en-EG', {
                         style: 'currency',
                         currency: 'EGP',
-                      }).format(product.salePrice)}
+                      }).format(product.unitSalePrice)}
                     </TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('en-EG', {

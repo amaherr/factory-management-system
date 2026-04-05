@@ -42,7 +42,7 @@ const orderService = {
                         _id: 1,
                         status: 1,
                         sku: 1,
-                        salePrice: 1,
+                        unitSalePrice: 1,
                         totalTheoreticalStock: 1,
                         totalReserved: 1,
                     },
@@ -63,7 +63,7 @@ const orderService = {
 
                     const lineQuantity = Number(it.quantity);
                     const actualQuantity = lineQuantity * Number(product.sku);
-                    const unitPrice = product.salePrice;
+                    const unitPrice = product.unitSalePrice;
                     const totalPrice = actualQuantity * unitPrice;
 
                     return {
@@ -486,7 +486,7 @@ const orderService = {
                             _id: 1,
                             status: 1,
                             sku: 1,
-                            salePrice: 1,
+                            unitSalePrice: 1,
                             totalTheoreticalStock: 1,
                             totalReserved: 1,
                         },
@@ -503,7 +503,7 @@ const orderService = {
 
                         const lineQuantity = Number(it.quantity);
                         const actualQuantity = lineQuantity * Number(product.sku);
-                        const unitPrice = product.salePrice;
+                        const unitPrice = product.unitSalePrice;
                         const totalPrice = actualQuantity * unitPrice;
 
                         return {

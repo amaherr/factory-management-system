@@ -12,8 +12,8 @@ interface Product {
   season?: Season;
   defaultImage?: string;
   sku: number;
-  costPrice: number;
-  salePrice: number;
+  unitCostPrice: number;
+  unitSalePrice: number;
   lineCostPrice: number;
   lineSalePrice: number;
   status: ProductStatus;
@@ -43,8 +43,8 @@ interface CreateProductPayload {
   season?: Season;
   defaultImage?: string;
   sku: number;
-  costPrice: number;
-  salePrice: number;
+  unitCostPrice: number;
+  unitSalePrice: number;
 }
 
 interface UpdateProductPayload {
@@ -56,8 +56,8 @@ interface UpdateProductPayload {
   defaultImage?: string;
   removeImage?: boolean;
   sku?: number;
-  costPrice?: number;
-  salePrice?: number;
+  unitCostPrice?: number;
+  unitSalePrice?: number;
 }
 
 interface ChangeProductActivationPayload {

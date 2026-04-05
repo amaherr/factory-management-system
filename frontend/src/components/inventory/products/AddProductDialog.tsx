@@ -32,8 +32,8 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
     color: '' as Color,
     season: '' as Season,
     sku: '',
-    costPrice: '',
-    salePrice: '',
+    unitCostPrice: '',
+    unitSalePrice: '',
   });
 
   useEffect(() => {
@@ -45,8 +45,8 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         color: '' as Color,
         season: '' as Season,
         sku: '',
-        costPrice: '',
-        salePrice: '',
+        unitCostPrice: '',
+        unitSalePrice: '',
       });
       setImagePreview('');
       setImageFile(null);
@@ -103,12 +103,12 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
         setLoading(false);
         return;
       }
-      if (!formData.costPrice) {
+      if (!formData.unitCostPrice) {
         toast.error(t('cost_price_required'));
         setLoading(false);
         return;
       }
-      if (!formData.salePrice) {
+      if (!formData.unitSalePrice) {
         toast.error(t('sale_price_required'));
         setLoading(false);
         return;
@@ -119,8 +119,8 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
       payload.append('name', formData.name.trim());
       payload.append('color', formData.color);
       payload.append('sku', formData.sku);
-      payload.append('costPrice', formData.costPrice);
-      payload.append('salePrice', formData.salePrice);
+      payload.append('unitCostPrice', formData.unitCostPrice);
+      payload.append('unitSalePrice', formData.unitSalePrice);
 
       if (formData.description.trim()) {
         payload.append('description', formData.description.trim());
@@ -303,25 +303,25 @@ export function AddProductDialog({ open, onOpenChange, onSuccess }: AddProductDi
               {/* Prices */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="costPrice">{t('cost_price')} *</Label>
+                  <Label htmlFor="unitCostPrice">{t('cost_price')} *</Label>
                   <Input
-                    id="costPrice"
+                    id="unitCostPrice"
                     type="number"
                     step="0.01"
-                    value={formData.costPrice}
-                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    value={formData.unitCostPrice}
+                    onChange={(e) => setFormData({ ...formData, unitCostPrice: e.target.value })}
                     placeholder={t('enter_cost_price')}
                     disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="salePrice">{t('sale_price')} *</Label>
+                  <Label htmlFor="unitSalePrice">{t('sale_price')} *</Label>
                   <Input
-                    id="salePrice"
+                    id="unitSalePrice"
                     type="number"
                     step="0.01"
-                    value={formData.salePrice}
-                    onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                    value={formData.unitSalePrice}
+                    onChange={(e) => setFormData({ ...formData, unitSalePrice: e.target.value })}
                     placeholder={t('enter_sale_price')}
                     disabled={loading}
                   />

@@ -113,15 +113,19 @@ export function ProductStockDetailsDialog({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                {product.costPrice && (
+                {product.unitCostPrice && (
                   <div>
-                    <p className="text-sm text-muted-foreground">{t('productDetails.costPrice')}</p>
-                    <p className="text-lg font-semibold">{product.costPrice.toFixed(2)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('productDetails.unitCostPrice')}
+                    </p>
+                    <p className="text-lg font-semibold">{product.unitCostPrice.toFixed(2)}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-muted-foreground">{t('productDetails.salePrice')}</p>
-                  <p className="text-lg font-semibold">{product.salePrice.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('productDetails.unitSalePrice')}
+                  </p>
+                  <p className="text-lg font-semibold">{product.unitSalePrice.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>

@@ -56,8 +56,8 @@ export function EditProductDialog({
     color: '' as Color,
     season: '' as Season,
     sku: '',
-    costPrice: '',
-    salePrice: '',
+    unitCostPrice: '',
+    unitSalePrice: '',
     isActive: false,
   });
 
@@ -70,8 +70,8 @@ export function EditProductDialog({
         color: product.color,
         season: product.season || ('' as Season),
         sku: product.sku.toString(),
-        costPrice: product.costPrice?.toString() || '',
-        salePrice: product.salePrice.toString(),
+        unitCostPrice: product.unitCostPrice?.toString() || '',
+        unitSalePrice: product.unitSalePrice.toString(),
         isActive: product.status === PRODUCT_STATUS.ACTIVE,
       });
       setImagePreview(product.defaultImage || '');
@@ -138,12 +138,12 @@ export function EditProductDialog({
         setLoading(false);
         return;
       }
-      if (!formData.costPrice) {
+      if (!formData.unitCostPrice) {
         toast.error(t('cost_price_required'));
         setLoading(false);
         return;
       }
-      if (!formData.salePrice) {
+      if (!formData.unitSalePrice) {
         toast.error(t('sale_price_required'));
         setLoading(false);
         return;
@@ -153,8 +153,8 @@ export function EditProductDialog({
       const trimmedName = formData.name.trim();
       const trimmedDescription = formData.description.trim();
       const parsedSku = Number(formData.sku);
-      const parsedCostPrice = Number(formData.costPrice);
-      const parsedSalePrice = Number(formData.salePrice);
+      const parsedCostPrice = Number(formData.unitCostPrice);
+      const parsedSalePrice = Number(formData.unitSalePrice);
 
       const nextDescription = trimmedDescription || undefined;
       const currentDescription = product.description?.trim() || undefined;
@@ -166,8 +166,8 @@ export function EditProductDialog({
       const colorChanged = formData.color !== product.color;
       const seasonChanged = nextSeason !== product.season;
       const skuChanged = parsedSku !== product.sku;
-      const costPriceChanged = parsedCostPrice !== product.costPrice;
-      const salePriceChanged = parsedSalePrice !== product.salePrice;
+      const unitCostPriceChanged = parsedCostPrice !== product.unitCostPrice;
+      const unitSalePriceChanged = parsedSalePrice !== product.unitSalePrice;
 
       let updatedProduct: Product = product;
 
@@ -183,8 +183,8 @@ export function EditProductDialog({
           payload.append('season', nextSeason || '');
         }
         if (skuChanged) payload.append('sku', String(parsedSku));
-        if (costPriceChanged) payload.append('costPrice', String(parsedCostPrice));
-        if (salePriceChanged) payload.append('salePrice', String(parsedSalePrice));
+        if (unitCostPriceChanged) payload.append('unitCostPrice', String(parsedCostPrice));
+        if (unitSalePriceChanged) payload.append('saleunitSalePricePrice', String(parsedSalePrice));
         payload.append('image', imageFile);
 
         updatedProduct = await productService.updateProduct(product._id, payload);
@@ -197,8 +197,8 @@ export function EditProductDialog({
           season?: Season;
           removeImage?: boolean;
           sku?: number;
-          costPrice?: number;
-          salePrice?: number;
+          unitCostPrice?: number;
+          unitSalePrice?: number;
         } = {};
 
         if (codeChanged) payload.code = trimmedCode;
@@ -207,8 +207,8 @@ export function EditProductDialog({
         if (colorChanged) payload.color = formData.color;
         if (seasonChanged) payload.season = nextSeason as Season | undefined;
         if (skuChanged) payload.sku = parsedSku;
-        if (costPriceChanged) payload.costPrice = parsedCostPrice;
-        if (salePriceChanged) payload.salePrice = parsedSalePrice;
+        if (unitCostPriceChanged) payload.unitCostPrice = parsedCostPrice;
+        if (unitSalePriceChanged) payload.unitSalePrice = parsedSalePrice;
         if (removeImage) payload.removeImage = true;
 
         if (Object.keys(payload).length > 0) {
@@ -437,25 +437,25 @@ export function EditProductDialog({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="costPrice">{t('cost_price')} *</Label>
+                  <Label htmlFor="unitCostPrice">{t('cost_price')} *</Label>
                   <Input
-                    id="costPrice"
+                    id="unitCostPrice"
                     type="number"
                     step="0.01"
-                    value={formData.costPrice}
-                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    value={formData.unitCostPrice}
+                    onChange={(e) => setFormData({ ...formData, unitCostPrice: e.target.value })}
                     placeholder={t('enter_cost_price')}
                     disabled={loading}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="salePrice">{t('sale_price')} *</Label>
+                  <Label htmlFor="unitSalePrice">{t('sale_price')} *</Label>
                   <Input
-                    id="salePrice"
+                    id="unitSalePrice"
                     type="number"
                     step="0.01"
-                    value={formData.salePrice}
-                    onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                    value={formData.unitSalePrice}
+                    onChange={(e) => setFormData({ ...formData, unitSalePrice: e.target.value })}
                     placeholder={t('enter_sale_price')}
                     disabled={loading}
                   />

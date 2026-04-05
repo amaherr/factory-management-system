@@ -49,11 +49,11 @@ const productSchema = new mongoose.Schema(
         },
 
         // price-related data
-        costPrice: {
+        unitCostPrice: {
             type: Number,
             min: 1,
         },
-        salePrice: {
+        unitSalePrice: {
             type: Number,
             required: true,
             min: 1,

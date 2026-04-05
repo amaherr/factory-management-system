@@ -144,7 +144,7 @@ export function ProductDetailsDialog({ open, onOpenChange, product }: ProductDet
                     {new Intl.NumberFormat('en-EG', {
                       style: 'currency',
                       currency: 'EGP',
-                    }).format(product.costPrice)}
+                    }).format(product.unitCostPrice)}
                   </p>
                 </div>
                 <div>
@@ -153,7 +153,7 @@ export function ProductDetailsDialog({ open, onOpenChange, product }: ProductDet
                     {new Intl.NumberFormat('en-EG', {
                       style: 'currency',
                       currency: 'EGP',
-                    }).format(product.salePrice)}
+                    }).format(product.unitSalePrice)}
                   </p>
                 </div>
                 <div>

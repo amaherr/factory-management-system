@@ -134,8 +134,8 @@ const productService = {
                 color,
                 defaultImage,
                 sku,
-                costPrice,
-                salePrice,
+                unitCostPrice,
+                unitSalePrice,
                 season,
             } = req.body;
 
@@ -148,8 +148,8 @@ const productService = {
             const resolvedImage = uploadedImageUrl || defaultImage;
 
             const resolvedSku = Number(sku);
-            const resolvedCostPrice = Number(costPrice);
-            const resolvedSalePrice = Number(salePrice);
+            const resolvedCostPrice = Number(unitCostPrice);
+            const resolvedSalePrice = Number(unitSalePrice);
 
             const newProduct = new Product({
                 code,
@@ -158,8 +158,8 @@ const productService = {
                 color,
                 defaultImage: resolvedImage,
                 sku: resolvedSku,
-                costPrice: resolvedCostPrice,
-                salePrice: resolvedSalePrice,
+                unitCostPrice: resolvedCostPrice,
+                unitSalePrice: resolvedSalePrice,
                 lineCostPrice: resolvedSku * resolvedCostPrice,
                 lineSalePrice: resolvedSku * resolvedSalePrice,
                 season,
@@ -228,13 +228,13 @@ const productService = {
 
             const nextSku = updates.sku !== undefined ? Number(updates.sku) : Number(product.sku);
             const nextCostPrice =
-                updates.costPrice !== undefined
-                    ? Number(updates.costPrice)
-                    : Number(product.costPrice);
+                updates.unitCostPrice !== undefined
+                    ? Number(updates.unitCostPrice)
+                    : Number(product.unitCostPrice);
             const nextSalePrice =
-                updates.salePrice !== undefined
-                    ? Number(updates.salePrice)
-                    : Number(product.salePrice);
+                updates.unitSalePrice !== undefined
+                    ? Number(updates.unitSalePrice)
+                    : Number(product.unitSalePrice);
 
             if (
                 !Number.isFinite(nextSku) ||
@@ -243,15 +243,15 @@ const productService = {
             ) {
                 return next(
                     createError(
-                        "sku, costPrice, and salePrice must be valid numbers to compute line prices",
+                        "sku, unitCostPrice, and unitSalePrice must be valid numbers to compute line prices",
                         400,
                     ),
                 );
             }
 
             updates.sku = nextSku;
-            updates.costPrice = nextCostPrice;
-            updates.salePrice = nextSalePrice;
+            updates.unitCostPrice = nextCostPrice;
+            updates.unitSalePrice = nextSalePrice;
             updates.lineCostPrice = nextSku * nextCostPrice;
             updates.lineSalePrice = nextSku * nextSalePrice;
 
