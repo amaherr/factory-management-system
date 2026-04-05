@@ -1,6 +1,6 @@
 const express = require("express");
 
-const userController = require("../controllers/user.controller");
+const userService = require("../services/user.service");
 const userDtos = require("../dtos/user.dtos");
 
 const validator = require("../middlewares/validator");
@@ -10,42 +10,42 @@ const { ROLES } = require("../enums/user.enums");
 const router = express.Router();
 
 // public login route
-router.post("/login", validator({ bodySchema: userDtos.loginSchema }), userController.login);
+router.post("/login", validator({ bodySchema: userDtos.loginSchema }), userService.login);
 
 // apply authorizor middleware (admin routes)
 router.use(authorizor([ROLES.ADMIN]));
 
 // route to create a new user
-router.post("/", validator({ bodySchema: userDtos.createUserSchema }), userController.createUser);
+router.post("/", validator({ bodySchema: userDtos.createUserSchema }), userService.createUser);
 
 // route to get all users
-router.get("/", userController.getAllUsers);
+router.get("/", userService.getAllUsers);
 
 // route to get a specific user
-router.get("/:userId", userController.getUser);
+router.get("/:userId", userService.getUser);
 
 // route to edit user details
 router.patch(
     "/edit/:userId",
     validator({ bodySchema: userDtos.editUserSchema }),
-    userController.editUser,
+    userService.editUser,
 );
 
 // route to change specific user roles
 router.patch(
     "/change-role/:userId",
     validator({ bodySchema: userDtos.changeUserRolesSchema }),
-    userController.changeUserRoles,
+    userService.changeUserRoles,
 );
 
 // route to change activation specific user
 router.patch(
     "/activation-status/:userId",
     validator({ bodySchema: userDtos.changeUserActivationSchema }),
-    userController.changeUserActivation,
+    userService.changeUserActivation,
 );
 
 // route to delete specific user
-router.delete("/delete/:userId", userController.deleteUser);
+router.delete("/delete/:userId", userService.deleteUser);
 
 module.exports = router;

@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 const Product = require("../models/product.model");
 const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../enums/product.enums");
@@ -6,7 +9,63 @@ const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../enums/stockMoveme
 
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
-const { saveUploadedFile, deleteUploadedFile, createStockMovement } = require("../utils/helpers");
+const { createStockMovement } = require("../utils/helpers");
+
+// ------------ Helpers ------------
+
+const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+
+function ensureUploadsDir() {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+}
+
+function hashFileName(originalName) {
+    const ext = path.extname(originalName || "").toLowerCase();
+    const hash = crypto.randomBytes(16).toString("hex");
+    return `${hash}${ext}`;
+}
+
+function saveUploadedFile(file) {
+    if (!file) {
+        return null;
+    }
+
+    ensureUploadsDir();
+
+    const fileName = hashFileName(file.originalname);
+    const filePath = path.join(UPLOADS_DIR, fileName);
+    fs.writeFileSync(filePath, file.buffer);
+
+    return `/uploads/${fileName}`;
+}
+
+function deleteUploadedFile(url) {
+    if (!url || typeof url !== "string") {
+        return false;
+    }
+
+    const normalized = url.replace(/\\/g, "/");
+    const uploadsPrefix = "/uploads/";
+
+    if (!normalized.startsWith(uploadsPrefix)) {
+        return false;
+    }
+
+    const fileName = normalized.slice(uploadsPrefix.length);
+    if (!fileName) {
+        return false;
+    }
+
+    const filePath = path.join(UPLOADS_DIR, fileName);
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        return true;
+    }
+
+    return false;
+}
 
 function findLocation(product, location) {
     return product.locations.find((entry) => entry.location === location);
@@ -63,7 +122,9 @@ function buildPhysicalAdjustmentMovement({
     };
 }
 
-const productController = {
+// ------------ Services ------------
+
+const productService = {
     createProduct: async (req, res, next) => {
         try {
             const {
@@ -523,4 +584,4 @@ const productController = {
     },
 };
 
-module.exports = productController;
+module.exports = productService;

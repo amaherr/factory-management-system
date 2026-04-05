@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const { COLORS, FACTORY_LOCATIONS, PRODUCT_STATUS, SEASONS } = require("../enums/product.enums");
-const { setPhysicalStock } = require("../controllers/product.controller");
+const { setPhysicalStock } = require("../services/product.service");
 
 const objectId = Joi.string().hex().length(24);
 

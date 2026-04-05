@@ -1,22 +1,19 @@
 const express = require("express");
 
-const exportController = require("../controllers/export.controller");
+const exportService = require("../services/export.service");
+
 const authorizor = require("../middlewares/authorizor");
 const { ROLES } = require("../enums/user.enums");
 
 const router = express.Router();
 
 // Get all collections available for export (Admin)
-router.get("/collections", authorizor([ROLES.ADMIN]), exportController.getExportableCollections);
+router.get("/collections", authorizor([ROLES.ADMIN]), exportService.getExportableCollections);
 
 // Export collection data as CSV (Admin)
-router.get("/:collection/csv", authorizor([ROLES.ADMIN]), exportController.exportCollectionAsCsv);
+router.get("/:collection/csv", authorizor([ROLES.ADMIN]), exportService.exportCollectionAsCsv);
 
 // Export collection data as Excel (.xlsx) (Admin)
-router.get(
-    "/:collection/excel",
-    authorizor([ROLES.ADMIN]),
-    exportController.exportCollectionAsExcel,
-);
+router.get("/:collection/excel", authorizor([ROLES.ADMIN]), exportService.exportCollectionAsExcel);
 
 module.exports = router;

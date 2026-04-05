@@ -1,6 +1,6 @@
 const express = require("express");
 
-const stockMovementController = require("../controllers/stockMovement.controller");
+const stockMovementService = require("../services/stockMovement.service");
 const stockMovementDtos = require("../dtos/stockMovement.dtos");
 
 const validator = require("../middlewares/validator");
@@ -14,21 +14,21 @@ router.get(
     "/",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING]),
     validator({ querySchema: stockMovementDtos.getStockMovementsQuerySchema }),
-    stockMovementController.getStockMovements,
+    stockMovementService.getStockMovements,
 );
 
 // Get stock movements for a specific product (Admin, Inventory, Accounting)
 router.get(
     "/product/:productId",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING]),
-    stockMovementController.getProductStockMovements,
+    stockMovementService.getProductStockMovements,
 );
 
 // Get a specific stock movement (Admin, Inventory, Accounting)
 router.get(
     "/:movementId",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY, ROLES.ACCOUNTING]),
-    stockMovementController.getStockMovement,
+    stockMovementService.getStockMovement,
 );
 
 // Execute a specific stock movement pick action (Admin, Inventory)
@@ -36,7 +36,7 @@ router.patch(
     "/:movementId/pick",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     validator({ bodySchema: stockMovementDtos.executePickStockMovement }),
-    stockMovementController.executePickStockMovement,
+    stockMovementService.executePickStockMovement,
 );
 
 // Execute a specific stock movement receive action (Admin, Inventory)
@@ -44,7 +44,7 @@ router.patch(
     "/:movementId/receive",
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     validator({ bodySchema: stockMovementDtos.executeReceiveStockMovement }),
-    stockMovementController.executeReceiveStockMovement,
+    stockMovementService.executeReceiveStockMovement,
 );
 
 module.exports = router;

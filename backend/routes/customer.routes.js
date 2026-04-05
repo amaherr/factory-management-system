@@ -1,6 +1,6 @@
 const express = require("express");
 
-const customerController = require("../controllers/customer.controller");
+const customerService = require("../services/customer.service");
 const customerDtos = require("../dtos/customer.dtos");
 
 const validator = require("../middlewares/validator");
@@ -15,23 +15,27 @@ router.use(authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]));
 router.post(
     "/",
     validator({ bodySchema: customerDtos.createCustomerSchema }),
-    customerController.createCustomer,
+    customerService.createCustomer,
 );
 
 // route to get all customers
-router.get("/", validator({ querySchema: customerDtos.getCustomersSchema }), customerController.getCustomers);
+router.get(
+    "/",
+    validator({ querySchema: customerDtos.getCustomersSchema }),
+    customerService.getCustomers,
+);
 
 // route to get a specific customers
-router.get("/:customerId", customerController.getCustomer);
+router.get("/:customerId", customerService.getCustomer);
 
 // route to edit a specific customer
 router.patch(
     "/edit/:customerId",
     validator({ bodySchema: customerDtos.editCustomerSchema }),
-    customerController.editCustomer,
+    customerService.editCustomer,
 );
 
 // route to delete a specific customer
-router.delete("/delete/:customerId", customerController.deleteCustomer);
+router.delete("/delete/:customerId", customerService.deleteCustomer);
 
 module.exports = router;

@@ -15,6 +15,8 @@ const User = require("../models/user.model");
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
+// ------------ Helpers ------------
+
 const SUPPORTED_COLLECTIONS = Object.freeze({
     users: User,
     customers: Customer,
@@ -86,7 +88,9 @@ const makeFileSafeTimestamp = () => {
     return new Date().toISOString().replace(/[:.]/g, "-");
 };
 
-const exportController = {
+// ------------ Services ------------
+
+const exportService = {
     getExportableCollections: async (req, res, next) => {
         try {
             const collections = Object.keys(SUPPORTED_COLLECTIONS);
@@ -160,4 +164,4 @@ const exportController = {
     },
 };
 
-module.exports = exportController;
+module.exports = exportService;

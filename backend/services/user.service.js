@@ -6,7 +6,7 @@ const User = require("../models/user.model");
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
-const userController = {
+const userService = {
     // function to handle user login
     login: async (req, res, next) => {
         try {
@@ -222,4 +222,4 @@ const userController = {
     },
 };
 
-module.exports = userController;
+module.exports = userService;

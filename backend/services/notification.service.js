@@ -4,7 +4,7 @@ const { NOTIFICATION_STATUS } = require("../enums/notification.enums");
 const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 
-const notificationController = {
+const notificationService = {
     // function to get the current user's notifications
     getUserNotifications: async (req, res, next) => {
         try {
@@ -57,4 +57,4 @@ const notificationController = {
         }
     },
 };
-module.exports = notificationController;
+module.exports = notificationService;

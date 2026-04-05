@@ -5,7 +5,7 @@ const createError = require("../utils/errorFactory");
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const customerController = {
+const customerService = {
     // function to create a new customer
     createCustomer: async (req, res, next) => {
         try {
@@ -128,4 +128,4 @@ const customerController = {
     },
 };
 
-module.exports = customerController;
+module.exports = customerService;

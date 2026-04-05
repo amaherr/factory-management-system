@@ -20,7 +20,7 @@ const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 const { getNextDocumentNumber, createStockMovement } = require("../utils/helpers");
 
-const orderController = {
+const orderService = {
     // function to create a new order
     createOrder: async (req, res, next) => {
         const session = await mongoose.startSession();
@@ -712,4 +712,4 @@ const orderController = {
     },
 };
 
-module.exports = orderController;
+module.exports = orderService;

@@ -9,7 +9,7 @@ const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 const { getNextDocumentNumber } = require("../utils/helpers");
 
-const issueController = {
+const issueService = {
     // function to create a new issue
     createIssue: async (req, res, next) => {
         const session = await mongoose.startSession();
@@ -172,4 +172,4 @@ const issueController = {
     },
 };
 
-module.exports = issueController;
+module.exports = issueService;

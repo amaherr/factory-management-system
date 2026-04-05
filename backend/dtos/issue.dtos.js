@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const { ISSUE_TYPE, ISSUE_STATUS } = require("../enums/issue.enums");
-const { changeIssueStatus } = require("../controllers/issue.controller");
+const { changeIssueStatus } = require("../services/issue.service");
 
 const issueDtos = {
     createIssueSchema: Joi.object({

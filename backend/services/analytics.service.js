@@ -1035,7 +1035,7 @@ const getOperationsDashboard = async (req, res, next) => {
 
 // ---------------------------------------------------------------------------
 
-const analyticsController = {
+const analyticsService = {
     getExecutiveSummary,
     getSalesDashboard,
     getProductionDashboard,
@@ -1043,4 +1043,4 @@ const analyticsController = {
     getOperationsDashboard,
 };
 
-module.exports = analyticsController;
+module.exports = analyticsService;

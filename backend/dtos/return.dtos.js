@@ -6,8 +6,6 @@ const objectId = Joi.string().hex().length(24);
 const returnItemSchema = Joi.object({
     productId: objectId.required(),
     quantity: Joi.number().integer().min(1).required(),
-    // Note: unitPrice and linePrice are computed by the controller from the order,
-    // so they should not be submitted in the request
 }).unknown(false);
 
 const returnDtos = {

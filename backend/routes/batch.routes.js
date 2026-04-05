@@ -1,6 +1,6 @@
 const express = require("express");
 
-const batchController = require("../controllers/batch.controller");
+const batchService = require("../services/batch.service");
 const batchDtos = require("../dtos/batch.dtos");
 
 const validator = require("../middlewares/validator");
@@ -14,21 +14,21 @@ router.post(
     "/",
     authorizor([ROLES.PLANNING, ROLES.ADMIN]),
     validator({ bodySchema: batchDtos.createBatchSchema }),
-    batchController.createBatch,
+    batchService.createBatch,
 );
 
 // Get All Batches (Planner, Admin, Inventory)
 router.get(
     "/",
     authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.INVENTORY]),
-    batchController.getAllBatches,
+    batchService.getAllBatches,
 );
 
 // Get Batch by ID (Planner, Admin, Inventory)
 router.get(
     "/:id",
     authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.INVENTORY]),
-    batchController.getBatchById,
+    batchService.getBatchById,
 );
 
 // Update Batch (Planner, Admin)
@@ -36,24 +36,24 @@ router.put(
     "/:id",
     authorizor([ROLES.PLANNING, ROLES.ADMIN]),
     validator({ bodySchema: batchDtos.updateBatchSchema }),
-    batchController.updateBatch,
+    batchService.updateBatch,
 );
 
 // Delete Batch (Admin only)
-router.delete("/:id", authorizor([ROLES.ADMIN]), batchController.deleteBatch);
+router.delete("/:id", authorizor([ROLES.ADMIN]), batchService.deleteBatch);
 
 // Finalize Planning (Planner, Admin)
 router.patch(
     "/:id/finalize-planning",
     authorizor([ROLES.PLANNING, ROLES.ADMIN]),
-    batchController.finalizePlanning,
+    batchService.finalizePlanning,
 );
 
 // Finalize Production (Planner, Admin)
 router.patch(
     "/:id/finalize-production",
     authorizor([ROLES.PLANNING, ROLES.ADMIN, ROLES.PRODUCTION]),
-    batchController.finalizeProduction,
+    batchService.finalizeProduction,
 );
 
 module.exports = router;

@@ -146,7 +146,9 @@ const executeWarehouseMovement = async ({
     }
 };
 
-const stockMovementController = {
+// ------------ Services ------------
+
+const stockMovementService = {
     // function to get all stock movements with pagination
     getStockMovements: async (req, res, next) => {
         try {
@@ -368,4 +370,4 @@ const stockMovementController = {
     },
 };
 
-module.exports = stockMovementController;
+module.exports = stockMovementService;

@@ -14,7 +14,7 @@ const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 const { createStockMovement, getNextDocumentNumber } = require("../utils/helpers");
 
-/////// Helpers ///////
+// ------------ Helpers ------------
 
 function buildOrderItemMap(order) {
     return new Map(order.items.map((it) => [String(it.productId), it]));
@@ -73,7 +73,7 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
     return snapshot;
 }
 
-const returnController = {
+const returnService = {
     // Create return as draft (no stock changes)
     createReturn: async (req, res, next) => {
         const session = await mongoose.startSession();
@@ -401,4 +401,4 @@ const returnController = {
     },
 };
 
-module.exports = returnController;
+module.exports = returnService;

@@ -1,6 +1,6 @@
 const express = require("express");
 
-const orderController = require("../controllers/order.controller");
+const orderService = require("../services/order.service");
 const orderDtos = require("../dtos/order.dtos");
 
 const validator = require("../middlewares/validator");
@@ -14,7 +14,7 @@ router.post(
     "/",
     authorizor([ROLES.ADMIN, ROLES.SALES]),
     validator({ bodySchema: orderDtos.createOrderSchema }),
-    orderController.createOrder,
+    orderService.createOrder,
 );
 
 // route to get orders
@@ -22,7 +22,7 @@ router.get(
     "/",
     authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
     validator({ querySchema: orderDtos.getOrdersQuerySchema }),
-    orderController.getOrders,
+    orderService.getOrders,
 );
 
 // route to get orders made by user
@@ -30,14 +30,14 @@ router.get(
     "/me",
     validator({ querySchema: orderDtos.getOrderQuerySchema }),
     authorizor([ROLES.ADMIN, ROLES.SALES]),
-    orderController.getUserOrders,
+    orderService.getUserOrders,
 );
 
 // route to get a specific order
 router.get(
     "/:orderId",
     authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
-    orderController.getOrder,
+    orderService.getOrder,
 );
 
 // route to change the status of a specific order
@@ -45,7 +45,7 @@ router.patch(
     "/change-status/:orderId",
     authorizor([ROLES.ADMIN, ROLES.ACCOUNTING]),
     validator({ bodySchema: orderDtos.changeOrderStatusSchema }),
-    orderController.changeStatus,
+    orderService.changeStatus,
 );
 
 // route to edit a specific order
@@ -53,10 +53,10 @@ router.patch(
     "/edit/:orderId",
     authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
     validator({ bodySchema: orderDtos.editOrderSchema }),
-    orderController.editOrder,
+    orderService.editOrder,
 );
 
 // route to delete a order
-router.delete("/:orderId", authorizor([ROLES.ADMIN]), orderController.deleteOrder);
+router.delete("/:orderId", authorizor([ROLES.ADMIN]), orderService.deleteOrder);
 
 module.exports = router;

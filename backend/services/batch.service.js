@@ -14,7 +14,7 @@ const response = require("../utils/responseFactory");
 const createError = require("../utils/errorFactory");
 const { createStockMovement, getNextDocumentNumber } = require("../utils/helpers");
 
-const batchController = {
+const batchService = {
     // Create Batch (Planning)
     createBatch: async (req, res, next) => {
         const session = await mongoose.startSession();
@@ -364,4 +364,4 @@ const batchController = {
     },
 };
 
-module.exports = batchController;
+module.exports = batchService;
