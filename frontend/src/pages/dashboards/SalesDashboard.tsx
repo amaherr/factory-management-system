@@ -19,7 +19,7 @@ import {
   analyticsService,
   type AnalyticsGranularity,
   type SalesDashboardData,
-} from '../../services/analytics';
+} from '../../services/dashboard';
 import {
   AnalyticsErrorState,
   AnalyticsLoadingState,
@@ -33,7 +33,7 @@ import {
   formatPercent,
   humanizeLabel,
   type QuickRangePreset,
-} from '../../components/analytics/AnalyticsPrimitives';
+} from '../../components/dashboards/AnalyticsPrimitives';
 import {
   Table,
   TableBody,

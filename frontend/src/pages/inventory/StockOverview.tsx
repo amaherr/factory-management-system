@@ -17,10 +17,10 @@ import {
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
 import { Search, PackagePlus, Settings2, RefreshCw, Eye, X, MapPinned } from 'lucide-react';
-import { AdjustStockDialog } from '../../components/stock/AdjustStockDialog';
-import { SetStockDialog } from '../../components/stock/SetStockDialog';
-import { ProductStockDetailsDialog } from '../../components/stock/ProductStockDetailsDialog';
-import { LocationStockOverviewDialog } from '../../components/stock/LocationStockOverviewDialog';
+import { AdjustStockDialog } from '../../components/inventory/stock/AdjustStockDialog';
+import { SetStockDialog } from '../../components/inventory/stock/SetStockDialog';
+import { ProductStockDetailsDialog } from '../../components/inventory/stock/ProductStockDetailsDialog';
+import { LocationStockOverviewDialog } from '../../components/inventory/stock/LocationStockOverviewDialog';
 import { toast } from 'sonner';
 import { getProductImageSrc } from '../../utils/imageUpload';
 

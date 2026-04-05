@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
-import type { Product } from '../../services/products';
-import { FACTORY_LOCATIONS_VALUES } from '../../services/enums/product.enums';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import { Badge } from '../../ui/badge';
+import type { Product } from '../../../services/products';
+import { FACTORY_LOCATIONS_VALUES } from '../../../services/enums/product.enums';
 
 interface LocationStockOverviewDialogProps {
   open: boolean;

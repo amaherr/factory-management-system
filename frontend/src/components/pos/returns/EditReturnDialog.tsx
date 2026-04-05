@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order } from '../../services/orders';
-import { CURRENCY, orderService } from '../../services/orders';
-import type { ReturnRecord } from '../../services/returns';
-import { returnService } from '../../services/returns';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import type { Order } from '../../../services/orders';
+import { CURRENCY, orderService } from '../../../services/orders';
+import type { ReturnRecord } from '../../../services/returns';
+import { returnService } from '../../../services/returns';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Textarea } from '../../ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from '../../ui/dialog';
 
-interface EditReturnModalProps {
+interface EditReturnDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   returnRecord: ReturnRecord | null;
@@ -34,12 +34,12 @@ function formatDateForInput(date: string): string {
   return `${year}-${month}-${day}`;
 }
 
-export function EditReturnModal({
+export function EditReturnDialog({
   open,
   onOpenChange,
   returnRecord,
   onSuccess,
-}: EditReturnModalProps) {
+}: EditReturnDialogProps) {
   const { t } = useTranslation('pos');
   const formatReturnNumber = (returnNumber: number | string) =>
     `${t('returns.numberPrefix')} - ${returnNumber}`;
@@ -57,7 +57,7 @@ export function EditReturnModal({
     const initialQty: Record<string, string> = {};
     for (const item of returnRecord.items) {
       const productId = typeof item.productId === 'string' ? item.productId : item.productId._id;
-      initialQty[productId] = String(item.quantity);
+      initialQty[productId] = String(item.lineQuantity);
     }
 
     setReturnDate(formatDateForInput(returnRecord.returnDate));
@@ -191,7 +191,7 @@ export function EditReturnModal({
                       <div className="md:col-span-2">
                         <p className="text-sm font-medium">{productName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {t('returns.createDialog.soldQty')}: {orderItem.quantity}
+                          {t('returns.createDialog.soldQty')}: {orderItem.lineQuantity}
                           {orderItem.actualQuantity != null &&
                             ` (${t('returns.createDialog.actualQty')}: ${orderItem.actualQuantity})`}
                         </p>
@@ -220,7 +220,7 @@ export function EditReturnModal({
                         <Input
                           type="number"
                           min={0}
-                          max={orderItem.quantity}
+                          max={orderItem.lineQuantity}
                           className="h-9 rounded-md border-[--border-default] bg-white text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                           value={quantities[productId] ?? ''}
                           onChange={(e) => {
@@ -231,7 +231,7 @@ export function EditReturnModal({
                             }
 
                             const num = Number(raw);
-                            const clamped = Math.max(0, Math.min(orderItem.quantity, num));
+                            const clamped = Math.max(0, Math.min(orderItem.lineQuantity, num));
                             setQuantities((prev) => ({
                               ...prev,
                               [productId]: String(Number.isNaN(clamped) ? 0 : clamped),

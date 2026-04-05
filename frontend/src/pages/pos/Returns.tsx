@@ -25,11 +25,11 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { CreateReturnModal } from '../../components/returns/CreateReturnModal';
-import { ReturnDetailsModal } from '../../components/returns/ReturnDetailsModal';
-import { EditReturnModal } from '../../components/returns/EditReturnModal';
-import { ChangeReturnStatusModal } from '../../components/returns/ChangeReturnStatusModal';
-import { DeleteReturnModal } from '../../components/returns/DeleteReturnModal';
+import { CreateReturnDialog } from '../../components/pos/returns/CreateReturnDialog';
+import { ReturnDetailsDialog } from '../../components/pos/returns/ReturnDetailsDialog';
+import { EditReturnDialog } from '../../components/pos/returns/EditReturnDialog';
+import { ChangeReturnStatusDialog } from '../../components/pos/returns/ChangeReturnStatusDialog';
+import { DeleteReturnDialog } from '../../components/pos/returns/DeleteReturnDialog';
 
 function getStatusColor(status: string): string {
   if (status === 'finalized') return 'bg-green-100 text-green-800';
@@ -285,13 +285,13 @@ export function Returns() {
         </CardContent>
       </Card>
 
-      <CreateReturnModal
+      <CreateReturnDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSuccess={refresh}
       />
 
-      <ReturnDetailsModal
+      <ReturnDetailsDialog
         open={detailsOpen}
         onOpenChange={(open) => {
           setDetailsOpen(open);
@@ -300,7 +300,7 @@ export function Returns() {
         returnRecord={selectedReturn}
       />
 
-      <EditReturnModal
+      <EditReturnDialog
         open={editOpen}
         onOpenChange={(open) => {
           setEditOpen(open);
@@ -310,7 +310,7 @@ export function Returns() {
         onSuccess={refresh}
       />
 
-      <ChangeReturnStatusModal
+      <ChangeReturnStatusDialog
         open={statusOpen}
         onOpenChange={(open) => {
           setStatusOpen(open);
@@ -320,7 +320,7 @@ export function Returns() {
         onSuccess={refresh}
       />
 
-      <DeleteReturnModal
+      <DeleteReturnDialog
         open={deleteOpen}
         onOpenChange={(open) => {
           setDeleteOpen(open);

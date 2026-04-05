@@ -15,7 +15,7 @@ import {
   YAxis,
 } from 'recharts';
 import { AlertTriangle, ClipboardCheck, RefreshCcw, Users } from 'lucide-react';
-import { analyticsService, type OperationsDashboardData } from '../../services/analytics';
+import { analyticsService, type OperationsDashboardData } from '../../services/dashboard';
 import {
   AnalyticsErrorState,
   AnalyticsLoadingState,
@@ -28,7 +28,7 @@ import {
   formatPercent,
   humanizeLabel,
   type QuickRangePreset,
-} from '../../components/analytics/AnalyticsPrimitives';
+} from '../../components/dashboards/AnalyticsPrimitives';
 import {
   Table,
   TableBody,

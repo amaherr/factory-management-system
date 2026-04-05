@@ -26,7 +26,7 @@ import {
   type StockBucket,
   type WarehouseAction,
 } from '../../services/stockMovements';
-import { StockMovementDetailsDialog } from '../../components/stock/StockMovementDetailsDialog';
+import { StockMovementDetailsDialog } from '../../components/inventory/stock/StockMovementDetailsDialog';
 
 export function StockMovementPage() {
   const { t } = useTranslation('stock');

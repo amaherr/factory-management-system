@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Product, FactoryLocation } from '../../services/products';
-import { productService } from '../../services/products';
-import { FACTORY_LOCATIONS_VALUES } from '../../services/enums/product.enums';
+import type { Product, FactoryLocation } from '../../../services/products';
+import { productService } from '../../../services/products';
+import { FACTORY_LOCATIONS_VALUES } from '../../../services/enums/product.enums';
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+} from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { Input } from '../../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { toast } from 'sonner';
 import { ArrowRight } from 'lucide-react';
 

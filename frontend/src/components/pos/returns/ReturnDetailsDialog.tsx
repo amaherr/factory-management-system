@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import type { ReturnRecord } from '../../services/returns';
-import { CURRENCY } from '../../services/orders';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
+import type { ReturnRecord } from '../../../services/returns';
+import { CURRENCY } from '../../../services/orders';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from '../../ui/dialog';
 
-interface ReturnDetailsModalProps {
+interface ReturnDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   returnRecord: ReturnRecord | null;
@@ -30,7 +30,11 @@ function getOrderNumber(orderId: ReturnRecord['orderId']): string {
   return orderId.orderNumber != null ? `#${orderId.orderNumber}` : '-';
 }
 
-export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnDetailsModalProps) {
+export function ReturnDetailsDialog({
+  open,
+  onOpenChange,
+  returnRecord,
+}: ReturnDetailsDialogProps) {
   const { t } = useTranslation('pos');
   const formatReturnNumber = (returnNumber: number | string) =>
     `${t('returns.numberPrefix')} - ${returnNumber}`;
@@ -90,7 +94,7 @@ export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnD
                     <div>
                       <p className="font-medium text-sm">{name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {t('returns.detailsDialog.qty')}: {item.quantity}
+                        {t('returns.detailsDialog.qty')}: {item.lineQuantity}
                       </p>
                       {item.actualQuantity != null && (
                         <p className="text-xs text-muted-foreground">
@@ -100,7 +104,7 @@ export function ReturnDetailsModal({ open, onOpenChange, returnRecord }: ReturnD
                     </div>
                     <p className="text-sm font-medium">
                       {CURRENCY}
-                      {(item.quantity * item.unitPrice).toFixed(2)}
+                      {(item.lineQuantity * item.unitPrice).toFixed(2)}
                     </p>
                   </div>
                 );

@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { ArrowRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import type { StockMovement, WarehouseAction } from '../../services/stockMovements';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
+import type { StockMovement, WarehouseAction } from '../../../services/stockMovements';
 
 interface StockMovementDetailsDialogProps {
   movement: StockMovement | null;

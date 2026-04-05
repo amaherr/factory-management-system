@@ -8,10 +8,10 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
+} from '../../ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
-import type { Order } from '../../services/orders';
-import { orderService } from '../../services/orders';
+import type { Order } from '../../../services/orders';
+import { orderService } from '../../../services/orders';
 import { toast } from 'sonner';
 
 interface CancelOrderDialogProps {

@@ -10,9 +10,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
-import { productService } from '../../services/products';
-import type { Product } from '../../services/products';
+} from '../../ui/alert-dialog';
+import { productService } from '../../../services/products';
+import type { Product } from '../../../services/products';
 
 interface DeleteProductDialogProps {
   open: boolean;

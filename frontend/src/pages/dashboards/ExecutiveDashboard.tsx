@@ -13,7 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import { AlertTriangle, Boxes, DollarSign, Factory, PackageCheck } from 'lucide-react';
-import { analyticsService, type ExecutiveDashboardData } from '../../services/analytics';
+import { analyticsService, type ExecutiveDashboardData } from '../../services/dashboard';
 import {
   AnalyticsErrorState,
   AnalyticsLoadingState,
@@ -27,7 +27,7 @@ import {
   formatPercent,
   humanizeLabel,
   type QuickRangePreset,
-} from '../../components/analytics/AnalyticsPrimitives';
+} from '../../components/dashboards/AnalyticsPrimitives';
 import { Badge } from '../../components/ui/badge';
 
 const PIE_COLORS = ['#0f766e', '#f59e0b', '#2563eb', '#ef4444', '#8b5cf6', '#14b8a6'];

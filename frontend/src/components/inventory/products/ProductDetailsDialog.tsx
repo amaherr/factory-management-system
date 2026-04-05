@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Badge } from '../ui/badge';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { getProductImageSrc } from '../../utils/imageUpload';
-import type { Product } from '../../services/products';
-import { PRODUCT_STATUS } from '../../services/enums/product.enums';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
+import { Badge } from '../../ui/badge';
+import { ImageWithFallback } from '../../figma/ImageWithFallback';
+import { getProductImageSrc } from '../../../utils/imageUpload';
+import type { Product } from '../../../services/products';
+import { PRODUCT_STATUS } from '../../../services/enums/product.enums';
 
 interface ProductDetailsDialogProps {
   open: boolean;

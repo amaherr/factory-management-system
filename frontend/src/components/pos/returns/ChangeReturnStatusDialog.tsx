@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ReturnRecord } from '../../services/returns';
-import { returnService } from '../../services/returns';
-import { Button } from '../ui/button';
+import type { ReturnRecord } from '../../../services/returns';
+import { returnService } from '../../../services/returns';
+import { Button } from '../../ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,23 +12,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Label } from '../ui/label';
+} from '../../ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Label } from '../../ui/label';
 
-interface ChangeReturnStatusModalProps {
+interface ChangeReturnStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   returnRecord: ReturnRecord | null;
   onSuccess: () => void;
 }
 
-export function ChangeReturnStatusModal({
+export function ChangeReturnStatusDialog({
   open,
   onOpenChange,
   returnRecord,
   onSuccess,
-}: ChangeReturnStatusModalProps) {
+}: ChangeReturnStatusDialogProps) {
   const { t } = useTranslation('pos');
   const [statusValue, setStatusValue] = useState<'finalized' | 'cancelled' | ''>('');
   const [statusLoading, setStatusLoading] = useState(false);

@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Loader2 } from 'lucide-react';
-import type { Order } from '../../services/orders';
-import { orderService, CURRENCY } from '../../services/orders';
+import type { Order } from '../../../services/orders';
+import { orderService, CURRENCY } from '../../../services/orders';
 
 interface OrderDetailsDialogProps {
   orderId: string | null;

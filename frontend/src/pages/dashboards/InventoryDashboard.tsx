@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { Boxes, PackageOpen, Scale, Warehouse } from 'lucide-react';
-import { analyticsService, type InventoryDashboardData } from '../../services/analytics';
+import { analyticsService, type InventoryDashboardData } from '../../services/dashboard';
 import {
   AnalyticsErrorState,
   AnalyticsLoadingState,
@@ -24,7 +24,7 @@ import {
   formatNumber,
   humanizeLabel,
   type QuickRangePreset,
-} from '../../components/analytics/AnalyticsPrimitives';
+} from '../../components/dashboards/AnalyticsPrimitives';
 import {
   Table,
   TableBody,

@@ -10,10 +10,10 @@ import {
   type WarehouseAction,
 } from '../../services/stockMovements';
 import { productService, type Product } from '../../services/products';
-import { PendingWarehouseExecutionsTable } from '../../components/warehouse/PendingWarehouseExecutionsTable';
-import { WarehouseTransferPanel } from '../../components/warehouse/WarehouseTransferPanel';
-import { ExecuteStockMovementDialog } from '../../components/warehouse/ExecuteStockMovementDialog';
-import { StockMovementDetailsDialog } from '../../components/stock/StockMovementDetailsDialog';
+import { PendingWarehouseExecutionsTable } from '../../components/inventory/warehouse/PendingWarehouseExecutionsTable';
+import { WarehouseTransferPanel } from '../../components/inventory/warehouse/WarehouseTransferPanel';
+import { ExecuteStockMovementDialog } from '../../components/inventory/warehouse/ExecuteStockMovementDialog';
+import { StockMovementDetailsDialog } from '../../components/inventory/stock/StockMovementDetailsDialog';
 
 const PAGE_SIZE = 10;
 

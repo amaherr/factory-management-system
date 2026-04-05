@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ReturnRecord } from '../../services/returns';
-import { returnService } from '../../services/returns';
+import type { ReturnRecord } from '../../../services/returns';
+import { returnService } from '../../../services/returns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,21 +12,21 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../ui/alert-dialog';
+} from '../../ui/alert-dialog';
 
-interface DeleteReturnModalProps {
+interface DeleteReturnDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   returnRecord: ReturnRecord | null;
   onSuccess: () => void;
 }
 
-export function DeleteReturnModal({
+export function DeleteReturnDialog({
   open,
   onOpenChange,
   returnRecord,
   onSuccess,
-}: DeleteReturnModalProps) {
+}: DeleteReturnDialogProps) {
   const { t } = useTranslation('pos');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const formatReturnNumber = (returnNumber: number | string) =>

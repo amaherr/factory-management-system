@@ -1,10 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import type { Product } from '../../services/products';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Badge } from '../ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { getProductImageSrc } from '../../utils/imageUpload';
+import type { Product } from '../../../services/products';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../../ui/dialog';
+import { Badge } from '../../ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { getProductImageSrc } from '../../../utils/imageUpload';
 
 interface ProductStockDetailsDialogProps {
   product: Product | null;

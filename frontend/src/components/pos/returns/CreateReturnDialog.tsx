@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order } from '../../services/orders';
-import { CURRENCY, orderService } from '../../services/orders';
-import { returnService } from '../../services/returns';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
+import type { Order } from '../../../services/orders';
+import { CURRENCY, orderService } from '../../../services/orders';
+import { returnService } from '../../../services/returns';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Textarea } from '../../ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -15,16 +15,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+} from '../../ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
-interface CreateReturnModalProps {
+interface CreateReturnDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
-export function CreateReturnModal({ open, onOpenChange, onSuccess }: CreateReturnModalProps) {
+export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateReturnDialogProps) {
   const { t } = useTranslation('pos');
 
   const [createLoading, setCreateLoading] = useState(false);

@@ -7,13 +7,13 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Label } from '../ui/label';
+} from '../../ui/dialog';
+import { Button } from '../../ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Label } from '../../ui/label';
 import { Loader2 } from 'lucide-react';
-import type { Order } from '../../services/orders';
-import { orderService } from '../../services/orders';
+import type { Order } from '../../../services/orders';
+import { orderService } from '../../../services/orders';
 import { toast } from 'sonner';
 
 interface ChangeOrderStatusDialogProps {
