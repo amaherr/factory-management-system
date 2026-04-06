@@ -1,0 +1,53 @@
+openapi: 3.0.4
+info:
+    title: ABA Factory System API
+    version: 1.0.0
+    description: |
+        OpenAPI documentation for the ABA Factory System backend.
+
+        This document currently focuses on reusable domain schemas that mirror
+        MongoDB models. Endpoint paths can be added and expanded gradually.
+
+servers:
+    - url: http://localhost:3000
+      description: Local development server
+
+paths: {}
+
+tags:
+    - name: Users
+    - name: Customers
+    - name: Products
+    - name: Orders
+    - name: Returns
+    - name: Batches
+    - name: Batch Events
+    - name: Stock Movements
+    - name: Issues
+    - name: Notifications
+    - name: Counters
+
+components:
+    schemas:
+        User:
+            $ref: ./schemas/user.schema.yaml
+        Customer:
+            $ref: ./schemas/customer.schema.yaml
+        Product:
+            $ref: ./schemas/product.schema.yaml
+        Order:
+            $ref: ./schemas/order.schema.yaml
+        Return:
+            $ref: ./schemas/return.schema.yaml
+        Batch:
+            $ref: ./schemas/batch.schema.yaml
+        BatchEvent:
+            $ref: ./schemas/batchEvent.schema.yaml
+        StockMovement:
+            $ref: ./schemas/stockMovement.schema.yaml
+        Issue:
+            $ref: ./schemas/issue.schema.yaml
+        Notification:
+            $ref: ./schemas/notification.schema.yaml
+        Counter:
+            $ref: ./schemas/counter.schema.yaml

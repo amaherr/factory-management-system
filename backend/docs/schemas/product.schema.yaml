@@ -1,0 +1,192 @@
+type: object
+description: Product catalog item with pricing and stock state.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86c1
+    code:
+        type: string
+        minLength: 1
+        maxLength: 50
+        description: Unique product code.
+        example: TSH-2026-RED-01
+    name:
+        type: string
+        minLength: 1
+        maxLength: 200
+        description: Product display name.
+        example: Cotton T-Shirt V-Neck
+    description:
+        type: string
+        minLength: 1
+        maxLength: 2000
+        nullable: true
+        description: Long-form product description.
+        example: Lightweight cotton t-shirt designed for summer collection.
+    color:
+        type: string
+        enum:
+            - red
+            - blue
+            - black
+            - white
+            - green
+            - yellow
+            - gray
+            - navy
+            - brown
+            - beige
+            - pink
+            - purple
+            - orange
+        description: Product color option.
+        example: red
+    season:
+        type: string
+        enum:
+            - spring
+            - summer
+            - autumn
+            - winter
+        nullable: true
+        description: Seasonal categorization.
+        example: summer
+    defaultImage:
+        type: string
+        nullable: true
+        description: Default image URL or relative path.
+        example: /uploads/products/tsh-2026-red-01.jpg
+    sku:
+        type: number
+        minimum: 1
+        description: Stock keeping unit multiplier per line.
+        example: 24
+    unitCostPrice:
+        type: number
+        minimum: 1
+        nullable: true
+        description: Optional cost per individual unit.
+        example: 5.3
+    unitSalePrice:
+        type: number
+        minimum: 1
+        description: Sale price per individual unit.
+        example: 8.5
+    lineCostPrice:
+        type: number
+        minimum: 1
+        description: Cost price per line.
+        example: 127.2
+    lineSalePrice:
+        type: number
+        minimum: 1
+        description: Sale price per line.
+        example: 204
+    status:
+        type: string
+        enum:
+            - pending
+            - active
+            - deactive
+        default: pending
+        description: Product lifecycle status.
+        example: active
+    totalTheoreticalStock:
+        type: number
+        minimum: 0
+        default: 0
+        description: System-calculated theoretical stock.
+        example: 1800
+    totalPhysicalStock:
+        type: number
+        minimum: 0
+        default: 0
+        description: Confirmed physical stock.
+        example: 1760
+    totalReserved:
+        type: number
+        minimum: 0
+        default: 0
+        description: Quantity reserved for open orders.
+        example: 220
+    totalSold:
+        type: number
+        minimum: 0
+        default: 0
+        description: Cumulative sold quantity.
+        example: 5400
+    locations:
+        type: array
+        description: Per-location stock levels.
+        items:
+            type: object
+            properties:
+                location:
+                    type: string
+                    enum:
+                        - showroom
+                        - warehouse a
+                        - warehouse b
+                    description: Factory location key.
+                    example: warehouse a
+                quantityInStock:
+                    type: number
+                    minimum: 0
+                    default: 0
+                    description: Quantity currently in stock at this location.
+                    example: 960
+            required:
+                - location
+                - quantityInStock
+    deactivatedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who deactivated the product.
+        example: 67fd5a33e0f2f3f07a8d86d4
+    deactivatedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Deactivation timestamp.
+        example: "2026-03-20T17:00:00.000Z"
+    activatedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who reactivated the product.
+        example: 67fd5a33e0f2f3f07a8d86d5
+    activatedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Reactivation timestamp.
+        example: "2026-04-01T09:30:00.000Z"
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-02-11T08:00:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-01T09:30:00.000Z"
+required:
+    - code
+    - name
+    - color
+    - sku
+    - unitSalePrice
+    - lineCostPrice
+    - lineSalePrice
+    - status
+    - totalTheoreticalStock
+    - totalPhysicalStock
+    - totalReserved
+    - totalSold

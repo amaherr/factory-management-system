@@ -1,0 +1,83 @@
+type: object
+description: Operational issue or incident record.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e4
+    issueNumber:
+        type: integer
+        description: Unique business identifier for the issue.
+        example: 501
+    createdByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: User who created the issue.
+        example: 67fd5a33e0f2f3f07a8d86e1
+    issueType:
+        type: string
+        enum:
+            - inventory discrepancy
+            - damaged goods
+            - system bug
+        description: Functional category of the issue.
+        example: inventory discrepancy
+    description:
+        type: string
+        maxLength: 200
+        description: Human-readable details about the issue.
+        example: Product count in Warehouse A does not match system balance.
+    status:
+        type: string
+        enum:
+            - open
+            - in progress
+            - resolved
+            - cancelled
+        default: open
+        description: Current lifecycle status.
+        example: in progress
+    resolvedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who resolved the issue.
+        example: 67fd5a33e0f2f3f07a8d86a1
+    resolvedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Timestamp when issue was resolved.
+        example: "2026-04-05T14:00:00.000Z"
+    cancelledByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who cancelled the issue.
+        example: 67fd5a33e0f2f3f07a8d86a2
+    cancelledAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Timestamp when issue was cancelled.
+        example: "2026-04-06T08:10:00.000Z"
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-01T09:20:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-05T14:00:00.000Z"
+required:
+    - issueNumber
+    - createdByUserId
+    - issueType
+    - description
+    - status

@@ -1,0 +1,97 @@
+type: object
+description: Return transaction linked to a source order.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e9
+    returnNumber:
+        type: integer
+        description: Unique business return number.
+        example: 220
+    orderId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Related order id.
+        example: 67fd5a33e0f2f3f07a8d86e8
+    userId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: User who created the return.
+        example: 67fd5a33e0f2f3f07a8d86d1
+    status:
+        type: string
+        enum:
+            - draft
+            - finalized
+            - cancelled
+        default: draft
+        description: Current return lifecycle status.
+        example: finalized
+    note:
+        type: string
+        maxLength: 200
+        nullable: true
+        description: Optional return note.
+        example: Customer reported stitching defect.
+    returnDate:
+        type: string
+        format: date-time
+        description: Business date when return happened.
+        example: "2026-04-06T09:00:00.000Z"
+    items:
+        type: array
+        description: Returned line items.
+        items:
+            type: object
+            properties:
+                productId:
+                    type: string
+                    pattern: "^[a-fA-F0-9]{24}$"
+                    description: Returned product id.
+                    example: 67fd5a33e0f2f3f07a8d86c1
+                lineQuantity:
+                    type: number
+                    minimum: 1
+                    description: Number of lines returned.
+                    example: 2
+                actualQuantity:
+                    type: number
+                    minimum: 1
+                    description: Individual units returned.
+                    example: 48
+                unitPrice:
+                    type: number
+                    minimum: 0
+                    description: Unit price snapshot from source order.
+                    example: 8.5
+                totalPrice:
+                    type: number
+                    minimum: 0
+                    description: Line refund total.
+                    example: 408
+            required:
+                - productId
+                - lineQuantity
+                - actualQuantity
+                - unitPrice
+                - totalPrice
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-06T09:05:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-06T10:30:00.000Z"
+required:
+    - returnNumber
+    - orderId
+    - userId
+    - status

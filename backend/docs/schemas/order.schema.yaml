@@ -1,0 +1,147 @@
+type: object
+description: Customer sales order with pricing snapshots and lifecycle state.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e8
+    orderNumber:
+        type: integer
+        description: Unique business order number.
+        example: 1021
+    createdByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: User who created the order.
+        example: 67fd5a33e0f2f3f07a8d86d1
+    customerId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Related customer id.
+        example: 67fd5a33e0f2f3f07a8d86e2
+    orderType:
+        type: string
+        enum:
+            - on shelf
+            - on demand
+        description: Order source and fulfillment type.
+        example: on demand
+    items:
+        type: array
+        description: Order line items.
+        items:
+            type: object
+            properties:
+                productId:
+                    type: string
+                    pattern: "^[a-fA-F0-9]{24}$"
+                    description: Product id for the line.
+                    example: 67fd5a33e0f2f3f07a8d86c1
+                lineQuantity:
+                    type: number
+                    minimum: 1
+                    description: Number of lines ordered.
+                    example: 10
+                actualQuantity:
+                    type: number
+                    minimum: 1
+                    description: Calculated individual units (lineQuantity * sku).
+                    example: 240
+                unitPrice:
+                    type: number
+                    minimum: 0
+                    description: Unit price snapshot at order time.
+                    example: 8.5
+                totalPrice:
+                    type: number
+                    minimum: 0
+                    description: Line total (actualQuantity * unitPrice).
+                    example: 2040
+            required:
+                - productId
+                - lineQuantity
+                - actualQuantity
+                - unitPrice
+                - totalPrice
+    subTotal:
+        type: number
+        minimum: 0
+        description: Sum of line totals before discounts/tax.
+        example: 6000
+    discountAmount:
+        type: number
+        minimum: 0
+        description: Absolute discount value.
+        example: 300
+    taxAmount:
+        type: number
+        minimum: 0
+        description: Tax amount applied to order.
+        example: 855
+    total:
+        type: number
+        minimum: 0
+        description: Final payable amount.
+        example: 6555
+    notes:
+        type: string
+        nullable: true
+        description: Optional order notes.
+        example: Priority customer, deliver before weekend.
+    status:
+        type: string
+        enum:
+            - draft
+            - finalized
+            - cancelled
+        default: draft
+        description: Current order lifecycle status.
+        example: finalized
+    finalizedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Finalization timestamp.
+        example: "2026-04-04T15:15:00.000Z"
+    finalizedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who finalized the order.
+        example: 67fd5a33e0f2f3f07a8d86d2
+    cancelledAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Cancellation timestamp.
+        example: "2026-04-05T08:00:00.000Z"
+    cancelledByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who cancelled the order.
+        example: 67fd5a33e0f2f3f07a8d86d3
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-04T13:00:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-04T15:15:00.000Z"
+required:
+    - orderNumber
+    - createdByUserId
+    - customerId
+    - orderType
+    - subTotal
+    - discountAmount
+    - taxAmount
+    - total
+    - status

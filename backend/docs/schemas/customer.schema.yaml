@@ -1,0 +1,74 @@
+type: object
+description: Customer profile and address information.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e2
+    name:
+        type: string
+        minLength: 1
+        maxLength: 35
+        description: Customer display name.
+        example: Nile Traders
+    company:
+        type: string
+        minLength: 1
+        description: Optional company or organization name.
+        example: Nile Trading Co.
+    phoneNumber:
+        type: string
+        minLength: 1
+        maxLength: 20
+        description: Unique contact phone number.
+        example: +201001112223
+    address:
+        type: object
+        description: Postal address details.
+        properties:
+            country:
+                type: string
+                minLength: 1
+                maxLength: 35
+                description: Country name.
+                example: Egypt
+            governate:
+                type: string
+                minLength: 1
+                maxLength: 35
+                description: Governate or governorate name.
+                example: Cairo
+            city:
+                type: string
+                minLength: 1
+                maxLength: 35
+                description: City name.
+                example: Nasr City
+            street:
+                type: string
+                minLength: 1
+                description: Street and building details.
+                example: 15 Abbas El Akkad St.
+        required:
+            - country
+            - governate
+            - city
+            - street
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-03-10T09:15:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-03-25T12:00:00.000Z"
+required:
+    - name
+    - phoneNumber
+    - address

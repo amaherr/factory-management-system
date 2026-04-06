@@ -1,0 +1,26 @@
+type: object
+description: Sequence counter used to generate business document numbers.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e3
+    name:
+        type: string
+        enum:
+            - order number
+            - batch number
+            - return number
+            - issue number
+        description: Counter scope identifier.
+        example: order number
+    seq:
+        type: integer
+        minimum: 0
+        default: 0
+        description: Current numeric sequence value.
+        example: 1042
+required:
+    - name

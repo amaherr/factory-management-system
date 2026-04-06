@@ -1,0 +1,48 @@
+type: object
+description: In-app notification exchanged between users.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e5
+    receiverUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Target user receiving the notification.
+        example: 67fd5a33e0f2f3f07a8d86b1
+    senderUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Source user creating the notification.
+        example: 67fd5a33e0f2f3f07a8d86b2
+    status:
+        type: string
+        enum:
+            - unread
+            - read
+        default: unread
+        description: Read state of notification.
+        example: unread
+    content:
+        type: string
+        description: Notification message text.
+        example: Order #1021 has been finalized.
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-06T11:35:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-06T11:40:00.000Z"
+required:
+    - receiverUserId
+    - senderUserId
+    - status
+    - content

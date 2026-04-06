@@ -1,0 +1,454 @@
+paths:
+    /api/issues:
+        post:
+            tags:
+                - Issues
+            summary: Create a new issue
+            description: Creates a new issue for the authenticated user.
+            security:
+                - CookieAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                issueType:
+                                    type: string
+                                    enum:
+                                        - inventory discrepancy
+                                        - damaged goods
+                                        - system bug
+                                description:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 200
+                            required:
+                                - issueType
+                                - description
+                        examples:
+                            inventoryDiscrepancy:
+                                summary: Inventory discrepancy report
+                                value:
+                                    issueType: inventory discrepancy
+                                    description: Product count in Warehouse A does not match system quantity.
+            responses:
+                "201":
+                    $ref: "#/components/responses/IssueSuccessResponse"
+                "400":
+                    $ref: "#/components/responses/BadRequestResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+
+        get:
+            tags:
+                - Issues
+            summary: Get all issues
+            description: Returns all issues in the system. Admin role required.
+            security:
+                - CookieAuth: []
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueListSuccessResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+                "403":
+                    $ref: "#/components/responses/ForbiddenResponse"
+
+    /api/issues/my-issues:
+        get:
+            tags:
+                - Issues
+            summary: Get authenticated user's issues
+            description: Returns issues created by the currently authenticated user.
+            security:
+                - CookieAuth: []
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueListSuccessResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+
+    /api/issues/{issueId}:
+        get:
+            tags:
+                - Issues
+            summary: Get a specific issue
+            description: Returns a single issue by its id. Admin role required.
+            security:
+                - CookieAuth: []
+            parameters:
+                - $ref: "#/components/parameters/IssueIdPathParam"
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueSuccessResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+                "403":
+                    $ref: "#/components/responses/ForbiddenResponse"
+                "404":
+                    $ref: "#/components/responses/NotFoundResponse"
+
+    /api/issues/edit-my-issue/{issueId}:
+        patch:
+            tags:
+                - Issues
+            summary: Edit authenticated user's open issue
+            description: |
+                Updates an issue only when all these rules are met:
+                - the issue exists
+                - it was created by the authenticated user
+                - its status is open
+            security:
+                - CookieAuth: []
+            parameters:
+                - $ref: "#/components/parameters/IssueIdPathParam"
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            minProperties: 1
+                            properties:
+                                issueType:
+                                    type: string
+                                    enum:
+                                        - inventory discrepancy
+                                        - damaged goods
+                                        - system bug
+                                description:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 200
+                        examples:
+                            updateDescription:
+                                summary: Update only description
+                                value:
+                                    description: Recounted inventory and mismatch still exists in warehouse A.
+                            updateTypeAndDescription:
+                                summary: Update issue type and description
+                                value:
+                                    issueType: system bug
+                                    description: Duplicate issue records are shown in dashboard list.
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueSuccessResponse"
+                "400":
+                    $ref: "#/components/responses/BadRequestResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+                "403":
+                    $ref: "#/components/responses/IssueEditForbiddenResponse"
+
+    /api/issues/change-status/{issueId}:
+        patch:
+            tags:
+                - Issues
+            summary: Change issue status
+            description: Changes issue status to either resolved or cancelled. Admin role required.
+            security:
+                - CookieAuth: []
+            parameters:
+                - $ref: "#/components/parameters/IssueIdPathParam"
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                status:
+                                    type: string
+                                    enum:
+                                        - cancelled
+                                        - resolved
+                            required:
+                                - status
+                        examples:
+                            resolveIssue:
+                                summary: Resolve issue
+                                value:
+                                    status: resolved
+                            cancelIssue:
+                                summary: Cancel issue
+                                value:
+                                    status: cancelled
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueSuccessResponse"
+                "400":
+                    $ref: "#/components/responses/BadRequestResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+                "403":
+                    $ref: "#/components/responses/ForbiddenResponse"
+                "404":
+                    $ref: "#/components/responses/NotFoundResponse"
+
+    /api/issues/delete/{issueId}:
+        delete:
+            tags:
+                - Issues
+            summary: Delete an issue
+            description: Deletes a specific issue by id. Admin role required.
+            security:
+                - CookieAuth: []
+            parameters:
+                - $ref: "#/components/parameters/IssueIdPathParam"
+            responses:
+                "200":
+                    $ref: "#/components/responses/IssueSuccessResponse"
+                "401":
+                    $ref: "#/components/responses/UnauthorizedResponse"
+                "403":
+                    $ref: "#/components/responses/ForbiddenResponse"
+                "404":
+                    $ref: "#/components/responses/NotFoundResponse"
+
+components:
+    securitySchemes:
+        CookieAuth:
+            type: apiKey
+            in: cookie
+            name: token
+
+    parameters:
+        IssueIdPathParam:
+            name: issueId
+            in: path
+            required: true
+            description: MongoDB ObjectId of the issue.
+            schema:
+                type: string
+                pattern: "^[a-fA-F0-9]{24}$"
+
+    responses:
+        BadRequestResponse:
+            description: Request validation failed
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: false
+                            message:
+                                type: string
+                                example: '"description" is required'
+                        required:
+                            - success
+                            - message
+
+        UnauthorizedResponse:
+            description: Authentication required or token invalid
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: false
+                            message:
+                                type: string
+                                example: Token missing
+                        required:
+                            - success
+                            - message
+                    examples:
+                        tokenMissing:
+                            value:
+                                success: false
+                                message: Token missing
+                        invalidToken:
+                            value:
+                                success: false
+                                message: Invalid token
+
+        ForbiddenResponse:
+            description: Authenticated user does not have permission
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: false
+                            message:
+                                type: string
+                                example: Access denied
+                        required:
+                            - success
+                            - message
+
+        IssueEditForbiddenResponse:
+            description: User not allowed to edit this issue or issue is not open
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: false
+                            message:
+                                type: string
+                                example: Issue not found or cannot be editted
+                        required:
+                            - success
+                            - message
+
+        NotFoundResponse:
+            description: Requested issue not found
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: false
+                            message:
+                                type: string
+                                example: Issue not found
+                        required:
+                            - success
+                            - message
+
+        IssueSuccessResponse:
+            description: Issue operation completed successfully
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: true
+                            message:
+                                type: string
+                                example: Issue retrieved successfully
+                            data:
+                                allOf:
+                                    - $ref: "#/components/schemas/Issue"
+                                    - type: object
+                                      properties:
+                                          createdByUserId:
+                                              oneOf:
+                                                  - type: string
+                                                    pattern: "^[a-fA-F0-9]{24}$"
+                                                  - type: object
+                                                    properties:
+                                                        _id:
+                                                            type: string
+                                                            pattern: "^[a-fA-F0-9]{24}$"
+                                                        name:
+                                                            type: string
+                                                        phoneNumber:
+                                                            type: string
+                                          resolvedByUserId:
+                                              oneOf:
+                                                  - type: string
+                                                    pattern: "^[a-fA-F0-9]{24}$"
+                                                    nullable: true
+                                                  - type: object
+                                                    nullable: true
+                                                    properties:
+                                                        _id:
+                                                            type: string
+                                                            pattern: "^[a-fA-F0-9]{24}$"
+                                                        name:
+                                                            type: string
+                                                        phoneNumber:
+                                                            type: string
+                                          cancelledByUserId:
+                                              oneOf:
+                                                  - type: string
+                                                    pattern: "^[a-fA-F0-9]{24}$"
+                                                    nullable: true
+                                                  - type: object
+                                                    nullable: true
+                                                    properties:
+                                                        _id:
+                                                            type: string
+                                                            pattern: "^[a-fA-F0-9]{24}$"
+                                                        name:
+                                                            type: string
+                                                        phoneNumber:
+                                                            type: string
+                        required:
+                            - success
+                            - message
+                            - data
+
+        IssueListSuccessResponse:
+            description: Issue list operation completed successfully
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            success:
+                                type: boolean
+                                example: true
+                            message:
+                                type: string
+                                example: Issues retrieved successfully
+                            data:
+                                type: array
+                                items:
+                                    allOf:
+                                        - $ref: "#/components/schemas/Issue"
+                                        - type: object
+                                          properties:
+                                              createdByUserId:
+                                                  oneOf:
+                                                      - type: string
+                                                        pattern: "^[a-fA-F0-9]{24}$"
+                                                      - type: object
+                                                        properties:
+                                                            _id:
+                                                                type: string
+                                                                pattern: "^[a-fA-F0-9]{24}$"
+                                                            name:
+                                                                type: string
+                                                            phoneNumber:
+                                                                type: string
+                                              resolvedByUserId:
+                                                  oneOf:
+                                                      - type: string
+                                                        pattern: "^[a-fA-F0-9]{24}$"
+                                                        nullable: true
+                                                      - type: object
+                                                        nullable: true
+                                                        properties:
+                                                            _id:
+                                                                type: string
+                                                                pattern: "^[a-fA-F0-9]{24}$"
+                                                            name:
+                                                                type: string
+                                                            phoneNumber:
+                                                                type: string
+                                              cancelledByUserId:
+                                                  oneOf:
+                                                      - type: string
+                                                        pattern: "^[a-fA-F0-9]{24}$"
+                                                        nullable: true
+                                                      - type: object
+                                                        nullable: true
+                                                        properties:
+                                                            _id:
+                                                                type: string
+                                                                pattern: "^[a-fA-F0-9]{24}$"
+                                                            name:
+                                                                type: string
+                                                            phoneNumber:
+                                                                type: string
+                        required:
+                            - success
+                            - message
+                            - data

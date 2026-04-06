@@ -4,7 +4,10 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
+
 const connectDB = require("./database/connectDB");
+const { buildOpenApiDocument } = require("./docs/swagger");
 
 // import routes
 const userRoutes = require("./routes/user.routes");
@@ -44,7 +47,22 @@ app.use(authenticator);
 // serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// mount user routes
+// serve swagger api documentation
+app.get("/api-docs/openapi.json", (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json(buildOpenApiDocument());
+});
+app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(null, {
+        swaggerOptions: {
+            url: "/api-docs/openapi.json",
+        },
+    }),
+);
+
+// mount routes
 app.use("/api/users", userRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/issues", issueRoutes);

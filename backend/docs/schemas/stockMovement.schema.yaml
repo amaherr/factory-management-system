@@ -1,0 +1,131 @@
+type: object
+description: Inventory stock movement event between logical channels and physical locations.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86ea
+    productId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Product affected by this movement.
+        example: 67fd5a33e0f2f3f07a8d86c1
+    quantityChange:
+        type: number
+        description: Quantity delta represented by the movement.
+        example: -120
+    orderId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: Related order id, if movement originated from an order.
+        example: 67fd5a33e0f2f3f07a8d86e8
+    returnId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: Related return id, if applicable.
+        example: 67fd5a33e0f2f3f07a8d86e9
+    batchId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: Related batch id, if applicable.
+        example: 67fd5a33e0f2f3f07a8d86e6
+    from:
+        type: string
+        enum:
+            - reserve
+            - sales
+            - batch
+            - return
+            - manual_adjustment
+            - inventory
+        description: Source movement channel.
+        example: inventory
+    to:
+        type: string
+        enum:
+            - reserve
+            - sales
+            - batch
+            - return
+            - manual_adjustment
+            - inventory
+        description: Destination movement channel.
+        example: sales
+    notes:
+        type: string
+        nullable: true
+        description: Optional descriptive notes.
+        example: Stock issued for finalized order #1021.
+    createdByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: User who created the stock movement.
+        example: 67fd5a33e0f2f3f07a8d86d1
+    warehouseAction:
+        type: string
+        enum:
+            - pick
+            - receive
+            - transfer
+        nullable: true
+        description: Physical warehouse operation type.
+        example: pick
+    isExecuted:
+        type: boolean
+        default: false
+        description: Whether physical action has been executed.
+        example: true
+    sourceLocation:
+        type: string
+        enum:
+            - showroom
+            - warehouse a
+            - warehouse b
+        nullable: true
+        description: Source physical location.
+        example: warehouse a
+    destinationLocation:
+        type: string
+        enum:
+            - showroom
+            - warehouse a
+            - warehouse b
+        nullable: true
+        description: Destination physical location.
+        example: showroom
+    physicalExecutedAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Timestamp of physical execution.
+        example: "2026-04-06T12:05:00.000Z"
+    physicalExecutedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who confirmed physical execution.
+        example: 67fd5a33e0f2f3f07a8d86d6
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-06T11:55:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-06T12:05:00.000Z"
+required:
+    - productId
+    - quantityChange
+    - from
+    - to
+    - createdByUserId
+    - isExecuted

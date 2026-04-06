@@ -24,7 +24,9 @@
         "mongodb": "^7.0.0",
         "mongoose": "^9.1.5",
         "multer": "^2.0.2",
-        "xlsx": "^0.18.5"
+        "swagger-ui-express": "^5.0.1",
+        "xlsx": "^0.18.5",
+        "yamljs": "^0.3.0"
     },
     "devDependencies": {
         "nodemon": "^3.1.11"

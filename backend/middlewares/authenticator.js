@@ -4,12 +4,16 @@ const createError = require("../utils/errorFactory");
 const User = require("../models/user.model");
 
 // define public paths
-PUBLIC_PATHS = ["/api/users/login"];
+const PUBLIC_PATHS = ["/api/users/login"];
+const PUBLIC_PATH_PREFIXES = ["/api-docs"];
 
 // function that authenticates the token of the user
 const authenticator = async (req, res, next) => {
     // allow public routes
-    if (PUBLIC_PATHS.includes(req.path)) return next();
+    const isPublicRoute =
+        PUBLIC_PATHS.includes(req.path) ||
+        PUBLIC_PATH_PREFIXES.some((prefix) => req.path.startsWith(prefix));
+    if (isPublicRoute) return next();
 
     // extract jwt token from cookie
     const token = req.cookies.token;

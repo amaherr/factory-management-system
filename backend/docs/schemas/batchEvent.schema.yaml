@@ -1,0 +1,70 @@
+type: object
+description: Stage-level event within a production batch.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e7
+    code:
+        type: string
+        description: Unique event code.
+        example: EVT-BATCH-3007-01
+    batchId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Related batch id.
+        example: 67fd5a33e0f2f3f07a8d86e6
+    stage:
+        type: string
+        enum:
+            - planning
+            - production
+        description: Process stage captured by this event.
+        example: production
+    loss:
+        type: number
+        minimum: 0
+        description: Quantity loss reported for this stage.
+        example: 20
+    notes:
+        type: string
+        nullable: true
+        description: Optional notes about the stage event.
+        example: 20 units rejected due to color variance.
+    finalizedByUserId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: User who finalized this stage event.
+        example: 67fd5a33e0f2f3f07a8d86d1
+    startDate:
+        type: string
+        format: date-time
+        description: Stage start date and time.
+        example: "2026-04-03T07:00:00.000Z"
+    endDate:
+        type: string
+        format: date-time
+        nullable: true
+        description: Stage end date and time.
+        example: "2026-04-03T17:00:00.000Z"
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-03T07:05:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-03T17:10:00.000Z"
+required:
+    - code
+    - batchId
+    - stage
+    - loss
+    - startDate

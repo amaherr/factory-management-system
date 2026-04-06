@@ -1,0 +1,69 @@
+type: object
+description: User account within the factory system.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e1
+    name:
+        type: string
+        minLength: 1
+        maxLength: 35
+        description: Full display name of the user.
+        example: Ahmed Hassan
+    password:
+        type: string
+        writeOnly: true
+        description: Hashed password string (not selected in most reads).
+        example: $2b$10$YjI0YjI0YjI0YjI0YjI0YeQvKukS3rNnUqWvW1IaQGePZW0U9n3K2
+    roles:
+        type: array
+        description: Roles assigned to the user.
+        items:
+            type: string
+            enum:
+                - admin
+                - sales
+                - inventory
+                - accounting
+                - planning
+                - production
+        example:
+            - admin
+            - inventory
+    phoneNumber:
+        type: string
+        minLength: 1
+        maxLength: 20
+        description: Unique phone number used for login and contact.
+        example: +201234567890
+    lastLoginAt:
+        type: string
+        format: date-time
+        nullable: true
+        description: Last successful login timestamp.
+        example: "2026-04-01T10:45:00.000Z"
+    isActive:
+        type: boolean
+        default: true
+        description: Whether the account is active.
+        example: true
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-03-15T08:30:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-01T10:45:00.000Z"
+required:
+    - name
+    - password
+    - roles
+    - phoneNumber

@@ -1,0 +1,72 @@
+type: object
+description: Production batch tracking record.
+properties:
+    _id:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        readOnly: true
+        description: MongoDB ObjectId.
+        example: 67fd5a33e0f2f3f07a8d86e6
+    batchNumber:
+        type: integer
+        description: Unique business identifier for the batch.
+        example: 3007
+    productId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        description: Related product id.
+        example: 67fd5a33e0f2f3f07a8d86c1
+    orderId:
+        type: string
+        pattern: "^[a-fA-F0-9]{24}$"
+        nullable: true
+        description: Optional related order id.
+        example: 67fd5a33e0f2f3f07a8d86c2
+    status:
+        type: string
+        enum:
+            - done
+            - planning
+            - production
+        default: planning
+        description: Current batch state.
+        example: production
+    plannedQuantity:
+        type: number
+        minimum: 0
+        description: Planned quantity for production.
+        example: 1500
+    producedQuantity:
+        type: number
+        minimum: 1
+        nullable: true
+        description: Actual produced quantity once available.
+        example: 1420
+    startDate:
+        type: string
+        format: date-time
+        description: Planned or actual start date.
+        example: "2026-04-03T06:00:00.000Z"
+    endDate:
+        type: string
+        format: date-time
+        nullable: true
+        description: End date when production is done.
+        example: "2026-04-04T16:30:00.000Z"
+    createdAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Creation timestamp.
+        example: "2026-04-02T12:00:00.000Z"
+    updatedAt:
+        type: string
+        format: date-time
+        readOnly: true
+        description: Last update timestamp.
+        example: "2026-04-04T16:30:00.000Z"
+required:
+    - batchNumber
+    - productId
+    - plannedQuantity
+    - startDate
