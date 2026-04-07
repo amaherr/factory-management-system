@@ -10,17 +10,17 @@ const connectDB = require("./database/connectDB");
 const { buildOpenApiDocument } = require("../docs/swagger");
 
 // import routes
-const userRoutes = require("./routes/user.routes");
-const customerRoutes = require("./routes/customer.routes");
-const issueRoutes = require("./routes/issue.routes");
-const productRoutes = require("./routes/product.routes");
-const notificationRoutes = require("./routes/notification.routes");
-const orderRoutes = require("./routes/order.routes");
-const returnRoutes = require("./routes/return.routes");
-const batchRoutes = require("./routes/batch.routes");
-const stockMovementRoutes = require("./routes/stockMovement.routes");
-const exportRoutes = require("./routes/export.routes");
-const analyticsRoutes = require("./routes/analytics.routes");
+const userRoutes = require("./modules/users/user.routes");
+const customerRoutes = require("./modules/customers/customer.routes");
+const issueRoutes = require("./modules/issues/issue.routes");
+const productRoutes = require("./modules/products/product.routes");
+const notificationRoutes = require("./modules/notifications/notification.routes");
+const orderRoutes = require("./modules/orders/order.routes");
+const returnRoutes = require("./modules/returns/return.routes");
+const batchRoutes = require("./modules/batches/batch.routes");
+const stockMovementRoutes = require("./modules/stockMovements/stockMovement.routes");
+const exportRoutes = require("./modules/exports/export.routes");
+const analyticsRoutes = require("./modules/analytics/analytics.routes");
 
 // import middlewares
 const logger = require("./middlewares/logger");

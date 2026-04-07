@@ -1,6 +1,6 @@
-const Notification = require("../models/notification.model");
-const StockMovement = require("../models/stockMovement.model");
-const Counter = require("../models/counter.model");
+const Notification = require("../modules/notifications/notification.model");
+const StockMovement = require("../modules/stockMovements/stockMovement.model");
+const Counter = require("./counter.model");
 
 // gets the next number of a document
 async function getNextDocumentNumber(name, session) {
