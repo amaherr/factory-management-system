@@ -7,7 +7,7 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 
 const connectDB = require("./database/connectDB");
-const { buildOpenApiDocument } = require("./docs/swagger");
+const { buildOpenApiDocument } = require("../docs/swagger");
 
 // import routes
 const userRoutes = require("./routes/user.routes");
@@ -45,7 +45,7 @@ app.use(logger);
 app.use(authenticator);
 
 // serve uploaded files
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // serve swagger api documentation
 app.get("/api-docs/openapi.json", (req, res) => {

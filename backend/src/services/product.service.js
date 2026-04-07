@@ -13,7 +13,7 @@ const { createStockMovement } = require("../utils/helpers");
 
 // ------------ Helpers ------------
 
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads");
 
 function ensureUploadsDir() {
     if (!fs.existsSync(UPLOADS_DIR)) {
