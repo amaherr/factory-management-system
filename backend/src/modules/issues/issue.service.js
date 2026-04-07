@@ -1,35 +1,27 @@
-const mongoose = require("mongoose");
-
-const Issue = require("./issue.model");
-
-const { COUNTERS } = require("../../enums/counter.enums");
 const { ISSUE_STATUS } = require("../../enums/issue.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
-const { getNextDocumentNumber } = require("../../utils/helpers");
+const transactionManager = require("../../database/transactionManager/instance");
+const issueRepository = require("./issue.repository");
 
 const issueService = {
     // function to create a new issue
     createIssue: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const userId = req.user.id;
             const { issueType, description } = req.body;
 
-            const issue = await session.withTransaction(async () => {
-                // get issue number
-                const issueNumber = await getNextDocumentNumber(COUNTERS.ISSUE_NUMBER, session);
-
-                // create new issue
-                const issue = await Issue.create({
-                    issueNumber,
-                    createdByUserId: userId,
-                    issueType,
-                    description,
-                });
-                return issue;
+            let issue;
+            await transactionManager.run(async (tx) => {
+                issue = await issueRepository.createIssueWithNextNumber(
+                    {
+                        createdByUserId: userId,
+                        issueType,
+                        description,
+                    },
+                    tx,
+                );
             });
 
             res.status(201).json(response("Issue created successfully", issue));
@@ -41,10 +33,7 @@ const issueService = {
     // function to get all issues
     getAllIssues: async (req, res, next) => {
         try {
-            const issues = await Issue.find().populate(
-                "createdByUserId resolvedByUserId cancelledByUserId",
-                "name phoneNumber",
-            );
+            const issues = await issueRepository.getAllIssues();
 
             res.status(200).json(response("Issues retrieved successfully", issues));
         } catch (err) {
@@ -57,9 +46,7 @@ const issueService = {
         try {
             const issueId = req.params.issueId;
 
-            const issue = await Issue.findById(issueId).populate(
-                "createdByUserId resolvedByUserId cancelledByUserId",
-            );
+            const issue = await issueRepository.getIssueById(issueId);
             if (!issue) {
                 return next(createError("Issue not found", 404));
             }
@@ -76,10 +63,7 @@ const issueService = {
             const userId = req.user.id;
 
             // get issues
-            const userIssues = await Issue.find({ createdByUserId: userId }).populate(
-                "createdByUserId resolvedByUserId cancelledByUserId",
-                "name phoneNumber",
-            );
+            const userIssues = await issueRepository.getIssuesByCreatorUserId(userId);
 
             res.status(200).json(response("User issues retrieved successfully", userIssues));
         } catch (err) {
@@ -100,11 +84,11 @@ const issueService = {
             if (description !== undefined) updateObject.description = description;
 
             // update open issue made by authenticated user
-            const updatedIssue = await Issue.findOneAndUpdate(
-                { _id: issueId, createdByUserId: userId, status: ISSUE_STATUS.OPEN },
-                { $set: updateObject },
-                { new: true, runValidators: true },
-            );
+            const updatedIssue = await issueRepository.updateUserOpenIssue({
+                issueId,
+                userId,
+                updateObject,
+            });
             if (!updatedIssue) {
                 return next(createError("Issue not found or cannot be editted", 403));
             }
@@ -140,9 +124,9 @@ const issueService = {
             }
 
             // change status
-            const updatedIssue = await Issue.findByIdAndUpdate(issueId, updateObject, {
-                new: true,
-                runValidators: true,
+            const updatedIssue = await issueRepository.updateIssueById({
+                issueId,
+                updateObject,
             });
             if (!updatedIssue) {
                 return next(createError("Issue not found", 404));
@@ -160,7 +144,7 @@ const issueService = {
             const issueId = req.params.issueId;
 
             // delete issue
-            const deletedIssue = await Issue.findByIdAndDelete(issueId);
+            const deletedIssue = await issueRepository.deleteIssueById(issueId);
             if (!deletedIssue) {
                 return next(createError("Issue not found", 404));
             }

@@ -1,4 +1,4 @@
-const Customer = require("./customer.model");
+const customerRepository = require("./customer.repository");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -10,13 +10,15 @@ const customerService = {
     createCustomer: async (req, res, next) => {
         try {
             // check existing customer
-            const existingCustomer = await Customer.findOne({ phoneNumber: req.body.phoneNumber });
+            const existingCustomer = await customerRepository.findByPhoneNumber(
+                req.body.phoneNumber,
+            );
             if (existingCustomer) {
                 return next(createError("Customer already exists", 409));
             }
 
             // create new customer
-            const customer = await Customer.create(req.body);
+            const customer = await customerRepository.createCustomer(req.body);
 
             res.status(201).json(response("Successfully created a new customer", customer));
         } catch (err) {
@@ -46,8 +48,12 @@ const customerService = {
             }
 
             const [total, customers] = await Promise.all([
-                Customer.countDocuments(filter),
-                Customer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+                customerRepository.countCustomers(filter),
+                customerRepository.findCustomers({
+                    filter,
+                    skip,
+                    limit: limitNum,
+                }),
             ]);
 
             const pages = Math.ceil(total / limitNum);
@@ -71,7 +77,7 @@ const customerService = {
         try {
             const customerId = req.params.customerId;
 
-            const customer = await Customer.findById(customerId);
+            const customer = await customerRepository.findCustomerById(customerId);
             if (!customer) {
                 return next(createError("Customer not found", 404));
             }
@@ -88,14 +94,10 @@ const customerService = {
             const customerId = req.params.customerId;
 
             // update customer
-            const updatedCustomer = await Customer.findByIdAndUpdate(
+            const updatedCustomer = await customerRepository.updateCustomerById({
                 customerId,
-                { $set: req.body },
-                {
-                    new: true,
-                    runValidators: true,
-                },
-            );
+                updateObject: { $set: req.body },
+            });
             if (!updatedCustomer) {
                 return next(createError("Customer not found", 404));
             }
@@ -116,7 +118,7 @@ const customerService = {
             const customerId = req.params.customerId;
 
             // delete customer
-            const deletedCustomer = await Customer.findByIdAndDelete(customerId);
+            const deletedCustomer = await customerRepository.deleteCustomerById(customerId);
             if (!deletedCustomer) {
                 return next(createError("Customer not found", 404));
             }

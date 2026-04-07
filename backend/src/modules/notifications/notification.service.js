@@ -1,4 +1,4 @@
-const Notification = require("./notification.model");
+const notificationRepository = require("./notification.repository");
 const { NOTIFICATION_STATUS } = require("../../enums/notification.enums");
 
 const response = require("../../utils/responseFactory");
@@ -11,7 +11,8 @@ const notificationService = {
             const userId = req.user.id;
 
             // get all notifications with receiver = user id
-            const notifications = await Notification.find({ receiverUserId: userId });
+            const notifications =
+                await notificationRepository.getNotificationsByReceiverUserId(userId);
 
             res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
@@ -25,7 +26,8 @@ const notificationService = {
             const userId = req.user.id;
 
             // get all notifications with sender = user id
-            const notifications = await Notification.find({ senderUserId: userId });
+            const notifications =
+                await notificationRepository.getNotificationsBySenderUserId(userId);
 
             res.status(200).json(response("Notifications retrieved successfully", notifications));
         } catch (err) {
@@ -40,11 +42,12 @@ const notificationService = {
             const userId = req.user.id;
 
             // update notification
-            const updatedNotification = await Notification.findByIdAndUpdate(
-                { _id: notificationId, receiverUserId: userId },
-                { status: NOTIFICATION_STATUS.READ },
-                { new: true, runValidators: true },
-            );
+            const updatedNotification =
+                await notificationRepository.markNotificationAsReadForReceiver({
+                    notificationId,
+                    receiverUserId: userId,
+                    status: NOTIFICATION_STATUS.READ,
+                });
             if (!updatedNotification) {
                 return next(createError("Notification not found", 404));
             }

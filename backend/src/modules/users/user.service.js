@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const User = require("./user.model");
+const userRepository = require("./user.repository");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -13,7 +13,7 @@ const userService = {
             const { phoneNumber, password } = req.body;
 
             // find user by phoneNumber (override password's 'select: false')
-            const user = await User.findOne({ phoneNumber }).select("+password");
+            const user = await userRepository.findByPhoneNumberWithPassword(phoneNumber);
             if (!user) {
                 return next(createError("Invalid Phone Number or password", 401));
             }
@@ -43,7 +43,7 @@ const userService = {
 
             // update last login date
             user.lastLoginAt = Date.now();
-            await user.save();
+            await userRepository.saveUser(user);
 
             // remove password when returning the user
             const userObj = user.toObject();
@@ -70,7 +70,7 @@ const userService = {
             const { name, password, roles, phoneNumber } = req.body;
 
             // check if user already exists
-            const existingUser = await User.findOne({ phoneNumber });
+            const existingUser = await userRepository.findByPhoneNumber(phoneNumber);
             if (existingUser) {
                 return next(createError("User already exists", 409));
             }
@@ -80,7 +80,7 @@ const userService = {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // create new user
-            const user = await User.create({
+            const user = await userRepository.createUser({
                 name,
                 password: hashedPassword,
                 roles,
@@ -96,7 +96,7 @@ const userService = {
     // function to get all users
     getAllUsers: async (req, res, next) => {
         try {
-            const users = await User.find();
+            const users = await userRepository.getAllUsers();
 
             res.status(200).json(response("Users retieved successfully", users));
         } catch (err) {
@@ -109,7 +109,7 @@ const userService = {
         try {
             const userId = req.params.userId;
 
-            const user = await User.findById(userId);
+            const user = await userRepository.getUserById(userId);
             if (!user) {
                 return next(createError("User not found", 404));
             }
@@ -138,9 +138,9 @@ const userService = {
             }
 
             // find and update the user
-            const updatedUser = await User.findByIdAndUpdate(userId, updateObject, {
-                new: true,
-                runValidators: true,
+            const updatedUser = await userRepository.updateUserById({
+                userId,
+                updateObject,
             });
             if (!updatedUser) {
                 return next(createError("User not found", 404));
@@ -164,11 +164,10 @@ const userService = {
             const { newRoles } = req.body;
 
             // update user role
-            const user = await User.findByIdAndUpdate(
+            const user = await userRepository.updateUserById({
                 userId,
-                { roles: newRoles },
-                { new: true, runValidators: true },
-            );
+                updateObject: { roles: newRoles },
+            });
             if (!user) {
                 return next(createError("User not found", 404));
             }
@@ -186,14 +185,10 @@ const userService = {
             const { isActive } = req.body;
 
             // change user activation status
-            const user = await User.findByIdAndUpdate(
+            const user = await userRepository.updateUserById({
                 userId,
-                { isActive },
-                {
-                    new: true,
-                    runValidators: true,
-                },
-            );
+                updateObject: { isActive },
+            });
             if (!user) {
                 return next(createError("User not found", 404));
             }
@@ -210,7 +205,7 @@ const userService = {
             const userId = req.params.userId;
 
             // delete user
-            const deletedUser = await User.findByIdAndDelete(userId);
+            const deletedUser = await userRepository.deleteUserById(userId);
             if (!deletedUser) {
                 return next(createError("User not found", 404));
             }

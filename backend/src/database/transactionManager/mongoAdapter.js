@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { create } = require("../../models/product.model");
 
 /**
  * Creates a MongoDB transaction adapter.
