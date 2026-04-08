@@ -18,7 +18,8 @@ const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMov
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
-const { getNextDocumentNumber, createStockMovement } = require("../../utils/helpers");
+const { getNextDocumentNumber } = require("../../utils/helpers");
+const stockMovementRepository = require("../stockMovements/stockMovement.repository");
 
 const orderService = {
     // function to create a new order
@@ -131,7 +132,7 @@ const orderService = {
                         }
 
                         // create stock movement for the item
-                        const sm = await createStockMovement(
+                        const sm = await stockMovementRepository.createStockMovement(
                             {
                                 productId: item.productId,
                                 quantityChange: item.actualQuantity,
@@ -142,7 +143,7 @@ const orderService = {
                                 orderId: created[0]._id,
                                 isExecuted: true,
                             },
-                            session,
+                            { kind: "mongo", session },
                         );
                         stockMovements.push(sm);
                     }
@@ -342,7 +343,7 @@ const orderService = {
                             }
 
                             // create stock movement
-                            const sm = await createStockMovement(
+                            const sm = await stockMovementRepository.createStockMovement(
                                 {
                                     productId: item.productId,
                                     quantityChange: item.actualQuantity,
@@ -353,7 +354,7 @@ const orderService = {
                                     orderId: updatedOrder._id,
                                     warehouseAction: WAREHOUSE_ACTIONS.PICK,
                                 },
-                                session,
+                                { kind: "mongo", session },
                             );
                             stockMovements.push(sm);
                         }
@@ -385,7 +386,7 @@ const orderService = {
                             }
 
                             // create stock movement
-                            const sm = await createStockMovement(
+                            const sm = await stockMovementRepository.createStockMovement(
                                 {
                                     productId: item.productId,
                                     quantityChange: item.actualQuantity,
@@ -396,7 +397,7 @@ const orderService = {
                                     orderId: updatedOrder._id,
                                     isExecuted: true,
                                 },
-                                session,
+                                { kind: "mongo", session },
                             );
                             stockMovements.push(sm);
                         }
@@ -590,7 +591,7 @@ const orderService = {
                             throw createError(`Product ${newItem.productId} is out of stock`, 409);
                         }
 
-                        const sm = await createStockMovement(
+                        const sm = await stockMovementRepository.createStockMovement(
                             {
                                 productId: newItem.productId,
                                 quantityChange: newItem.actualQuantity,
@@ -601,7 +602,7 @@ const orderService = {
                                 orderId: order._id,
                                 isExecuted: true,
                             },
-                            session,
+                            { kind: "mongo", session },
                         );
 
                         stockMovements.push(sm);

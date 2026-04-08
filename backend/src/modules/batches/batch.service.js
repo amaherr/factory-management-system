@@ -12,7 +12,8 @@ const { COUNTERS } = require("../../enums/counter.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
-const { createStockMovement, getNextDocumentNumber } = require("../../utils/helpers");
+const { getNextDocumentNumber } = require("../../utils/helpers");
+const stockMovementRepository = require("../stockMovements/stockMovement.repository");
 
 const batchService = {
     // Create Batch (Planning)
@@ -337,7 +338,7 @@ const batchService = {
             }
 
             // Create Stock Movement
-            const stockMovement = await createStockMovement(
+            const stockMovement = await stockMovementRepository.createStockMovement(
                 {
                     productId: batch.productId,
                     quantityChange: producedQuantity,
@@ -348,7 +349,7 @@ const batchService = {
                     batchId: batch._id,
                     warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
                 },
-                session,
+                { kind: "mongo", session },
             );
 
             await session.commitTransaction();

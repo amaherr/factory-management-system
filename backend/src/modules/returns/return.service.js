@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
-const Return = require("./return.model");
-const Product = require("../products/product.model");
-const Order = require("../orders/order.model");
-const StockMovement = require("../stockMovements/stockMovement.model");
+const returnRepository = require("./return.repository");
+const orderRepository = require("../orders/order.repository");
+const productRepository = require("../products/product.repository");
+const stockMovementRepository = require("../stockMovements/stockMovement.repository");
 
 const { RETURN_STATUS } = require("../../enums/return.enums");
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
@@ -12,7 +12,9 @@ const { COUNTERS } = require("../../enums/counter.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
-const { createStockMovement, getNextDocumentNumber } = require("../../utils/helpers");
+const transactionManager = require("../../database/transactionManager/instance");
+const { getMongoSession } = require("../../database/transactionManager/mongoAdapter");
+const { getNextDocumentNumber } = require("../../utils/helpers");
 
 // ------------ Helpers ------------
 
@@ -76,16 +78,16 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
 const returnService = {
     // Create return as draft (no stock changes)
     createReturn: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const userId = req.user.id;
             const { orderId, note, returnDate, items } = req.body;
             const returnTime = returnDate ? new Date(returnDate) : new Date();
 
-            const newReturn = await session.withTransaction(async () => {
+            let newReturn;
+            await transactionManager.run(async (tx) => {
+                const session = getMongoSession(tx);
                 // 1) Load & validate order
-                const order = await Order.findById(orderId).session(session);
+                const order = await orderRepository.getOrderById(orderId, tx);
                 if (!order) throw createError("Order not found", 404);
                 if (order.status !== ORDER_STATUS.FINALIZED) {
                     throw createError("Order is not finalized", 409);
@@ -99,38 +101,29 @@ const returnService = {
                 // 3) Get next return number and create return doc
                 const returnNumber = await getNextDocumentNumber(COUNTERS.RETURN_NUMBER, session);
 
-                const [newReturn] = await Return.create(
-                    [
-                        {
-                            returnNumber,
-                            orderId,
-                            userId,
-                            note,
-                            returnDate: returnTime,
-                            items: returnItems,
-                        },
-                    ],
-                    { session },
+                newReturn = await returnRepository.createReturn(
+                    {
+                        returnNumber,
+                        orderId,
+                        userId,
+                        note,
+                        returnDate: returnTime,
+                        items: returnItems,
+                    },
+                    tx,
                 );
-
-                return newReturn;
             });
 
             return res.status(201).json(response("Return created successfully", newReturn));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // Get all returns
     getAllReturns: async (req, res, next) => {
         try {
-            const returns = await Return.find()
-                .populate("orderId")
-                .populate("userId")
-                .populate("items.productId");
+            const returns = await returnRepository.getAllReturns();
 
             res.status(200).json(response("Returns retrieved successfully", returns));
         } catch (err) {
@@ -143,12 +136,7 @@ const returnService = {
         try {
             const { productId } = req.params;
 
-            const returns = await Return.find({
-                "items.productId": productId,
-            })
-                .populate("orderId")
-                .populate("userId")
-                .populate("items.productId");
+            const returns = await returnRepository.getReturnsByProductId(productId);
 
             res.status(200).json(response("Product returns retrieved successfully", returns));
         } catch (err) {
@@ -161,10 +149,7 @@ const returnService = {
         try {
             const { orderId } = req.params;
 
-            const returns = await Return.find({ orderId })
-                .populate("orderId")
-                .populate("userId")
-                .populate("items.productId");
+            const returns = await returnRepository.getReturnsByOrderId(orderId);
 
             res.status(200).json(response("Order returns retrieved successfully", returns));
         } catch (err) {
@@ -174,15 +159,14 @@ const returnService = {
 
     // Update return while still draft (no stock changes)
     editReturn: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const returnId = req.params.returnId;
             const { items, note, returnDate } = req.body;
 
-            const updatedReturn = await session.withTransaction(async () => {
+            let updatedReturn;
+            await transactionManager.run(async (tx) => {
                 // 1) Load the return
-                const existingReturn = await Return.findById(returnId).session(session);
+                const existingReturn = await returnRepository.getReturnById(returnId, tx);
                 if (!existingReturn) throw createError("Return not found", 404);
                 if (existingReturn.status !== RETURN_STATUS.DRAFT) {
                     throw createError("Cannot edit return unless it is draft", 409);
@@ -190,7 +174,7 @@ const returnService = {
 
                 // 2) If items are provided, rebuild snapshot from order
                 if (items !== undefined) {
-                    const order = await Order.findById(existingReturn.orderId).session(session);
+                    const order = await orderRepository.getOrderById(existingReturn.orderId, tx);
                     if (!order) throw createError("Order not found", 404);
                     if (order.status !== ORDER_STATUS.FINALIZED) {
                         throw createError("Order is not finalized", 409);
@@ -204,9 +188,8 @@ const returnService = {
                 if (note !== undefined) existingReturn.note = note;
                 if (returnDate !== undefined) existingReturn.returnDate = new Date(returnDate);
 
-                await existingReturn.save({ session });
-
-                return existingReturn;
+                await returnRepository.saveReturn({ returnDoc: existingReturn }, tx);
+                updatedReturn = existingReturn;
             });
 
             return res
@@ -216,22 +199,19 @@ const returnService = {
                 );
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // Update return status - allowed transitions: draft -> finalized | cancelled
     updateReturnStatus: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const userId = req.user.id;
             const returnId = req.params.returnId;
             const { status } = req.body;
 
-            const { updatedReturn, stockMovements } = await session.withTransaction(async () => {
-                const returnDoc = await Return.findById(returnId).session(session);
+            let result;
+            await transactionManager.run(async (tx) => {
+                const returnDoc = await returnRepository.getReturnById(returnId, tx);
                 if (!returnDoc) throw createError("Return not found", 404);
 
                 if (returnDoc.status !== RETURN_STATUS.DRAFT) {
@@ -240,15 +220,16 @@ const returnService = {
 
                 if (status === RETURN_STATUS.CANCELLED) {
                     returnDoc.status = RETURN_STATUS.CANCELLED;
-                    await returnDoc.save({ session });
-                    return { updatedReturn: returnDoc, stockMovements: [] };
+                    await returnRepository.saveReturn({ returnDoc }, tx);
+                    result = { updatedReturn: returnDoc, stockMovements: [] };
+                    return;
                 }
 
                 if (status !== RETURN_STATUS.FINALIZED) {
                     throw createError("Invalid return status transition", 400);
                 }
 
-                const order = await Order.findById(returnDoc.orderId).session(session);
+                const order = await orderRepository.getOrderById(returnDoc.orderId, tx);
                 if (!order) throw createError("Order not found", 404);
                 if (order.status !== ORDER_STATUS.FINALIZED) {
                     throw createError("Order is not finalized", 409);
@@ -257,22 +238,14 @@ const returnService = {
                 const orderItemMap = buildOrderItemMap(order);
 
                 // Guard against over-returning relative to already finalized returns.
-                const finalizedAgg = await Return.aggregate([
-                    {
-                        $match: {
-                            orderId: new mongoose.Types.ObjectId(returnDoc.orderId),
-                            status: RETURN_STATUS.FINALIZED,
-                            _id: { $ne: new mongoose.Types.ObjectId(returnDoc._id) },
+                const finalizedAgg =
+                    await returnRepository.getFinalizedReturnedByOrderExcludingReturn(
+                        {
+                            orderId: returnDoc.orderId,
+                            returnId: returnDoc._id,
                         },
-                    },
-                    { $unwind: "$items" },
-                    {
-                        $group: {
-                            _id: "$items.productId",
-                            returnedQty: { $sum: "$items.quantity" },
-                        },
-                    },
-                ]).session(session);
+                        tx,
+                    );
 
                 const finalizedReturnedMap = new Map(
                     finalizedAgg.map((r) => [String(r._id), Number(r.returnedQty)]),
@@ -313,22 +286,19 @@ const returnService = {
                     // Backfill missing values on old draft returns before status save.
                     item.actualQuantity = actualQuantity;
 
-                    const r = await Product.updateOne(
-                        { _id: item.productId, totalSold: { $gte: actualQuantity } },
+                    const r = await productRepository.applyReturnFinalization(
                         {
-                            $inc: {
-                                totalSold: -actualQuantity,
-                                totalTheoreticalStock: +actualQuantity,
-                            },
+                            productId: item.productId,
+                            actualQuantity,
                         },
-                        { session },
+                        tx,
                     );
 
                     if (r.modifiedCount !== 1) {
                         throw createError(`Product ${item.productId} cannot be returned`, 409);
                     }
 
-                    const stockMovement = await createStockMovement(
+                    const stockMovement = await stockMovementRepository.createStockMovement(
                         {
                             productId: item.productId,
                             quantityChange: actualQuantity,
@@ -339,7 +309,7 @@ const returnService = {
                             returnId: returnDoc._id,
                             warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
                         },
-                        session,
+                        tx,
                     );
 
                     stockMovements.push(stockMovement);
@@ -347,10 +317,12 @@ const returnService = {
 
                 returnDoc.status = RETURN_STATUS.FINALIZED;
                 returnDoc.returnDate = movementTime;
-                await returnDoc.save({ session });
+                await returnRepository.saveReturn({ returnDoc }, tx);
 
-                return { updatedReturn: returnDoc, stockMovements };
+                result = { updatedReturn: returnDoc, stockMovements };
             });
+
+            const { updatedReturn, stockMovements } = result;
 
             return res.status(200).json(
                 response("Return status updated successfully", {
@@ -360,21 +332,18 @@ const returnService = {
             );
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // Delete return (draft only)
     deleteReturn: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const returnId = req.params.returnId;
 
-            const deletedReturn = await session.withTransaction(async () => {
+            let deletedReturn;
+            await transactionManager.run(async (tx) => {
                 // 1) Load the return
-                const returnDoc = await Return.findById(returnId).session(session);
+                const returnDoc = await returnRepository.getReturnById(returnId, tx);
                 if (!returnDoc) {
                     throw createError("Return not found", 404);
                 }
@@ -384,19 +353,17 @@ const returnService = {
                 }
 
                 // 2) Clean up related stock movements if any exist from legacy data.
-                await StockMovement.deleteMany({ returnId: returnDoc._id }, { session });
+                await stockMovementRepository.deleteByReturnId(returnDoc._id, tx);
 
                 // 3) Delete the return itself
-                await Return.deleteOne({ _id: returnDoc._id }, { session });
+                await returnRepository.deleteReturnById(returnDoc._id, tx);
 
-                return returnDoc;
+                deletedReturn = returnDoc;
             });
 
             return res.status(200).json(response("Return deleted successfully", { deletedReturn }));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 };

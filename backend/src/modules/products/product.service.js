@@ -9,7 +9,7 @@ const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMov
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
-const { createStockMovement } = require("../../utils/helpers");
+const stockMovementRepository = require("../stockMovements/stockMovement.repository");
 
 // ------------ Helpers ------------
 
@@ -410,7 +410,7 @@ const productService = {
 
                 await currentProduct.save({ session });
 
-                await createStockMovement(
+                await stockMovementRepository.createStockMovement(
                     {
                         productId: currentProduct._id,
                         quantityChange: quantity,
@@ -425,7 +425,7 @@ const productService = {
                         physicalExecutedAt: new Date(),
                         physicalExecutedByUserId: userId,
                     },
-                    session,
+                    { kind: "mongo", session },
                 );
 
                 return currentProduct;
@@ -487,7 +487,7 @@ const productService = {
 
                 await currentProduct.save({ session });
 
-                await createStockMovement(
+                await stockMovementRepository.createStockMovement(
                     buildPhysicalAdjustmentMovement({
                         productId: currentProduct._id,
                         location,
@@ -496,7 +496,7 @@ const productService = {
                         notes: `Manual physical stock ${adjustmentType} of ${quantity} units at ${location}`,
                         delta: adjustmentType === "add" ? quantity : -quantity,
                     }),
-                    session,
+                    { kind: "mongo", session },
                 );
 
                 return currentProduct;
@@ -550,7 +550,7 @@ const productService = {
                 await product.save({ session });
 
                 if (delta !== 0) {
-                    await createStockMovement(
+                    await stockMovementRepository.createStockMovement(
                         buildPhysicalAdjustmentMovement({
                             productId: product._id,
                             location,
@@ -559,7 +559,7 @@ const productService = {
                             notes: `Physical stock set from ${prevQty} to ${qty} at ${location}`,
                             delta,
                         }),
-                        session,
+                        { kind: "mongo", session },
                     );
                 }
 
