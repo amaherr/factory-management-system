@@ -126,6 +126,119 @@ async function applyReturnFinalization(data, tx = null) {
     );
 }
 
+async function getProductsByIdsForOrderItems(data, tx = null) {
+    const { productIds } = data;
+    const session = getMongoSession(tx);
+    const query = Product.find(
+        { _id: { $in: productIds } },
+        {
+            _id: 1,
+            status: 1,
+            sku: 1,
+            unitSalePrice: 1,
+            totalTheoreticalStock: 1,
+            totalReserved: 1,
+        },
+    );
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
+async function reserveForOrderItem(data, tx = null) {
+    const { productId, actualQuantity } = data;
+    const session = getMongoSession(tx);
+    const options = {};
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.updateOne(
+        {
+            _id: productId,
+            totalTheoreticalStock: { $gte: actualQuantity },
+            status: PRODUCT_STATUS.ACTIVE,
+        },
+        {
+            $inc: {
+                totalTheoreticalStock: -actualQuantity,
+                totalReserved: +actualQuantity,
+            },
+        },
+        options,
+    );
+}
+
+async function finalizeReservedForOrderItem(data, tx = null) {
+    const { productId, actualQuantity } = data;
+    const session = getMongoSession(tx);
+    const options = {};
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.updateOne(
+        {
+            _id: productId,
+            totalReserved: { $gte: actualQuantity },
+        },
+        {
+            $inc: {
+                totalSold: +actualQuantity,
+                totalReserved: -actualQuantity,
+            },
+        },
+        options,
+    );
+}
+
+async function cancelReservedForOrderItem(data, tx = null) {
+    const { productId, actualQuantity } = data;
+    const session = getMongoSession(tx);
+    const options = {};
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.updateOne(
+        {
+            _id: productId,
+            totalReserved: { $gte: actualQuantity },
+        },
+        {
+            $inc: {
+                totalTheoreticalStock: +actualQuantity,
+                totalReserved: -actualQuantity,
+            },
+        },
+        options,
+    );
+}
+
+async function unreserveOrderItem(data, tx = null) {
+    const { productId, actualQuantity } = data;
+    const session = getMongoSession(tx);
+    const options = {};
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.updateOne(
+        {
+            _id: productId,
+            totalReserved: { $gte: actualQuantity },
+        },
+        {
+            $inc: {
+                totalTheoreticalStock: +actualQuantity,
+                totalReserved: -actualQuantity,
+            },
+        },
+        options,
+    );
+}
+
 const productRepository = {
     findByCode,
     createProduct,
@@ -138,6 +251,11 @@ const productRepository = {
     getProductsByLocation,
     saveProduct,
     applyReturnFinalization,
+    getProductsByIdsForOrderItems,
+    reserveForOrderItem,
+    finalizeReservedForOrderItem,
+    cancelReservedForOrderItem,
+    unreserveOrderItem,
 };
 
 module.exports = productRepository;

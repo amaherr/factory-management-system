@@ -1,22 +1,12 @@
-const mongoose = require("mongoose");
-
-const StockMovement = require("./stockMovement.model");
-const Product = require("../products/product.model");
+const stockMovementRepository = require("./stockMovement.repository");
+const productRepository = require("../products/product.repository");
 const { WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
+const transactionManager = require("../../database/transactionManager/instance");
 
 // ------------ Helpers ------------
-
-const populateMovementReferences = (query) =>
-    query
-        .populate("productId", "code name")
-        .populate("createdByUserId", "name email")
-        .populate("physicalExecutedByUserId", "name email")
-        .populate("orderId", "orderNumber")
-        .populate("returnId", "returnNumber")
-        .populate("batchId", "batchNumber");
 
 function findLocation(product, location) {
     return product.locations.find((entry) => entry.location === location);
@@ -44,106 +34,87 @@ const executeWarehouseMovement = async ({
     locationUpdates,
 }) => {
     const executionLocation = locationUpdates[locationField];
-    const session = await mongoose.startSession();
+    let stockMovement;
+    await transactionManager.run(async (tx) => {
+        const existingMovement = await stockMovementRepository.getMovementForExecution(
+            movementId,
+            tx,
+        );
 
-    try {
-        const stockMovement = await session.withTransaction(async () => {
-            const existingMovement = await StockMovement.findById(movementId)
-                .select("_id isExecuted warehouseAction productId quantityChange")
-                .session(session);
+        if (!existingMovement) {
+            throw createError("Stock movement not found", 404);
+        }
 
-            if (!existingMovement) {
-                throw createError("Stock movement not found", 404);
-            }
+        if (existingMovement.isExecuted) {
+            throw createError("Stock movement already executed", 409);
+        }
 
-            if (existingMovement.isExecuted) {
-                throw createError("Stock movement already executed", 409);
-            }
+        if (!existingMovement.warehouseAction) {
+            throw createError("Stock movement does not require physical execution", 400);
+        }
 
-            if (!existingMovement.warehouseAction) {
-                throw createError("Stock movement does not require physical execution", 400);
-            }
-
-            if (existingMovement.warehouseAction !== requiredAction) {
-                throw createError(
-                    `Stock movement requires '${existingMovement.warehouseAction}' execution action`,
-                    400,
-                );
-            }
-
-            const quantity = Number(existingMovement.quantityChange);
-            if (!Number.isFinite(quantity) || quantity <= 0) {
-                throw createError("Stock movement has invalid quantityChange", 409);
-            }
-
-            const product = await Product.findById(existingMovement.productId).session(session);
-            if (!product) {
-                throw createError("Product not found", 404);
-            }
-
-            const totalPhysicalStock = Number(product.totalPhysicalStock || 0);
-
-            if (requiredAction === WAREHOUSE_ACTIONS.PICK) {
-                const sourceLoc = findLocation(product, executionLocation);
-
-                if (!sourceLoc) {
-                    throw createError(
-                        `Source location ${executionLocation} not found in product`,
-                        404,
-                    );
-                }
-
-                if (sourceLoc.quantityInStock < quantity) {
-                    throw createError("Insufficient stock in source location", 400);
-                }
-
-                if (totalPhysicalStock < quantity) {
-                    throw createError("Stock totals cannot become negative", 409);
-                }
-
-                sourceLoc.quantityInStock -= quantity;
-                product.totalPhysicalStock = totalPhysicalStock - quantity;
-            } else if (requiredAction === WAREHOUSE_ACTIONS.RECEIVE) {
-                const destinationLoc = ensureLocation(product, executionLocation);
-
-                destinationLoc.quantityInStock += quantity;
-                product.totalPhysicalStock = totalPhysicalStock + quantity;
-            }
-
-            await product.save({ session });
-
-            const updatedMovement = await populateMovementReferences(
-                StockMovement.findOneAndUpdate(
-                    {
-                        _id: movementId,
-                        isExecuted: false,
-                    },
-                    {
-                        $set: {
-                            isExecuted: true,
-                            ...locationUpdates,
-                            physicalExecutedAt: new Date(),
-                            physicalExecutedByUserId: userId,
-                        },
-                    },
-                    {
-                        new: true,
-                        session,
-                    },
-                ),
+        if (existingMovement.warehouseAction !== requiredAction) {
+            throw createError(
+                `Stock movement requires '${existingMovement.warehouseAction}' execution action`,
+                400,
             );
+        }
 
-            if (!updatedMovement) {
-                throw createError("Stock movement already executed", 409);
+        const quantity = Number(existingMovement.quantityChange);
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+            throw createError("Stock movement has invalid quantityChange", 409);
+        }
+
+        const product = await productRepository.getProductById(existingMovement.productId, tx);
+        if (!product) {
+            throw createError("Product not found", 404);
+        }
+
+        const totalPhysicalStock = Number(product.totalPhysicalStock || 0);
+
+        if (requiredAction === WAREHOUSE_ACTIONS.PICK) {
+            const sourceLoc = findLocation(product, executionLocation);
+
+            if (!sourceLoc) {
+                throw createError(`Source location ${executionLocation} not found in product`, 404);
             }
 
-            return updatedMovement;
-        });
+            if (sourceLoc.quantityInStock < quantity) {
+                throw createError("Insufficient stock in source location", 400);
+            }
 
-        return stockMovement;
-    } finally {
-        await session.endSession();
-    }
+            if (totalPhysicalStock < quantity) {
+                throw createError("Stock totals cannot become negative", 409);
+            }
+
+            sourceLoc.quantityInStock -= quantity;
+            product.totalPhysicalStock = totalPhysicalStock - quantity;
+        } else if (requiredAction === WAREHOUSE_ACTIONS.RECEIVE) {
+            const destinationLoc = ensureLocation(product, executionLocation);
+
+            destinationLoc.quantityInStock += quantity;
+            product.totalPhysicalStock = totalPhysicalStock + quantity;
+        }
+
+        await productRepository.saveProduct({ productDoc: product }, tx);
+
+        const updatedMovement = await stockMovementRepository.markMovementExecuted(
+            {
+                movementId,
+                userId,
+                locationUpdates,
+            },
+            tx,
+        );
+
+        if (!updatedMovement) {
+            throw createError("Stock movement already executed", 409);
+        }
+
+        stockMovement = updatedMovement;
+    });
+
+    return stockMovement;
 };
 
 // ------------ Services ------------
@@ -216,7 +187,7 @@ const stockMovementService = {
 
             // search by product code
             if (q) {
-                const product = await Product.findOne({ code: q });
+                const product = await productRepository.findByCode(q);
                 if (product) {
                     filter.productId = product._id;
                 } else {
@@ -228,20 +199,14 @@ const stockMovementService = {
             const skip = (pageNum - 1) * limitNum;
 
             // get total count for pagination
-            const total = await StockMovement.countDocuments(filter);
+            const total = await stockMovementRepository.countStockMovements({ filter });
 
             // get stock movements
-            const movements = await StockMovement.find(filter)
-                .populate("productId", "code name")
-                .populate("createdByUserId", "name email")
-                .populate("physicalExecutedByUserId", "name email")
-                .populate("orderId", "orderNumber")
-                .populate("returnId", "returnNumber")
-                .populate("batchId", "batchNumber")
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limitNum)
-                .lean();
+            const movements = await stockMovementRepository.getStockMovements({
+                filter,
+                skip,
+                limit: limitNum,
+            });
 
             res.status(200).json(
                 response("Stock movements retrieved successfully", {
@@ -263,13 +228,7 @@ const stockMovementService = {
             const { movementId } = req.params;
 
             // get stock movement
-            const movement = await StockMovement.findById(movementId)
-                .populate("productId")
-                .populate("createdByUserId", "name email")
-                .populate("physicalExecutedByUserId", "name email")
-                .populate("orderId")
-                .populate("returnId")
-                .populate("batchId");
+            const movement = await stockMovementRepository.getStockMovementById(movementId);
 
             if (!movement) {
                 return next(createError("Stock movement not found", 404));
@@ -295,19 +254,14 @@ const stockMovementService = {
             const skip = (pageNum - 1) * limitNum;
 
             // get total count
-            const total = await StockMovement.countDocuments({ productId });
+            const total = await stockMovementRepository.countByProductId(productId);
 
             // get movements
-            const movements = await StockMovement.find({ productId })
-                .populate("createdByUserId", "name email")
-                .populate("physicalExecutedByUserId", "name email")
-                .populate("orderId", "orderNumber")
-                .populate("returnId", "returnNumber")
-                .populate("batchId", "batchNumber")
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limitNum)
-                .lean();
+            const movements = await stockMovementRepository.getByProductId({
+                productId,
+                skip,
+                limit: limitNum,
+            });
 
             res.status(200).json(
                 response("Product stock movements retrieved successfully", {

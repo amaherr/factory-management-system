@@ -5,11 +5,8 @@
    - ON_DEMAND stock doesn't change
 */
 
-const mongoose = require("mongoose");
-
-const Order = require("./order.model");
-const Product = require("../products/product.model");
-const StockMovement = require("../stockMovements/stockMovement.model");
+const orderRepository = require("./order.repository");
+const productRepository = require("../products/product.repository");
 
 const { ORDER_TYPE, ORDER_STATUS } = require("../../enums/order.enums");
 const { PRODUCT_STATUS } = require("../../enums/product.enums");
@@ -20,34 +17,29 @@ const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
 const { getNextDocumentNumber } = require("../../utils/helpers");
 const stockMovementRepository = require("../stockMovements/stockMovement.repository");
+const transactionManager = require("../../database/transactionManager/instance");
+const { getMongoSession } = require("../../database/transactionManager/mongoAdapter");
 
 const orderService = {
     // function to create a new order
     createOrder: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const userId = req.user.id;
             const { customerId, orderType, items, discountAmount, taxAmount, notes } = req.body;
 
             // transactional part
-            const { createdOrder, stockMovements } = await session.withTransaction(async () => {
+            let result;
+            await transactionManager.run(async (tx) => {
+                const session = getMongoSession(tx);
                 // generate order number atomically
                 const orderNumber = await getNextDocumentNumber(COUNTERS.ORDER_NUMBER, session);
 
                 // fetch products once
                 const productIds = items.map((item) => item.productId);
-                const products = await Product.find(
-                    { _id: { $in: productIds } },
-                    {
-                        _id: 1,
-                        status: 1,
-                        sku: 1,
-                        unitSalePrice: 1,
-                        totalTheoreticalStock: 1,
-                        totalReserved: 1,
-                    },
-                ).session(session);
+                const products = await productRepository.getProductsByIdsForOrderItems(
+                    { productIds },
+                    tx,
+                );
 
                 const productMap = new Map(products.map((p) => [String(p._id), p]));
 
@@ -89,22 +81,20 @@ const orderService = {
                 }
 
                 // create order
-                const created = await Order.create(
-                    [
-                        {
-                            orderNumber,
-                            createdByUserId: userId,
-                            customerId,
-                            orderType,
-                            items: pricedItems,
-                            subTotal,
-                            discountAmount: discount,
-                            taxAmount: tax,
-                            total,
-                            notes,
-                        },
-                    ],
-                    { session },
+                const createdOrder = await orderRepository.createOrder(
+                    {
+                        orderNumber,
+                        createdByUserId: userId,
+                        customerId,
+                        orderType,
+                        items: pricedItems,
+                        subTotal,
+                        discountAmount: discount,
+                        taxAmount: tax,
+                        total,
+                        notes,
+                    },
+                    tx,
                 );
 
                 // if ON_SHELF, check inventory stock and reserve stock
@@ -112,19 +102,12 @@ const orderService = {
                 if (orderType === ORDER_TYPE.ON_SHELF) {
                     for (const item of pricedItems) {
                         // check if item is out of stock (reserve and decrement from stock if not)
-                        const r = await Product.updateOne(
+                        const r = await productRepository.reserveForOrderItem(
                             {
-                                _id: item.productId,
-                                totalTheoreticalStock: { $gte: item.actualQuantity },
-                                status: PRODUCT_STATUS.ACTIVE,
+                                productId: item.productId,
+                                actualQuantity: item.actualQuantity,
                             },
-                            {
-                                $inc: {
-                                    totalTheoreticalStock: -item.actualQuantity,
-                                    totalReserved: +item.actualQuantity,
-                                },
-                            },
-                            { session },
+                            tx,
                         );
 
                         if (r.modifiedCount !== 1) {
@@ -140,25 +123,25 @@ const orderService = {
                                 to: STOCK_MOVEMENT_TYPE.RESERVE,
                                 createdByUserId: userId,
                                 notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
-                                orderId: created[0]._id,
+                                orderId: createdOrder._id,
                                 isExecuted: true,
                             },
-                            { kind: "mongo", session },
+                            tx,
                         );
                         stockMovements.push(sm);
                     }
                 }
 
-                return { createdOrder: created[0], stockMovements };
+                result = { createdOrder, stockMovements };
             });
+
+            const { createdOrder, stockMovements } = result;
 
             return res
                 .status(201)
                 .json(response("Order created successfully", { createdOrder, stockMovements }));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
@@ -196,10 +179,7 @@ const orderService = {
             }
 
             // get filtered orders with populated fields
-            const orders = await Order.find(filter)
-                .populate("customerId")
-                .populate("items.productId", "name productCode")
-                .sort({ createdAt: -1 });
+            const orders = await orderRepository.getOrders({ filter });
 
             res.status(200).json(
                 response("Orders retrieved successfully", { count: orders.length, orders }),
@@ -233,10 +213,7 @@ const orderService = {
                 if (!Number.isNaN(num)) filter.orderNumber = num;
             }
 
-            const orders = await Order.find({ ...filter, createdByUserId: userId })
-                .populate("customerId")
-                .populate("items.productId", "name productCode")
-                .sort("-createdAt");
+            const orders = await orderRepository.getUserOrders({ userId, filter });
 
             res.status(200).json(response("Order retrieved successfully", orders));
         } catch (err) {
@@ -250,9 +227,7 @@ const orderService = {
             const orderId = req.params.orderId;
 
             // get order with populated fields
-            const order = await Order.findById(orderId)
-                .populate("createdByUserId customerId finalizedByUserId cancelledByUserId")
-                .populate("items.productId", "name productCode");
+            const order = await orderRepository.getOrderWithDetails(orderId);
             if (!order) {
                 return next(createError("Order not found", 404));
             }
@@ -265,16 +240,15 @@ const orderService = {
 
     // function to change the status of an order
     changeStatus: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const orderId = req.params.orderId;
             const userId = req.user.id;
             const { status } = req.body;
 
-            const { updatedOrder, stockMovements } = await session.withTransaction(async () => {
+            let result;
+            await transactionManager.run(async (tx) => {
                 // fetch first to distinguish 404 vs 409 and to know orderType
-                const order = await Order.findById(orderId).session(session);
+                const order = await orderRepository.getOrderById(orderId, tx);
                 if (!order) throw createError("Order not found", 404);
                 if (order.status !== ORDER_STATUS.DRAFT) {
                     throw createError("Only draft orders can change status", 409);
@@ -303,10 +277,12 @@ const orderService = {
                 }
 
                 // update order
-                const updatedOrder = await Order.findOneAndUpdate(
-                    { _id: orderId, status: ORDER_STATUS.DRAFT },
-                    update,
-                    { new: true, session },
+                const updatedOrder = await orderRepository.updateDraftOrderStatus(
+                    {
+                        orderId,
+                        updateObject: update,
+                    },
+                    tx,
                 );
 
                 if (!updatedOrder) {
@@ -321,18 +297,12 @@ const orderService = {
                     if (status === ORDER_STATUS.FINALIZED) {
                         for (const item of updatedOrder.items) {
                             // check and move stock
-                            const r = await Product.updateOne(
+                            const r = await productRepository.finalizeReservedForOrderItem(
                                 {
-                                    _id: item.productId,
-                                    totalReserved: { $gte: item.actualQuantity },
+                                    productId: item.productId,
+                                    actualQuantity: item.actualQuantity,
                                 },
-                                {
-                                    $inc: {
-                                        totalSold: +item.actualQuantity,
-                                        totalReserved: -item.actualQuantity,
-                                    },
-                                },
-                                { session },
+                                tx,
                             );
 
                             if (r.modifiedCount !== 1) {
@@ -354,7 +324,7 @@ const orderService = {
                                     orderId: updatedOrder._id,
                                     warehouseAction: WAREHOUSE_ACTIONS.PICK,
                                 },
-                                { kind: "mongo", session },
+                                tx,
                             );
                             stockMovements.push(sm);
                         }
@@ -364,18 +334,12 @@ const orderService = {
                     if (status === ORDER_STATUS.CANCELLED) {
                         for (const item of updatedOrder.items) {
                             // check and move stock
-                            const r = await Product.updateOne(
+                            const r = await productRepository.cancelReservedForOrderItem(
                                 {
-                                    _id: item.productId,
-                                    totalReserved: { $gte: item.actualQuantity },
+                                    productId: item.productId,
+                                    actualQuantity: item.actualQuantity,
                                 },
-                                {
-                                    $inc: {
-                                        totalTheoreticalStock: +item.actualQuantity,
-                                        totalReserved: -item.actualQuantity,
-                                    },
-                                },
-                                { session },
+                                tx,
                             );
 
                             if (r.modifiedCount !== 1) {
@@ -397,15 +361,17 @@ const orderService = {
                                     orderId: updatedOrder._id,
                                     isExecuted: true,
                                 },
-                                { kind: "mongo", session },
+                                tx,
                             );
                             stockMovements.push(sm);
                         }
                     }
                 }
 
-                return { updatedOrder, stockMovements };
+                result = { updatedOrder, stockMovements };
             });
+
+            const { updatedOrder, stockMovements } = result;
 
             return res
                 .status(200)
@@ -414,23 +380,20 @@ const orderService = {
                 );
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // function to edit the details of an order
     editOrder: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const userId = req.user.id;
             const orderId = req.params.orderId;
             const { customerId, items, discountAmount, taxAmount, notes } = req.body;
 
-            const { updatedOrder, stockMovements } = await session.withTransaction(async () => {
+            let result;
+            await transactionManager.run(async (tx) => {
                 // validate the order
-                const order = await Order.findById(orderId).session(session);
+                const order = await orderRepository.getOrderById(orderId, tx);
                 if (!order) {
                     throw createError("Order not found", 404);
                 }
@@ -481,17 +444,10 @@ const orderService = {
                 if (itemsProvided) {
                     // fetch all products
                     const productIds = nextRawItems.map((it) => it.productId);
-                    const products = await Product.find(
-                        { _id: { $in: productIds } },
-                        {
-                            _id: 1,
-                            status: 1,
-                            sku: 1,
-                            unitSalePrice: 1,
-                            totalTheoreticalStock: 1,
-                            totalReserved: 1,
-                        },
-                    ).session(session);
+                    const products = await productRepository.getProductsByIdsForOrderItems(
+                        { productIds },
+                        tx,
+                    );
 
                     // create new items snapshot
                     const productMap = new Map(products.map((p) => [String(p._id), p]));
@@ -530,18 +486,12 @@ const orderService = {
                 if (order.orderType === ORDER_TYPE.ON_SHELF && itemsChanged) {
                     // undo old reservations (unreserve everything from the old order)
                     for (const oldItem of order.items) {
-                        const r = await Product.updateOne(
+                        const r = await productRepository.unreserveOrderItem(
                             {
-                                _id: oldItem.productId,
-                                totalReserved: { $gte: oldItem.actualQuantity },
+                                productId: oldItem.productId,
+                                actualQuantity: oldItem.actualQuantity,
                             },
-                            {
-                                $inc: {
-                                    totalTheoreticalStock: +oldItem.actualQuantity,
-                                    totalReserved: -oldItem.actualQuantity,
-                                },
-                            },
-                            { session },
+                            tx,
                         );
 
                         if (r.modifiedCount !== 1) {
@@ -553,38 +503,19 @@ const orderService = {
                     }
 
                     // delete previous reservation-related movements for this order
-                    await StockMovement.deleteMany(
-                        {
-                            orderId: order._id,
-                            $or: [
-                                {
-                                    from: STOCK_MOVEMENT_TYPE.INVENTORY,
-                                    to: STOCK_MOVEMENT_TYPE.RESERVE,
-                                },
-                                {
-                                    from: STOCK_MOVEMENT_TYPE.RESERVE,
-                                    to: STOCK_MOVEMENT_TYPE.INVENTORY,
-                                },
-                            ],
-                        },
-                        { session },
+                    await stockMovementRepository.deleteReservationMovementsByOrderId(
+                        order._id,
+                        tx,
                     );
 
                     // reserve new items + create new RESERVE movements
                     for (const newItem of pricedItems) {
-                        const r = await Product.updateOne(
+                        const r = await productRepository.reserveForOrderItem(
                             {
-                                _id: newItem.productId,
-                                status: PRODUCT_STATUS.ACTIVE,
-                                totalTheoreticalStock: { $gte: newItem.actualQuantity },
+                                productId: newItem.productId,
+                                actualQuantity: newItem.actualQuantity,
                             },
-                            {
-                                $inc: {
-                                    totalTheoreticalStock: -newItem.actualQuantity,
-                                    totalReserved: +newItem.actualQuantity,
-                                },
-                            },
-                            { session },
+                            tx,
                         );
 
                         if (r.modifiedCount !== 1) {
@@ -602,7 +533,7 @@ const orderService = {
                                 orderId: order._id,
                                 isExecuted: true,
                             },
-                            { kind: "mongo", session },
+                            tx,
                         );
 
                         stockMovements.push(sm);
@@ -623,92 +554,83 @@ const orderService = {
                     update.items = pricedItems;
                 }
 
-                const updatedOrder = await Order.findByIdAndUpdate(order._id, update, {
-                    new: true,
-                    session,
-                });
+                const updatedOrder = await orderRepository.updateOrderById(
+                    {
+                        orderId: order._id,
+                        updateObject: update,
+                    },
+                    tx,
+                );
 
-                return { updatedOrder, stockMovements };
+                result = { updatedOrder, stockMovements };
             });
+
+            const { updatedOrder, stockMovements } = result;
 
             return res
                 .status(200)
                 .json(response("Order updated successfully", { updatedOrder, stockMovements }));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // function to delete an order
     deleteOrder: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const orderId = req.params.orderId;
 
-            const { deletedOrder, deletedMovementsCount } = await session.withTransaction(
-                async () => {
-                    // validate the order
-                    const order = await Order.findById(orderId).session(session);
-                    if (!order) {
-                        throw createError("Order not found", 404);
-                    }
-                    if (order.status === ORDER_STATUS.FINALIZED) {
-                        throw createError("Cannot delete a finalized order", 409);
-                    }
+            let result;
+            await transactionManager.run(async (tx) => {
+                // validate the order
+                const order = await orderRepository.getOrderById(orderId, tx);
+                if (!order) {
+                    throw createError("Order not found", 404);
+                }
+                if (order.status === ORDER_STATUS.FINALIZED) {
+                    throw createError("Cannot delete a finalized order", 409);
+                }
 
-                    const deletedOrder = await Order.findByIdAndDelete(orderId).session(session);
+                const deletedOrder = await orderRepository.deleteOrderById(orderId, tx);
 
-                    // return reserved products to stock (only if ON_SHELF draft reserved stock)
-                    if (
-                        deletedOrder.orderType === ORDER_TYPE.ON_SHELF &&
-                        deletedOrder.status === ORDER_STATUS.DRAFT
-                    ) {
-                        // return product amount to stock
-                        for (const item of deletedOrder.items) {
-                            // add reserved to stock
-                            const r = await Product.updateOne(
-                                {
-                                    _id: item.productId,
-                                    totalReserved: { $gte: item.actualQuantity },
-                                },
-                                {
-                                    $inc: {
-                                        totalTheoreticalStock: +item.actualQuantity,
-                                        totalReserved: -item.actualQuantity,
-                                    },
-                                },
-                                { session },
+                // return reserved products to stock (only if ON_SHELF draft reserved stock)
+                if (
+                    deletedOrder.orderType === ORDER_TYPE.ON_SHELF &&
+                    deletedOrder.status === ORDER_STATUS.DRAFT
+                ) {
+                    // return product amount to stock
+                    for (const item of deletedOrder.items) {
+                        // add reserved to stock
+                        const r = await productRepository.unreserveOrderItem(
+                            {
+                                productId: item.productId,
+                                actualQuantity: item.actualQuantity,
+                            },
+                            tx,
+                        );
+
+                        if (r.modifiedCount !== 1) {
+                            // This indicates your reserved totals are out of sync.
+                            throw createError(
+                                `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
+                                409,
                             );
-
-                            if (r.modifiedCount !== 1) {
-                                // This indicates your reserved totals are out of sync.
-                                throw createError(
-                                    `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
-                                    409,
-                                );
-                            }
                         }
                     }
-                    // delete all stock movements related to the order
-                    const delRes = await StockMovement.deleteMany(
-                        { orderId: deletedOrder._id },
-                        { session },
-                    );
+                }
+                // delete all stock movements related to the order
+                const delRes = await stockMovementRepository.deleteByOrderId(deletedOrder._id, tx);
 
-                    return { deletedOrder, deletedMovementsCount: delRes.deletedCount || 0 };
-                },
-            );
+                result = { deletedOrder, deletedMovementsCount: delRes.deletedCount || 0 };
+            });
+
+            const { deletedOrder, deletedMovementsCount } = result;
 
             res.status(200).json(
                 response("Order deleted successflly", { deletedOrder, deletedMovementsCount }),
             );
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 };
