@@ -1,15 +1,15 @@
-const mongoose = require("mongoose");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const Product = require("./product.model");
+const productRepository = require("./product.repository");
 const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../../enums/product.enums");
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
 const stockMovementRepository = require("../stockMovements/stockMovement.repository");
+const transactionManager = require("../../database/transactionManager/instance");
 
 // ------------ Helpers ------------
 
@@ -139,7 +139,7 @@ const productService = {
                 season,
             } = req.body;
 
-            const existingProduct = await Product.findOne({ code });
+            const existingProduct = await productRepository.findByCode(code);
             if (existingProduct) {
                 return next(createError("Product with this code already exists", 400));
             }
@@ -151,7 +151,7 @@ const productService = {
             const resolvedCostPrice = Number(unitCostPrice);
             const resolvedSalePrice = Number(unitSalePrice);
 
-            const newProduct = new Product({
+            const newProduct = await productRepository.createProduct({
                 code,
                 name,
                 description,
@@ -167,8 +167,6 @@ const productService = {
                 activatedAt: Date.now(),
             });
 
-            await newProduct.save();
-
             res.status(201).json(response("Product created successfully", newProduct));
         } catch (err) {
             return next(err);
@@ -178,7 +176,7 @@ const productService = {
     deleteProduct: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const product = await Product.findByIdAndDelete(id);
+            const product = await productRepository.deleteProductById(id);
 
             if (!product) {
                 return next(createError("Product not found", 404));
@@ -198,7 +196,7 @@ const productService = {
                 updates.removeImage === true || updates.removeImage === "true";
 
             // query product to validate
-            const product = await Product.findById(id);
+            const product = await productRepository.getProductById(id);
 
             // validate product
             if (!product) {
@@ -255,9 +253,9 @@ const productService = {
             updates.lineCostPrice = nextSku * nextCostPrice;
             updates.lineSalePrice = nextSku * nextSalePrice;
 
-            const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
-                new: true,
-                runValidators: true,
+            const updatedProduct = await productRepository.updateProductById({
+                productId: id,
+                updateObject: updates,
             });
 
             res.status(200).json(response("Product updated successfully", updatedProduct));
@@ -293,9 +291,9 @@ const productService = {
             }
 
             // change product activation status
-            const product = await Product.findByIdAndUpdate(productId, update, {
-                new: true,
-                runValidators: true,
+            const product = await productRepository.updateProductById({
+                productId,
+                updateObject: update,
             });
             if (!product) {
                 return next(createError("Product not found", 404));
@@ -309,7 +307,7 @@ const productService = {
 
     getAllProducts: async (req, res, next) => {
         try {
-            const products = await Product.find();
+            const products = await productRepository.getAllProducts();
             res.status(200).json(response("Products retrieved successfully", products));
         } catch (err) {
             return next(err);
@@ -318,7 +316,7 @@ const productService = {
 
     getAllActiveProducts: async (req, res, next) => {
         try {
-            const products = await Product.find({ status: PRODUCT_STATUS.ACTIVE });
+            const products = await productRepository.getAllActiveProducts();
             res.status(200).json(response("Active products retrieved successfully", products));
         } catch (err) {
             return next(err);
@@ -328,7 +326,7 @@ const productService = {
     getProductById: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const product = await Product.findById(id);
+            const product = await productRepository.getProductById(id);
 
             if (!product) {
                 return next(createError("Product not found", 404));
@@ -345,7 +343,7 @@ const productService = {
     // Get all products that have stock (physical stock > 0)
     getProductsWithStock: async (req, res, next) => {
         try {
-            const products = await Product.find({ totalPhysicalStock: { $gt: 0 } });
+            const products = await productRepository.getProductsWithStock();
             res.status(200).json(response("Products with stock retrieved successfully", products));
         } catch (err) {
             return next(err);
@@ -362,14 +360,7 @@ const productService = {
                 return next(createError("Invalid location", 400));
             }
 
-            const products = await Product.find({
-                locations: {
-                    $elemMatch: {
-                        location: location,
-                        quantityInStock: { $gt: 0 },
-                    },
-                },
-            });
+            const products = await productRepository.getProductsByLocation(location);
 
             res.status(200).json(
                 response("Products for location retrieved successfully", products),
@@ -381,15 +372,14 @@ const productService = {
 
     // Transfer stock between locations
     transferProductStock: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const { productId } = req.params;
             const { fromLocation, toLocation, quantity } = req.body;
             const userId = req.user.id;
 
-            const product = await session.withTransaction(async () => {
-                const currentProduct = await Product.findById(productId).session(session);
+            let product;
+            await transactionManager.run(async (tx) => {
+                const currentProduct = await productRepository.getProductById(productId, tx);
                 if (!currentProduct) {
                     throw createError("Product not found", 404);
                 }
@@ -408,7 +398,7 @@ const productService = {
                 fromLoc.quantityInStock -= quantity;
                 toLoc.quantityInStock += quantity;
 
-                await currentProduct.save({ session });
+                await productRepository.saveProduct({ productDoc: currentProduct }, tx);
 
                 await stockMovementRepository.createStockMovement(
                     {
@@ -425,31 +415,28 @@ const productService = {
                         physicalExecutedAt: new Date(),
                         physicalExecutedByUserId: userId,
                     },
-                    { kind: "mongo", session },
+                    tx,
                 );
 
-                return currentProduct;
+                product = currentProduct;
             });
 
             return res.status(200).json(response("Stock transferred successfully", product));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // Manual Physical Stock Adjustment
     manualPhysicalStockAdjustment: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const { productId } = req.params;
             const { location, adjustmentType, quantity } = req.body;
             const userId = req.user.id;
 
-            const product = await session.withTransaction(async () => {
-                const currentProduct = await Product.findById(productId).session(session);
+            let product;
+            await transactionManager.run(async (tx) => {
+                const currentProduct = await productRepository.getProductById(productId, tx);
                 if (!currentProduct) {
                     throw createError("Product not found", 404);
                 }
@@ -485,7 +472,7 @@ const productService = {
                     currentProduct.totalTheoreticalStock = totalTheoreticalStock - quantity;
                 }
 
-                await currentProduct.save({ session });
+                await productRepository.saveProduct({ productDoc: currentProduct }, tx);
 
                 await stockMovementRepository.createStockMovement(
                     buildPhysicalAdjustmentMovement({
@@ -496,10 +483,10 @@ const productService = {
                         notes: `Manual physical stock ${adjustmentType} of ${quantity} units at ${location}`,
                         delta: adjustmentType === "add" ? quantity : -quantity,
                     }),
-                    { kind: "mongo", session },
+                    tx,
                 );
 
-                return currentProduct;
+                product = currentProduct;
             });
 
             return res
@@ -507,15 +494,11 @@ const productService = {
                 .json(response("Product stock adjusted manually successfully", product));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 
     // function to set the phyiscal stock to a new number
     setPhysicalStock: async (req, res, next) => {
-        const session = await mongoose.startSession();
-
         try {
             const productId = req.params.productId;
             const { location, newQuantity } = req.body;
@@ -523,8 +506,9 @@ const productService = {
 
             const qty = Number(newQuantity);
 
-            const result = await session.withTransaction(async () => {
-                const product = await Product.findById(productId).session(session);
+            let result;
+            await transactionManager.run(async (tx) => {
+                const product = await productRepository.getProductById(productId, tx);
                 if (!product) {
                     throw createError("Product not found", 404);
                 }
@@ -547,7 +531,7 @@ const productService = {
                 product.totalPhysicalStock = nextTotalPhysical;
                 product.totalTheoreticalStock = nextTotalTheoretical;
 
-                await product.save({ session });
+                await productRepository.saveProduct({ productDoc: product }, tx);
 
                 if (delta !== 0) {
                     await stockMovementRepository.createStockMovement(
@@ -559,11 +543,11 @@ const productService = {
                             notes: `Physical stock set from ${prevQty} to ${qty} at ${location}`,
                             delta,
                         }),
-                        { kind: "mongo", session },
+                        tx,
                     );
                 }
 
-                return {
+                result = {
                     productId: product._id,
                     location,
                     previousQuantity: prevQty,
@@ -578,8 +562,6 @@ const productService = {
             return res.status(200).json(response("Physical stock updated successfully", result));
         } catch (err) {
             return next(err);
-        } finally {
-            await session.endSession();
         }
     },
 };
