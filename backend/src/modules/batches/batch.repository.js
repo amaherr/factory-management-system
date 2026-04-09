@@ -54,13 +54,15 @@ async function updatePlanningBatchById(data, tx = null) {
     );
 }
 
-async function saveBatch(data, tx = null) {
-    const { batchDoc } = data;
+async function updateBatchById(data, tx = null) {
+    const { batchId, updateObject } = data;
     const session = getMongoSession(tx);
+    const options = { new: true, runValidators: true };
     if (session) {
-        return batchDoc.save({ session });
+        options.session = session;
     }
-    return batchDoc.save();
+
+    return Batch.findByIdAndUpdate(batchId, updateObject, options);
 }
 
 async function deleteBatchById(batchId, tx = null) {
@@ -77,7 +79,7 @@ const batchRepository = {
     getBatchById,
     getBatchByIdRaw,
     updatePlanningBatchById,
-    saveBatch,
+    updateBatchById,
     deleteBatchById,
 };
 

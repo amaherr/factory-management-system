@@ -122,6 +122,17 @@ function buildPhysicalAdjustmentMovement({
     };
 }
 
+function toInventorySnapshot(product) {
+    return {
+        locations: (product.locations || []).map((entry) => ({
+            location: entry.location,
+            quantityInStock: Number(entry.quantityInStock || 0),
+        })),
+        totalPhysicalStock: Number(product.totalPhysicalStock || 0),
+        totalTheoreticalStock: Number(product.totalTheoreticalStock || 0),
+    };
+}
+
 // ------------ Services ------------
 
 const productService = {
@@ -384,7 +395,9 @@ const productService = {
                     throw createError("Product not found", 404);
                 }
 
-                const fromLoc = findLocation(currentProduct, fromLocation);
+                const nextInventory = toInventorySnapshot(currentProduct);
+
+                const fromLoc = findLocation(nextInventory, fromLocation);
                 if (!fromLoc) {
                     throw createError(`Source location ${fromLocation} not found in product`, 404);
                 }
@@ -393,12 +406,18 @@ const productService = {
                     throw createError("Insufficient stock in source location", 400);
                 }
 
-                const toLoc = ensureLocation(currentProduct, toLocation);
+                const toLoc = ensureLocation(nextInventory, toLocation);
 
                 fromLoc.quantityInStock -= quantity;
                 toLoc.quantityInStock += quantity;
 
-                await productRepository.saveProduct({ productDoc: currentProduct }, tx);
+                product = await productRepository.updateProductLocations(
+                    {
+                        productId,
+                        locations: nextInventory.locations,
+                    },
+                    tx,
+                );
 
                 await stockMovementRepository.createStockMovement(
                     {
@@ -417,8 +436,6 @@ const productService = {
                     },
                     tx,
                 );
-
-                product = currentProduct;
             });
 
             return res.status(200).json(response("Stock transferred successfully", product));
@@ -441,23 +458,25 @@ const productService = {
                     throw createError("Product not found", 404);
                 }
 
-                let loc = findLocation(currentProduct, location);
+                const nextInventory = toInventorySnapshot(currentProduct);
+
+                let loc = findLocation(nextInventory, location);
 
                 if (!loc) {
                     if (adjustmentType === "subtract") {
                         throw createError(`Location ${location} not found in product`, 404);
                     }
 
-                    loc = ensureLocation(currentProduct, location);
+                    loc = ensureLocation(nextInventory, location);
                 }
 
-                const totalPhysicalStock = Number(currentProduct.totalPhysicalStock || 0);
-                const totalTheoreticalStock = Number(currentProduct.totalTheoreticalStock || 0);
+                const totalPhysicalStock = Number(nextInventory.totalPhysicalStock || 0);
+                const totalTheoreticalStock = Number(nextInventory.totalTheoreticalStock || 0);
 
                 if (adjustmentType === "add") {
                     loc.quantityInStock += quantity;
-                    currentProduct.totalPhysicalStock = totalPhysicalStock + quantity;
-                    currentProduct.totalTheoreticalStock = totalTheoreticalStock + quantity;
+                    nextInventory.totalPhysicalStock = totalPhysicalStock + quantity;
+                    nextInventory.totalTheoreticalStock = totalTheoreticalStock + quantity;
                 } else if (adjustmentType === "subtract") {
                     if (loc.quantityInStock < quantity) {
                         throw createError("Insufficient stock in location", 400);
@@ -468,11 +487,19 @@ const productService = {
                     }
 
                     loc.quantityInStock -= quantity;
-                    currentProduct.totalPhysicalStock = totalPhysicalStock - quantity;
-                    currentProduct.totalTheoreticalStock = totalTheoreticalStock - quantity;
+                    nextInventory.totalPhysicalStock = totalPhysicalStock - quantity;
+                    nextInventory.totalTheoreticalStock = totalTheoreticalStock - quantity;
                 }
 
-                await productRepository.saveProduct({ productDoc: currentProduct }, tx);
+                product = await productRepository.updateProductInventorySnapshot(
+                    {
+                        productId,
+                        locations: nextInventory.locations,
+                        totalPhysicalStock: nextInventory.totalPhysicalStock,
+                        totalTheoreticalStock: nextInventory.totalTheoreticalStock,
+                    },
+                    tx,
+                );
 
                 await stockMovementRepository.createStockMovement(
                     buildPhysicalAdjustmentMovement({
@@ -485,8 +512,6 @@ const productService = {
                     }),
                     tx,
                 );
-
-                product = currentProduct;
             });
 
             return res
@@ -513,14 +538,17 @@ const productService = {
                     throw createError("Product not found", 404);
                 }
 
-                const loc = ensureLocation(product, location);
+                const nextInventory = toInventorySnapshot(product);
+
+                const loc = ensureLocation(nextInventory, location);
                 const prevQty = Number(loc.quantityInStock || 0);
                 const delta = qty - prevQty;
 
                 loc.quantityInStock = qty;
 
-                const nextTotalPhysical = Number(product.totalPhysicalStock || 0) + delta;
-                const nextTotalTheoretical = Number(product.totalTheoreticalStock || 0) + delta;
+                const nextTotalPhysical = Number(nextInventory.totalPhysicalStock || 0) + delta;
+                const nextTotalTheoretical =
+                    Number(nextInventory.totalTheoreticalStock || 0) + delta;
                 if (nextTotalPhysical < 0) {
                     throw createError("totalPhysicalStock cannot become negative", 409);
                 }
@@ -528,10 +556,18 @@ const productService = {
                     throw createError("totalTheoreticalStock cannot become negative", 409);
                 }
 
-                product.totalPhysicalStock = nextTotalPhysical;
-                product.totalTheoreticalStock = nextTotalTheoretical;
+                nextInventory.totalPhysicalStock = nextTotalPhysical;
+                nextInventory.totalTheoreticalStock = nextTotalTheoretical;
 
-                await productRepository.saveProduct({ productDoc: product }, tx);
+                const updatedProduct = await productRepository.updateProductInventorySnapshot(
+                    {
+                        productId,
+                        locations: nextInventory.locations,
+                        totalPhysicalStock: nextInventory.totalPhysicalStock,
+                        totalTheoreticalStock: nextInventory.totalTheoreticalStock,
+                    },
+                    tx,
+                );
 
                 if (delta !== 0) {
                     await stockMovementRepository.createStockMovement(
@@ -553,9 +589,9 @@ const productService = {
                     previousQuantity: prevQty,
                     newQuantity: qty,
                     delta,
-                    totalPhysicalStock: product.totalPhysicalStock,
-                    totalTheoreticalStock: product.totalTheoreticalStock,
-                    locations: product.locations,
+                    totalPhysicalStock: updatedProduct.totalPhysicalStock,
+                    totalTheoreticalStock: updatedProduct.totalTheoreticalStock,
+                    locations: updatedProduct.locations,
                 };
             });
 

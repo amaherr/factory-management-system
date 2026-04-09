@@ -42,13 +42,15 @@ async function updatePlanningEventStartDate(data, tx = null) {
     );
 }
 
-async function saveBatchEvent(data, tx = null) {
-    const { eventDoc } = data;
+async function updateEventByBatchIdAndStage(data, tx = null) {
+    const { batchId, stage, updateObject } = data;
     const session = getMongoSession(tx);
+    const options = { new: true, runValidators: true };
     if (session) {
-        return eventDoc.save({ session });
+        options.session = session;
     }
-    return eventDoc.save();
+
+    return BatchEvent.findOneAndUpdate({ batchId, stage }, updateObject, options);
 }
 
 async function deleteEventsByBatchId(batchId, tx = null) {
@@ -64,7 +66,7 @@ const batchEventRepository = {
     getEventsByBatchId,
     getEventByBatchIdAndStage,
     updatePlanningEventStartDate,
-    saveBatchEvent,
+    updateEventByBatchIdAndStage,
     deleteEventsByBatchId,
 };
 

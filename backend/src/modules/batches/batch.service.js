@@ -226,8 +226,13 @@ const batchService = {
                     throw createError("Batch is not in planning status", 400);
                 }
 
-                batch.status = BATCH_STATUS.PRODUCTION;
-                await batchRepository.saveBatch({ batchDoc: batch }, tx);
+                const updatedBatch = await batchRepository.updateBatchById(
+                    {
+                        batchId: id,
+                        updateObject: { status: BATCH_STATUS.PRODUCTION },
+                    },
+                    tx,
+                );
 
                 const planningEvent = await batchEventRepository.getEventByBatchIdAndStage(
                     {
@@ -238,9 +243,17 @@ const batchService = {
                 );
 
                 if (planningEvent) {
-                    planningEvent.endDate = Date.now();
-                    planningEvent.finalizedByUserId = req.user.id;
-                    await batchEventRepository.saveBatchEvent({ eventDoc: planningEvent }, tx);
+                    await batchEventRepository.updateEventByBatchIdAndStage(
+                        {
+                            batchId: id,
+                            stage: BATCH_EVENT_STAGES.PLANNING,
+                            updateObject: {
+                                endDate: Date.now(),
+                                finalizedByUserId: req.user.id,
+                            },
+                        },
+                        tx,
+                    );
                 }
 
                 const productionEvent = await batchEventRepository.createBatchEvent(
@@ -254,7 +267,7 @@ const batchService = {
                     tx,
                 );
 
-                result = { batch, productionEvent };
+                result = { batch: updatedBatch, productionEvent };
             });
 
             const { batch, productionEvent } = result;
@@ -290,10 +303,18 @@ const batchService = {
                     throw createError("Batch is not in production status", 400);
                 }
 
-                batch.status = BATCH_STATUS.DONE;
-                batch.producedQuantity = producedQuantity;
-                batch.endDate = endDate || Date.now();
-                await batchRepository.saveBatch({ batchDoc: batch }, tx);
+                const resolvedEndDate = endDate || Date.now();
+                const updatedBatch = await batchRepository.updateBatchById(
+                    {
+                        batchId: id,
+                        updateObject: {
+                            status: BATCH_STATUS.DONE,
+                            producedQuantity,
+                            endDate: resolvedEndDate,
+                        },
+                    },
+                    tx,
+                );
 
                 const loss = batch.plannedQuantity - producedQuantity;
 
@@ -306,10 +327,18 @@ const batchService = {
                 );
 
                 if (productionEvent) {
-                    productionEvent.endDate = endDate || Date.now();
-                    productionEvent.loss = loss;
-                    productionEvent.finalizedByUserId = req.user.id;
-                    await batchEventRepository.saveBatchEvent({ eventDoc: productionEvent }, tx);
+                    await batchEventRepository.updateEventByBatchIdAndStage(
+                        {
+                            batchId: id,
+                            stage: BATCH_EVENT_STAGES.PRODUCTION,
+                            updateObject: {
+                                endDate: resolvedEndDate,
+                                loss,
+                                finalizedByUserId: req.user.id,
+                            },
+                        },
+                        tx,
+                    );
                 }
 
                 const stockUpdate = {};
@@ -346,7 +375,7 @@ const batchService = {
                     tx,
                 );
 
-                result = { batch, stockMovement };
+                result = { batch: updatedBatch, stockMovement };
             });
 
             const { batch, stockMovement } = result;

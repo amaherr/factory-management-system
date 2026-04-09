@@ -71,14 +71,6 @@ async function deleteUserById(userId, tx = null) {
     return User.findByIdAndDelete(userId, options);
 }
 
-async function saveUser(userDoc, tx = null) {
-    const session = getMongoSession(tx);
-    if (session) {
-        return userDoc.save({ session });
-    }
-    return userDoc.save();
-}
-
 const userRepository = {
     findByPhoneNumber,
     findByPhoneNumberWithPassword,
@@ -87,7 +79,6 @@ const userRepository = {
     getUserById,
     updateUserById,
     deleteUserById,
-    saveUser,
 };
 
 module.exports = userRepository;

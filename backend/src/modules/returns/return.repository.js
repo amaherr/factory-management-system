@@ -19,13 +19,18 @@ async function getReturnById(returnId, tx = null) {
     return query;
 }
 
-async function saveReturn(data, tx = null) {
-    const { returnDoc } = data;
+async function updateReturnById(data, tx = null) {
+    const { returnId, updateObject } = data;
     const session = getMongoSession(tx);
+    const options = {
+        new: true,
+        runValidators: true,
+    };
     if (session) {
-        return returnDoc.save({ session });
+        options.session = session;
     }
-    return returnDoc.save();
+
+    return Return.findByIdAndUpdate(returnId, updateObject, options);
 }
 
 async function getAllReturns(data = null, tx = null) {
@@ -51,7 +56,10 @@ async function getReturnsByProductId(productId, tx = null) {
 
 async function getReturnsByOrderId(orderId, tx = null) {
     const session = getMongoSession(tx);
-    const query = Return.find({ orderId }).populate("orderId").populate("userId").populate("items.productId");
+    const query = Return.find({ orderId })
+        .populate("orderId")
+        .populate("userId")
+        .populate("items.productId");
     if (session) {
         query.session(session);
     }
@@ -96,7 +104,7 @@ async function deleteReturnById(returnId, tx = null) {
 const returnRepository = {
     createReturn,
     getReturnById,
-    saveReturn,
+    updateReturnById,
     getAllReturns,
     getReturnsByProductId,
     getReturnsByOrderId,

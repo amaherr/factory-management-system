@@ -172,6 +172,8 @@ const returnService = {
                     throw createError("Cannot edit return unless it is draft", 409);
                 }
 
+                const updateObject = {};
+
                 // 2) If items are provided, rebuild snapshot from order
                 if (items !== undefined) {
                     const order = await orderRepository.getOrderById(existingReturn.orderId, tx);
@@ -182,14 +184,24 @@ const returnService = {
 
                     const orderItemMap = buildOrderItemMap(order);
                     const requestedMap = normalizeRequestedItems(items);
-                    existingReturn.items = buildReturnItemsSnapshot(requestedMap, orderItemMap);
+                    updateObject.items = buildReturnItemsSnapshot(requestedMap, orderItemMap);
                 }
 
-                if (note !== undefined) existingReturn.note = note;
-                if (returnDate !== undefined) existingReturn.returnDate = new Date(returnDate);
+                if (note !== undefined) updateObject.note = note;
+                if (returnDate !== undefined) updateObject.returnDate = new Date(returnDate);
 
-                await returnRepository.saveReturn({ returnDoc: existingReturn }, tx);
-                updatedReturn = existingReturn;
+                if (Object.keys(updateObject).length === 0) {
+                    updatedReturn = existingReturn;
+                    return;
+                }
+
+                updatedReturn = await returnRepository.updateReturnById(
+                    {
+                        returnId,
+                        updateObject,
+                    },
+                    tx,
+                );
             });
 
             return res
@@ -219,9 +231,14 @@ const returnService = {
                 }
 
                 if (status === RETURN_STATUS.CANCELLED) {
-                    returnDoc.status = RETURN_STATUS.CANCELLED;
-                    await returnRepository.saveReturn({ returnDoc }, tx);
-                    result = { updatedReturn: returnDoc, stockMovements: [] };
+                    const updatedReturn = await returnRepository.updateReturnById(
+                        {
+                            returnId,
+                            updateObject: { status: RETURN_STATUS.CANCELLED },
+                        },
+                        tx,
+                    );
+                    result = { updatedReturn, stockMovements: [] };
                     return;
                 }
 
@@ -271,6 +288,7 @@ const returnService = {
 
                 const movementTime = returnDoc.returnDate || new Date();
                 const stockMovements = [];
+                const finalizedItems = [];
                 for (const item of returnDoc.items) {
                     const sold = orderItemMap.get(String(item.productId));
                     const skuRatio = Number(sold.actualQuantity) / Number(sold.quantity);
@@ -283,8 +301,10 @@ const returnService = {
                         );
                     }
 
-                    // Backfill missing values on old draft returns before status save.
-                    item.actualQuantity = actualQuantity;
+                    // Backfill missing values on old draft returns before status update.
+                    const nextItem = item.toObject ? item.toObject() : { ...item };
+                    nextItem.actualQuantity = actualQuantity;
+                    finalizedItems.push(nextItem);
 
                     const r = await productRepository.applyReturnFinalization(
                         {
@@ -315,11 +335,19 @@ const returnService = {
                     stockMovements.push(stockMovement);
                 }
 
-                returnDoc.status = RETURN_STATUS.FINALIZED;
-                returnDoc.returnDate = movementTime;
-                await returnRepository.saveReturn({ returnDoc }, tx);
+                const updatedReturn = await returnRepository.updateReturnById(
+                    {
+                        returnId,
+                        updateObject: {
+                            status: RETURN_STATUS.FINALIZED,
+                            returnDate: movementTime,
+                            items: finalizedItems,
+                        },
+                    },
+                    tx,
+                );
 
-                result = { updatedReturn: returnDoc, stockMovements };
+                result = { updatedReturn, stockMovements };
             });
 
             const { updatedReturn, stockMovements } = result;

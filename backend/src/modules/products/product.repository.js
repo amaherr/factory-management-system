@@ -53,6 +53,42 @@ async function updateProductById(data, tx = null) {
     return Product.findByIdAndUpdate(productId, updateObject, options);
 }
 
+async function updateProductLocations(data, tx = null) {
+    const { productId, locations } = data;
+    const session = getMongoSession(tx);
+    const options = {
+        new: true,
+        runValidators: true,
+    };
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.findByIdAndUpdate(productId, { locations }, options);
+}
+
+async function updateProductInventorySnapshot(data, tx = null) {
+    const { productId, locations, totalPhysicalStock, totalTheoreticalStock } = data;
+    const session = getMongoSession(tx);
+    const options = {
+        new: true,
+        runValidators: true,
+    };
+    if (session) {
+        options.session = session;
+    }
+
+    return Product.findByIdAndUpdate(
+        productId,
+        {
+            locations,
+            totalPhysicalStock,
+            totalTheoreticalStock,
+        },
+        options,
+    );
+}
+
 async function getAllProducts(data = null, tx = null) {
     const session = getMongoSession(tx);
     const query = Product.find();
@@ -95,15 +131,6 @@ async function getProductsByLocation(location, tx = null) {
         query.session(session);
     }
     return query;
-}
-
-async function saveProduct(data, tx = null) {
-    const { productDoc } = data;
-    const session = getMongoSession(tx);
-    if (session) {
-        return productDoc.save({ session });
-    }
-    return productDoc.save();
 }
 
 async function applyReturnFinalization(data, tx = null) {
@@ -245,11 +272,12 @@ const productRepository = {
     getProductById,
     deleteProductById,
     updateProductById,
+    updateProductLocations,
+    updateProductInventorySnapshot,
     getAllProducts,
     getAllActiveProducts,
     getProductsWithStock,
     getProductsByLocation,
-    saveProduct,
     applyReturnFinalization,
     getProductsByIdsForOrderItems,
     reserveForOrderItem,

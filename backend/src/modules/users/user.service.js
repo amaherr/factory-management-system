@@ -42,12 +42,16 @@ const userService = {
             );
 
             // update last login date
-            user.lastLoginAt = Date.now();
-            await userRepository.saveUser(user);
+            const loginTimestamp = Date.now();
+            await userRepository.updateUserById({
+                userId: user._id,
+                updateObject: { lastLoginAt: loginTimestamp },
+            });
 
             // remove password when returning the user
             const userObj = user.toObject();
             delete userObj.password;
+            userObj.lastLoginAt = new Date(loginTimestamp);
 
             // sent the jwt token in a cookie
             const isProduction = process.env.NODE_ENV == "development" ? false : true;
