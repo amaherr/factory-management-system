@@ -1,6 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Loader2, Pencil, Plus, Search, Settings2, Trash2, X } from 'lucide-react';
+import {
+  Eye,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+  Settings2,
+  Trash2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ReturnRecord } from '../../services/returns';
@@ -62,6 +73,11 @@ export function Returns() {
   const [loading, setLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [limit] = useState(20);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -77,8 +93,20 @@ export function Returns() {
     const fetchReturns = async () => {
       setLoading(true);
       try {
-        const data = await returnService.getReturns();
-        setReturns(data);
+        const data = await returnService.getReturns({
+          status: statusFilter,
+          query: searchQuery.trim() || undefined,
+          page: currentPage,
+          limit,
+        });
+
+        setReturns(data.returns);
+        setTotal(data.total);
+        setTotalPages(data.pages);
+
+        if (data.pages > 0 && currentPage > data.pages) {
+          setCurrentPage(data.pages);
+        }
       } catch (error: any) {
         toast.error(error.message || t('returns.toasts.generalError'));
       } finally {
@@ -87,32 +115,7 @@ export function Returns() {
     };
 
     fetchReturns();
-  }, [refreshTrigger, t]);
-
-  const filteredReturns = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-
-    return returns
-      .filter((item) => {
-        const statusMatch = statusFilter === 'all' || item.status === statusFilter;
-        if (!statusMatch) return false;
-
-        if (!query) return true;
-
-        const returnNumber = String(item.returnNumber).toLowerCase();
-        const orderNumber = getOrderNumber(item.orderId).toLowerCase();
-        const note = (item.note || '').toLowerCase();
-        const createdBy = getCreatedBy(item.userId).toLowerCase();
-
-        return (
-          returnNumber.includes(query) ||
-          orderNumber.includes(query) ||
-          note.includes(query) ||
-          createdBy.includes(query)
-        );
-      })
-      .sort((a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime());
-  }, [returns, searchQuery, statusFilter]);
+  }, [refreshTrigger, t, statusFilter, searchQuery, currentPage, limit]);
 
   const formatReturnNumber = (returnNumber: number | string) =>
     `#${t('returns.numberPrefix')} - ${returnNumber}`;
@@ -120,6 +123,9 @@ export function Returns() {
   const refresh = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
+
+  const from = total === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const to = Math.min(currentPage * limit, total);
 
   return (
     <div className="p-6 space-y-6">
@@ -144,7 +150,10 @@ export function Returns() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder={t('returns.searchPlaceholder')}
                 className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
               />
@@ -154,7 +163,10 @@ export function Returns() {
                   variant="ghost"
                   size="sm"
                   className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
                   title={t('clearSearch')}
                 >
                   <X className="size-4" />
@@ -164,7 +176,10 @@ export function Returns() {
 
             <Select
               value={statusFilter}
-              onValueChange={setStatusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setCurrentPage(1);
+              }}
             >
               <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('returns.statusFilterLabel')} />
@@ -186,7 +201,7 @@ export function Returns() {
             <div className="flex justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-          ) : filteredReturns.length === 0 ? (
+          ) : returns.length === 0 ? (
             <div className="text-center py-12 text-gray-500">{t('returns.noReturns')}</div>
           ) : (
             <Table>
@@ -202,7 +217,7 @@ export function Returns() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReturns.map((item) => (
+                {returns.map((item) => (
                   <TableRow key={item._id}>
                     <TableCell className="font-medium">
                       {formatReturnNumber(item.returnNumber)}
@@ -281,6 +296,46 @@ export function Returns() {
                 ))}
               </TableBody>
             </Table>
+          )}
+
+          {!loading && total > 0 && (
+            <div className="border-t p-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {t('returns.pagination.showing', {
+                  from,
+                  to,
+                  total,
+                })}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={loading || currentPage <= 1}
+                >
+                  <ChevronLeft className="size-4 mr-1" />
+                  {t('returns.pagination.previous')}
+                </Button>
+                <div className="flex items-center gap-2 px-3 py-1">
+                  <span className="text-sm">
+                    {t('returns.pagination.page', {
+                      current: totalPages === 0 ? 0 : currentPage,
+                      total: totalPages,
+                    })}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={loading || totalPages === 0 || currentPage >= totalPages}
+                >
+                  {t('returns.pagination.next')}
+                  <ChevronRight className="size-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

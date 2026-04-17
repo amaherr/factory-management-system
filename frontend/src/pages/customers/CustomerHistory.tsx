@@ -63,11 +63,11 @@ export function CustomerHistory() {
       try {
         const [customerOrders, customerReturns] = await Promise.all([
           orderService.getOrders({ customerId }),
-          returnService.getReturns({ customerId }),
+          returnService.getReturns({ customerId, page: 1, limit: 200 }),
         ]);
 
         setOrders(Array.isArray(customerOrders) ? customerOrders : []);
-        setReturns(Array.isArray(customerReturns) ? customerReturns : []);
+        setReturns(Array.isArray(customerReturns?.returns) ? customerReturns.returns : []);
       } catch (error: any) {
         toast.error(error?.message || t('history_load_failed'));
       } finally {

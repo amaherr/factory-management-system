@@ -58,7 +58,6 @@ export interface CreateReturnPayload {
   items: Array<{
     productId: string;
     quantity: number;
-    unitPrice: number;
   }>;
 }
 
@@ -68,7 +67,6 @@ export interface UpdateReturnPayload {
   items?: Array<{
     productId: string;
     quantity: number;
-    unitPrice: number;
   }>;
 }
 
@@ -78,18 +76,55 @@ interface ApiResponse<T> {
   data: T;
 }
 
+export interface GetReturnsFilters {
+  customerId?: string;
+  status?: string;
+  query?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GetReturnsData {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  returns: ReturnRecord[];
+}
+
 export const returnService = {
-  async getReturns(filters?: { customerId?: string }): Promise<ReturnRecord[]> {
+  async getReturns(filters?: GetReturnsFilters): Promise<GetReturnsData> {
     try {
       axios.defaults.withCredentials = true;
-      const params: Record<string, string> = {};
+      const params: Record<string, string | number> = {};
       if (filters?.customerId) {
         params.customerId = filters.customerId;
       }
-      const response = await axios.get<ApiResponse<ReturnRecord[]>>(`${API_URL}/returns`, {
+      if (filters?.status && filters.status !== 'all') {
+        params.status = filters.status;
+      }
+      if (filters?.query) {
+        params.q = filters.query;
+      }
+      if (filters?.page) {
+        params.page = filters.page;
+      }
+      if (filters?.limit) {
+        params.limit = filters.limit;
+      }
+
+      const response = await axios.get<ApiResponse<GetReturnsData>>(`${API_URL}/returns`, {
         params,
       });
-      return Array.isArray(response.data.data) ? response.data.data : [];
+
+      const payload = response.data.data;
+      return {
+        total: Number(payload?.total || 0),
+        page: Number(payload?.page || filters?.page || 1),
+        limit: Number(payload?.limit || filters?.limit || 20),
+        pages: Number(payload?.pages || 0),
+        returns: Array.isArray(payload?.returns) ? payload.returns : [],
+      };
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Failed to fetch returns');
     }

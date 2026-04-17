@@ -143,6 +143,12 @@
       "returnDate": "تاريخ المرتجع",
       "actions": "الإجراءات"
     },
+    "pagination": {
+      "showing": "عرض {{from}} إلى {{to}} من أصل {{total}} مرتجع",
+      "previous": "السابق",
+      "next": "التالي",
+      "page": "الصفحة {{current}} من {{total}}"
+    },
     "actions": {
       "viewDetails": "عرض التفاصيل",
       "edit": "تعديل",

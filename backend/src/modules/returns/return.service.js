@@ -77,7 +77,7 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
 }
 
 const returnService = {
-    // Create return as draft and automatically reverse stock for on-shelf items
+    // Create return as draft (no stock changes at draft stage)
     createReturn: async (req, res, next) => {
         try {
             const userId = req.user.id;
@@ -85,7 +85,6 @@ const returnService = {
             const returnTime = returnDate ? new Date(returnDate) : new Date();
 
             let newReturn;
-            let stockMovements = [];
             await transactionManager.run(async (tx) => {
                 const session = getMongoSession(tx);
                 // 1) Load & validate order
@@ -114,52 +113,11 @@ const returnService = {
                     },
                     tx,
                 );
-
-                // CHANGED: Auto-reverse stock for on-shelf items immediately upon return creation
-                for (const item of returnItems) {
-                    if (item.itemType === ORDER_TYPE.ON_SHELF) {
-                        // Reverse reserved stock back to theoretical stock
-                        const r = await productRepository.unreserveOrderItem(
-                            {
-                                productId: item.productId,
-                                actualQuantity: item.actualQuantity,
-                            },
-                            tx,
-                        );
-
-                        if (r.modifiedCount !== 1) {
-                            throw createError(
-                                `Cannot reverse stock for product ${item.productId} (reserved mismatch)`,
-                                409,
-                            );
-                        }
-
-                        // Create stock movement record for the reversal
-                        const sm = await stockMovementRepository.createStockMovement(
-                            {
-                                productId: item.productId,
-                                quantityChange: item.actualQuantity,
-                                from: STOCK_MOVEMENT_TYPE.RESERVE,
-                                to: STOCK_MOVEMENT_TYPE.INVENTORY,
-                                createdByUserId: userId,
-                                notes: `Return #${newReturn.returnNumber}: Stock reversed from reserved to inventory`,
-                                returnId: newReturn._id,
-                                isExecuted: true,
-                            },
-                            tx,
-                        );
-                        stockMovements.push(sm);
-                    }
-                    // ON_DEMAND items: no stock reversal (they never had reserved stock)
-                }
             });
 
-            return res.status(201).json(
-                response("Return created successfully and stock reversed", {
-                    newReturn,
-                    stockMovements,
-                }),
-            );
+            return res
+                .status(201)
+                .json(response("Return created successfully", { newReturn, stockMovements: [] }));
         } catch (err) {
             return next(err);
         }
@@ -168,7 +126,17 @@ const returnService = {
     // Get all returns
     getAllReturns: async (req, res, next) => {
         try {
-            const { customerId } = req.query;
+            const { customerId, status, q, page = 1, limit = 20 } = req.query;
+            const pageNum = Number(page) || 1;
+            const limitNum = Number(limit) || 20;
+            const normalizedQuery = String(q || "")
+                .trim()
+                .toLowerCase();
+            const numericQuery = Number(normalizedQuery);
+            const hasNumericQuery =
+                normalizedQuery.length > 0 &&
+                !Number.isNaN(numericQuery) &&
+                Number.isFinite(numericQuery);
 
             let returns = [];
             if (customerId) {
@@ -178,7 +146,15 @@ const returnService = {
                 const orderIds = customerOrders.map((order) => order._id);
 
                 if (orderIds.length === 0) {
-                    return res.status(200).json(response("Returns retrieved successfully", []));
+                    return res.status(200).json(
+                        response("Returns retrieved successfully", {
+                            total: 0,
+                            page: pageNum,
+                            limit: limitNum,
+                            pages: 0,
+                            returns: [],
+                        }),
+                    );
                 }
 
                 returns = await returnRepository.getReturnsByOrderIds(orderIds);
@@ -186,7 +162,66 @@ const returnService = {
                 returns = await returnRepository.getAllReturns();
             }
 
-            res.status(200).json(response("Returns retrieved successfully", returns));
+            const filtered = returns
+                .filter((item) => {
+                    if (status && item.status !== status) return false;
+
+                    if (!normalizedQuery) return true;
+
+                    const returnNumber = String(item.returnNumber || "").toLowerCase();
+                    const orderNumber =
+                        typeof item.orderId === "object" && item.orderId?.orderNumber != null
+                            ? String(item.orderId.orderNumber).toLowerCase()
+                            : "";
+                    const note = String(item.note || "").toLowerCase();
+
+                    let createdBy = "";
+                    if (typeof item.userId === "string") {
+                        createdBy = item.userId.toLowerCase();
+                    } else if (item.userId) {
+                        createdBy = String(
+                            item.userId.name || item.userId.email || item.userId._id || "",
+                        ).toLowerCase();
+                    }
+
+                    const textMatch =
+                        returnNumber.includes(normalizedQuery) ||
+                        orderNumber.includes(normalizedQuery) ||
+                        note.includes(normalizedQuery) ||
+                        createdBy.includes(normalizedQuery);
+
+                    if (textMatch) return true;
+
+                    if (hasNumericQuery) {
+                        const returnNumberNum = Number(item.returnNumber);
+                        const orderNumberNum =
+                            typeof item.orderId === "object" && item.orderId?.orderNumber != null
+                                ? Number(item.orderId.orderNumber)
+                                : NaN;
+                        return returnNumberNum === numericQuery || orderNumberNum === numericQuery;
+                    }
+
+                    return false;
+                })
+                .sort(
+                    (a, b) => new Date(b.returnDate).getTime() - new Date(a.returnDate).getTime(),
+                );
+
+            const total = filtered.length;
+            const pages = total === 0 ? 0 : Math.ceil(total / limitNum);
+            const safePage = pages === 0 ? 1 : Math.min(pageNum, pages);
+            const start = (safePage - 1) * limitNum;
+            const paginated = filtered.slice(start, start + limitNum);
+
+            res.status(200).json(
+                response("Returns retrieved successfully", {
+                    total,
+                    page: safePage,
+                    limit: limitNum,
+                    pages,
+                    returns: paginated,
+                }),
+            );
         } catch (err) {
             return next(err);
         }
@@ -218,7 +253,7 @@ const returnService = {
         }
     },
 
-    // Update return while still draft (no stock changes - stock was already reversed at creation)
+    // Update return while still draft (no stock changes)
     editReturn: async (req, res, next) => {
         try {
             const returnId = req.params.returnId;
@@ -246,7 +281,6 @@ const returnService = {
                     const orderItemMap = buildOrderItemMap(order);
                     const requestedMap = normalizeRequestedItems(items);
                     updateObject.items = buildReturnItemsSnapshot(requestedMap, orderItemMap);
-                    // NOTE: Stock reversal already happened at creation time, no need to handle here
                 }
 
                 if (note !== undefined) updateObject.note = note;
@@ -338,9 +372,9 @@ const returnService = {
                     }
 
                     const alreadyFinalized = finalizedReturnedMap.get(pid) || 0;
-                    const maxReturnable = Number(sold.quantity) - alreadyFinalized;
+                    const maxReturnable = Number(sold.lineQuantity) - alreadyFinalized;
 
-                    if (item.quantity > maxReturnable) {
+                    if (item.lineQuantity > maxReturnable) {
                         throw createError(
                             `Cannot finalize return for product ${pid}. Remaining returnable: ${maxReturnable}`,
                             409,
@@ -353,8 +387,9 @@ const returnService = {
                 const finalizedItems = [];
                 for (const item of returnDoc.items) {
                     const sold = orderItemMap.get(String(item.productId));
-                    const skuRatio = Number(sold.actualQuantity) / Number(sold.quantity);
-                    const actualQuantity = Number(item.actualQuantity) || item.quantity * skuRatio;
+                    const skuRatio = Number(sold.actualQuantity) / Number(sold.lineQuantity);
+                    const actualQuantity =
+                        Number(item.actualQuantity) || Number(item.lineQuantity) * skuRatio;
 
                     if (!Number.isFinite(actualQuantity) || actualQuantity <= 0) {
                         throw createError(
@@ -368,33 +403,36 @@ const returnService = {
                     nextItem.actualQuantity = actualQuantity;
                     finalizedItems.push(nextItem);
 
-                    const r = await productRepository.applyReturnFinalization(
-                        {
-                            productId: item.productId,
-                            actualQuantity,
-                        },
-                        tx,
-                    );
+                    // Reverse stock only for on-shelf items when return is finalized.
+                    if (item.itemType === ORDER_TYPE.ON_SHELF) {
+                        const r = await productRepository.applyReturnFinalization(
+                            {
+                                productId: item.productId,
+                                actualQuantity,
+                            },
+                            tx,
+                        );
 
-                    if (r.modifiedCount !== 1) {
-                        throw createError(`Product ${item.productId} cannot be returned`, 409);
+                        if (r.modifiedCount !== 1) {
+                            throw createError(`Product ${item.productId} cannot be returned`, 409);
+                        }
+
+                        const stockMovement = await stockMovementRepository.createStockMovement(
+                            {
+                                productId: item.productId,
+                                quantityChange: actualQuantity,
+                                from: STOCK_MOVEMENT_TYPE.SALES,
+                                to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                createdByUserId: userId,
+                                notes: `Return finalized for order ${returnDoc.orderId} - ${returnDoc.note || ""}`.trim(),
+                                returnId: returnDoc._id,
+                                warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
+                            },
+                            tx,
+                        );
+
+                        stockMovements.push(stockMovement);
                     }
-
-                    const stockMovement = await stockMovementRepository.createStockMovement(
-                        {
-                            productId: item.productId,
-                            quantityChange: actualQuantity,
-                            from: STOCK_MOVEMENT_TYPE.RETURN,
-                            to: STOCK_MOVEMENT_TYPE.INVENTORY,
-                            createdByUserId: userId,
-                            notes: `Return finalized for order ${returnDoc.orderId} - ${returnDoc.note || ""}`.trim(),
-                            returnId: returnDoc._id,
-                            warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
-                        },
-                        tx,
-                    );
-
-                    stockMovements.push(stockMovement);
                 }
 
                 const updatedReturn = await returnRepository.updateReturnById(

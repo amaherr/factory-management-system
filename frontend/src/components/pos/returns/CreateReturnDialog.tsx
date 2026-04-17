@@ -37,8 +37,7 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
   const [createNote, setCreateNote] = useState('');
   const [quantities, setQuantities] = useState<Record<string, string>>({});
 
-  const formatReturnNumber = (returnNumber: number | string) =>
-    `${t('returns.numberPrefix')} - ${returnNumber}`;
+  const formatOrderNumber = (orderNumber: number | string) => `ORD - ${orderNumber}`;
 
   const resetState = () => {
     setSelectedOrderId('');
@@ -97,21 +96,19 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
 
     const itemsPayload = selectedOrder.items
       .map((orderItem) => {
+        const lineKey = orderItem._id;
         const productId =
           typeof orderItem.productId === 'string' ? orderItem.productId : orderItem.productId._id;
-        const qty = Number(quantities[productId] || 0);
+        const qty = Number(quantities[lineKey] || 0);
 
         if (!Number.isInteger(qty) || qty <= 0) return null;
 
         return {
           productId,
           quantity: qty, // lineQuantity - number of lines being returned
-          unitPrice: Number(orderItem.unitPrice ?? 0),
         };
       })
-      .filter((item): item is { productId: string; quantity: number; unitPrice: number } =>
-        Boolean(item),
-      );
+      .filter((item): item is { productId: string; quantity: number } => Boolean(item));
 
     if (itemsPayload.length === 0) {
       toast.error(t('returns.toasts.selectAtLeastOneItem'));
@@ -178,7 +175,7 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                         key={order._id}
                         value={order._id}
                       >
-                        {formatReturnNumber(order.orderNumber)}
+                        {formatOrderNumber(order.orderNumber)}
                       </SelectItem>
                     ))
                   )}
@@ -221,6 +218,7 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
             ) : selectedOrder?.items?.length ? (
               <div className="space-y-3">
                 {selectedOrder.items.map((orderItem) => {
+                  const lineKey = orderItem._id;
                   const productId =
                     typeof orderItem.productId === 'string'
                       ? orderItem.productId
@@ -232,7 +230,7 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
 
                   return (
                     <div
-                      key={productId}
+                      key={lineKey}
                       className="grid grid-cols-1 items-end gap-3 rounded-md border border-[--border-default] bg-[--bg-secondary] p-3 md:grid-cols-4"
                     >
                       <div className="md:col-span-2">
@@ -279,11 +277,11 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                           min={0}
                           max={orderItem.lineQuantity}
                           className="h-9 rounded-md border-[--border-default] bg-white text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
-                          value={quantities[productId] ?? ''}
+                          value={quantities[lineKey] ?? ''}
                           onChange={(e) => {
                             const raw = e.target.value;
                             if (raw === '') {
-                              setQuantities((prev) => ({ ...prev, [productId]: '' }));
+                              setQuantities((prev) => ({ ...prev, [lineKey]: '' }));
                               return;
                             }
 
@@ -291,7 +289,7 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                             const clamped = Math.max(0, Math.min(orderItem.lineQuantity, num));
                             setQuantities((prev) => ({
                               ...prev,
-                              [productId]: String(Number.isNaN(clamped) ? 0 : clamped),
+                              [lineKey]: String(Number.isNaN(clamped) ? 0 : clamped),
                             }));
                           }}
                         />
@@ -313,24 +311,24 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
               <div className="space-y-2">
                 {selectedOrder.items
                   .filter((item) => {
-                    const productId =
-                      typeof item.productId === 'string' ? item.productId : item.productId._id;
-                    return Number(quantities[productId] || 0) > 0;
+                    const lineKey = item._id;
+                    return Number(quantities[lineKey] || 0) > 0;
                   })
                   .map((item) => {
+                    const lineKey = item._id;
                     const productId =
                       typeof item.productId === 'string' ? item.productId : item.productId._id;
                     const productName =
                       typeof item.productId === 'string'
                         ? item.productId
                         : item.productId.name || item.productId.productCode || productId;
-                    const returnLineQty = Number(quantities[productId] || 0);
+                    const returnLineQty = Number(quantities[lineKey] || 0);
                     const unitPriceVal = Number(item.unitPrice ?? 0);
                     const returnTotalPrice = returnLineQty * unitPriceVal;
 
                     return (
                       <div
-                        key={productId}
+                        key={lineKey}
                         className="flex justify-between rounded-md border border-[--primary-200] bg-[--primary-50] p-3 text-sm"
                       >
                         <div>
@@ -354,9 +352,8 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                     );
                   })}
                 {selectedOrder.items.every((item) => {
-                  const productId =
-                    typeof item.productId === 'string' ? item.productId : item.productId._id;
-                  return Number(quantities[productId] || 0) === 0;
+                  const lineKey = item._id;
+                  return Number(quantities[lineKey] || 0) === 0;
                 }) && (
                   <p className="text-sm italic text-muted-foreground">
                     {t('returns.createDialog.selectItemsToReturn')}
@@ -377,9 +374,8 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                 {CURRENCY}
                 {selectedOrder.items
                   .reduce((sum, item) => {
-                    const productId =
-                      typeof item.productId === 'string' ? item.productId : item.productId._id;
-                    const returnQty = Number(quantities[productId] || 0);
+                    const lineKey = item._id;
+                    const returnQty = Number(quantities[lineKey] || 0);
                     const unitPrice = Number(item.unitPrice ?? 0);
                     return sum + returnQty * unitPrice;
                   }, 0)

@@ -143,6 +143,12 @@
       "returnDate": "Return Date",
       "actions": "Actions"
     },
+    "pagination": {
+      "showing": "Showing {{from}} to {{to}} of {{total}} returns",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{current}} of {{total}}"
+    },
     "actions": {
       "viewDetails": "View Details",
       "edit": "Edit",

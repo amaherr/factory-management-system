@@ -96,12 +96,9 @@ export function EditReturnDialog({
         return {
           productId,
           quantity: qty,
-          unitPrice: Number(orderItem.unitPrice),
         };
       })
-      .filter((item): item is { productId: string; quantity: number; unitPrice: number } =>
-        Boolean(item),
-      );
+      .filter((item): item is { productId: string; quantity: number } => Boolean(item));
 
     if (items.length === 0) {
       toast.error(t('returns.toasts.selectAtLeastOneItem'));

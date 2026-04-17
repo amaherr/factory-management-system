@@ -11,6 +11,12 @@ const returnItemSchema = Joi.object({
 const returnDtos = {
     getReturnsQuerySchema: Joi.object({
         customerId: objectId.optional(),
+        status: Joi.string()
+            .valid(...Object.values(RETURN_STATUS))
+            .optional(),
+        q: Joi.string().trim().allow("").optional(),
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(20),
     }),
 
     createReturnSchema: Joi.object({

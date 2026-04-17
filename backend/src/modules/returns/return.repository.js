@@ -93,7 +93,7 @@ async function getFinalizedReturnedByOrderExcludingReturn(data, tx = null) {
         {
             $group: {
                 _id: "$items.productId",
-                returnedQty: { $sum: "$items.quantity" },
+                returnedQty: { $sum: "$items.lineQuantity" },
             },
         },
     ]);
