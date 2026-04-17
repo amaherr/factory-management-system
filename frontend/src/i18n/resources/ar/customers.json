@@ -62,5 +62,15 @@
   "cancel": "إلغاء",
   "close": "إغلاق",
   "created": "تم الإنشاء",
-  "updated": "تم التحديث"
+  "updated": "تم التحديث",
+  "show_history": "عرض السجل",
+  "customer_history": "سجل العميل",
+  "history_description": "عرض طلبات ومرتجعات {{customerName}}",
+  "back_to_customers": "العودة إلى العملاء",
+  "orders_tab": "الطلبات",
+  "returns_tab": "المرتجعات",
+  "history_no_orders": "لا توجد طلبات لهذا العميل",
+  "history_no_returns": "لا توجد مرتجعات لهذا العميل",
+  "history_load_failed": "فشل تحميل سجل العميل",
+  "history_invalid_customer": "معرف العميل غير صالح"
 }

@@ -66,6 +66,18 @@ async function getReturnsByOrderId(orderId, tx = null) {
     return query;
 }
 
+async function getReturnsByOrderIds(orderIds, tx = null) {
+    const session = getMongoSession(tx);
+    const query = Return.find({ orderId: { $in: orderIds } })
+        .populate("orderId")
+        .populate("userId")
+        .populate("items.productId");
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
 async function getFinalizedReturnedByOrderExcludingReturn(data, tx = null) {
     const { orderId, returnId } = data;
     const session = getMongoSession(tx);
@@ -108,6 +120,7 @@ const returnRepository = {
     getAllReturns,
     getReturnsByProductId,
     getReturnsByOrderId,
+    getReturnsByOrderIds,
     getFinalizedReturnedByOrderExcludingReturn,
     deleteReturnById,
 };

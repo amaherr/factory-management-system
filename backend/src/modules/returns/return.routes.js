@@ -9,20 +9,25 @@ const { ROLES } = require("../../enums/user.enums");
 
 const router = express.Router();
 
-// Get all returns (Admin, Inventory, Sales)
-router.get("/", authorizor([ROLES.ADMIN, ROLES.SALES]), returnService.getAllReturns);
+// Get all returns (Admin, Sales, Accounting)
+router.get(
+    "/",
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
+    validator({ querySchema: returnDtos.getReturnsQuerySchema }),
+    returnService.getAllReturns,
+);
 
-// Get returns by product ID (Admin, Inventory, Sales)
+// Get returns by product ID (Admin, Sales, Accounting)
 router.get(
     "/product/:productId",
-    authorizor([ROLES.ADMIN, ROLES.SALES]),
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
     returnService.getReturnsByProductId,
 );
 
-// Get returns by order ID (Admin, Inventory, Sales)
+// Get returns by order ID (Admin, Sales, Accounting)
 router.get(
     "/order/:orderId",
-    authorizor([ROLES.ADMIN, ROLES.SALES]),
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
     returnService.getReturnsByOrderId,
 );
 

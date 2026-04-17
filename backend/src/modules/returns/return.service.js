@@ -168,7 +168,23 @@ const returnService = {
     // Get all returns
     getAllReturns: async (req, res, next) => {
         try {
-            const returns = await returnRepository.getAllReturns();
+            const { customerId } = req.query;
+
+            let returns = [];
+            if (customerId) {
+                const customerOrders = await orderRepository.getOrders({
+                    filter: { customerId },
+                });
+                const orderIds = customerOrders.map((order) => order._id);
+
+                if (orderIds.length === 0) {
+                    return res.status(200).json(response("Returns retrieved successfully", []));
+                }
+
+                returns = await returnRepository.getReturnsByOrderIds(orderIds);
+            } else {
+                returns = await returnRepository.getAllReturns();
+            }
 
             res.status(200).json(response("Returns retrieved successfully", returns));
         } catch (err) {

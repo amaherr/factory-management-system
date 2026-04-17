@@ -9,6 +9,10 @@ const returnItemSchema = Joi.object({
 }).unknown(false);
 
 const returnDtos = {
+    getReturnsQuerySchema: Joi.object({
+        customerId: objectId.optional(),
+    }),
+
     createReturnSchema: Joi.object({
         orderId: objectId.required(),
         note: Joi.string().trim().max(500).optional(),

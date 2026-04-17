@@ -79,10 +79,16 @@ interface ApiResponse<T> {
 }
 
 export const returnService = {
-  async getReturns(): Promise<ReturnRecord[]> {
+  async getReturns(filters?: { customerId?: string }): Promise<ReturnRecord[]> {
     try {
       axios.defaults.withCredentials = true;
-      const response = await axios.get<ApiResponse<ReturnRecord[]>>(`${API_URL}/returns`);
+      const params: Record<string, string> = {};
+      if (filters?.customerId) {
+        params.customerId = filters.customerId;
+      }
+      const response = await axios.get<ApiResponse<ReturnRecord[]>>(`${API_URL}/returns`, {
+        params,
+      });
       return Array.isArray(response.data.data) ? response.data.data : [];
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Failed to fetch returns');

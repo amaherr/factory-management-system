@@ -15,7 +15,8 @@ import { BatchesList } from './pages/production/BatchesList';
 import { NewSale } from './pages/pos/NewSale';
 import { OrdersList } from './pages/pos/OrdersList';
 import { Returns } from './pages/pos/Returns';
-import { Customers } from './pages/Customers';
+import { Customers } from './pages/customers/Customers';
+import { CustomerHistory } from './pages/customers/CustomerHistory';
 import { Issues } from './pages/Issues';
 import { Notifications } from './pages/Notifications';
 import { UsersManagement } from './pages/UsersManagement';
@@ -152,6 +153,10 @@ export const router = createBrowserRouter([
       {
         path: 'customers',
         element: <Customers />,
+      },
+      {
+        path: 'customers/:customerId/history',
+        element: <CustomerHistory />,
       },
       {
         path: 'issues',

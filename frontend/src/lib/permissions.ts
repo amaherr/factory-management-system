@@ -124,7 +124,7 @@ export const navigationItems: NavItem[] = [
     label: 'Customers',
     path: '/customers',
     icon: 'Users',
-    roles: [ROLES.ADMIN, ROLES.SALES],
+    roles: [ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING],
   },
   {
     label: 'Issues',

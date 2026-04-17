@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card, CardContent } from '../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Card, CardContent } from '../../components/ui/card';
 import {
   Table,
   TableBody,
@@ -10,17 +10,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/table';
-import { Search, Eye, Loader2, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { AddCustomerDialog } from '../components/customers/AddCustomerDialog';
-import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog';
-import { EditCustomerDialog } from '../components/customers/EditCustomerDialog';
-import { DeleteCustomerDialog } from '../components/customers/DeleteCustomerDialog';
-import { customerService, type Customer } from '../services/customers';
+} from '../../components/ui/table';
+import {
+  Search,
+  Eye,
+  Loader2,
+  Pencil,
+  Trash2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  History,
+} from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { AddCustomerDialog } from '../../components/customers/AddCustomerDialog';
+import { CustomerDetailsDialog } from '../../components/customers/CustomerDetailsDialog';
+import { EditCustomerDialog } from '../../components/customers/EditCustomerDialog';
+import { DeleteCustomerDialog } from '../../components/customers/DeleteCustomerDialog';
+import { customerService, type Customer } from '../../services/customers';
 import { toast } from 'sonner';
 
 export function Customers() {
   const { t } = useTranslation('customers');
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -218,6 +230,21 @@ export function Customers() {
                           className="text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            customer._id &&
+                            navigate(`/customers/${customer._id}/history`, {
+                              state: { customerName: customer.name },
+                            })
+                          }
+                          title={t('show_history')}
+                          className="gap-1"
+                        >
+                          <History className="size-4" />
+                          {t('show_history')}
                         </Button>
                       </div>
                     </TableCell>

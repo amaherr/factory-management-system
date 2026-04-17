@@ -109,13 +109,20 @@ export interface GetOrderResponse {
 }
 
 export const orderService = {
-  async getOrders(filters?: { status?: string; query?: string }): Promise<Order[]> {
+  async getOrders(filters?: {
+    status?: string;
+    query?: string;
+    customerId?: string;
+  }): Promise<Order[]> {
     try {
       axios.defaults.withCredentials = true;
       const params: Record<string, string> = {};
 
       if (filters?.status && filters.status !== 'all') {
         params.status = filters.status;
+      }
+      if (filters?.customerId) {
+        params.customerId = filters.customerId;
       }
       if (filters?.query) {
         const num = Number(filters.query);

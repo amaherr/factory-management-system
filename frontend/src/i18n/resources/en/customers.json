@@ -62,5 +62,15 @@
   "cancel": "Cancel",
   "close": "Close",
   "created": "Created",
-  "updated": "Updated"
+  "updated": "Updated",
+  "show_history": "Show History",
+  "customer_history": "Customer History",
+  "history_description": "View orders and returns for {{customerName}}",
+  "back_to_customers": "Back to Customers",
+  "orders_tab": "Orders",
+  "returns_tab": "Returns",
+  "history_no_orders": "No orders found for this customer",
+  "history_no_returns": "No returns found for this customer",
+  "history_load_failed": "Failed to load customer history",
+  "history_invalid_customer": "Invalid customer id"
 }
