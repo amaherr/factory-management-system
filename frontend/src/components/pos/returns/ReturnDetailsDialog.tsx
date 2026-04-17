@@ -101,6 +101,18 @@ export function ReturnDetailsDialog({
                           {t('returns.detailsDialog.actualQty')}: {item.actualQuantity}
                         </p>
                       )}
+                      {item.itemType && (
+                        <div className="mt-2 flex gap-1">
+                          <Badge
+                            variant={item.itemType === 'on shelf' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {item.itemType === 'on shelf'
+                              ? t('itemType.onShelf')
+                              : t('itemType.onDemand')}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                     <p className="text-sm font-medium">
                       {CURRENCY}

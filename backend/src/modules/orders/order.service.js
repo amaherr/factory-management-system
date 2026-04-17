@@ -1,8 +1,9 @@
 /* Invariants:
-   - ON_SHELF draft reserves stock (theoretical--, reserved++)
+   - Per-item stock handling based on itemType (on shelf | on demand)
+   - ON_SHELF items: draft reserves stock (theoretical--, reserved++)
    - ON_SHELF finalize: reserved--, sold++
-   - ON_SHELF cancel/delete draft: reserved--, theoretical++
-   - ON_DEMAND stock doesn't change
+   - ON_SHELF cancel: reserved--, theoretical++
+   - ON_DEMAND items: stock doesn't change at any stage
 */
 
 const orderRepository = require("./order.repository");
@@ -25,7 +26,7 @@ const orderService = {
     createOrder: async (req, res, next) => {
         try {
             const userId = req.user.id;
-            const { customerId, orderType, items, discountAmount, taxAmount, notes } = req.body;
+            const { customerId, items, discountAmount, taxAmount, notes } = req.body;
 
             // transactional part
             let result;
@@ -44,6 +45,7 @@ const orderService = {
                 const productMap = new Map(products.map((p) => [String(p._id), p]));
 
                 // validate products exist and activated + build pricedItems (snapshot)
+                // each item includes its itemType
                 const pricedItems = items.map((it) => {
                     const product = productMap.get(String(it.productId));
 
@@ -65,6 +67,7 @@ const orderService = {
                         actualQuantity,
                         unitPrice, // snapshot
                         totalPrice,
+                        itemType: it.itemType, // per-item fulfillment type
                     };
                 });
 
@@ -80,13 +83,12 @@ const orderService = {
                     throw createError("Total cannot be negative (check discount/tax)", 400);
                 }
 
-                // create order
+                // create order (NO orderType field, itemType is per-item)
                 const createdOrder = await orderRepository.createOrder(
                     {
                         orderNumber,
                         createdByUserId: userId,
                         customerId,
-                        orderType,
                         items: pricedItems,
                         subTotal,
                         discountAmount: discount,
@@ -97,10 +99,11 @@ const orderService = {
                     tx,
                 );
 
-                // if ON_SHELF, check inventory stock and reserve stock
+                // CHANGED: handle stock per item based on itemType
                 let stockMovements = [];
-                if (orderType === ORDER_TYPE.ON_SHELF) {
-                    for (const item of pricedItems) {
+                for (const item of pricedItems) {
+                    // only reserve stock if item is On-Shelf
+                    if (item.itemType === ORDER_TYPE.ON_SHELF) {
                         // check if item is out of stock (reserve and decrement from stock if not)
                         const r = await productRepository.reserveForOrderItem(
                             {
@@ -130,6 +133,7 @@ const orderService = {
                         );
                         stockMovements.push(sm);
                     }
+                    // ON_DEMAND items: no stock operations
                 }
 
                 result = { createdOrder, stockMovements };
@@ -151,18 +155,16 @@ const orderService = {
             const {
                 createdByUserId,
                 customerId,
-                orderType,
                 status,
                 from, // date filter
                 to, // date filter
                 q, // search by order number
             } = req.query;
 
-            // build the filter object
+            // build the filter object (NO orderType filtering)
             const filter = {};
             if (createdByUserId) filter.createdByUserId = createdByUserId;
             if (customerId) filter.customerId = customerId;
-            if (orderType) filter.orderType = orderType;
             if (status) filter.status = status;
 
             // date range
@@ -196,15 +198,13 @@ const orderService = {
 
             const {
                 customerId,
-                orderType,
                 status,
                 q, // search by order number
             } = req.query;
 
-            // build the filter object
+            // build the filter object (NO orderType filtering)
             const filter = {};
             if (customerId) filter.customerId = customerId;
-            if (orderType) filter.orderType = orderType;
             if (status) filter.status = status;
 
             // search query
@@ -291,12 +291,12 @@ const orderService = {
 
                 const stockMovements = [];
 
-                // only ON_SHELF has reservations in the system
-                if (updatedOrder.orderType === ORDER_TYPE.ON_SHELF) {
-                    // move from reserved to sold
-                    if (status === ORDER_STATUS.FINALIZED) {
-                        for (const item of updatedOrder.items) {
-                            // check and move stock
+                // CHANGED: per-item stock handling based on itemType
+                // move from reserved to sold (only for ON_SHELF items) or release reserved (for cancellation)
+                for (const item of updatedOrder.items) {
+                    if (item.itemType === ORDER_TYPE.ON_SHELF) {
+                        if (status === ORDER_STATUS.FINALIZED) {
+                            // move from reserved to sold
                             const r = await productRepository.finalizeReservedForOrderItem(
                                 {
                                     productId: item.productId,
@@ -328,12 +328,9 @@ const orderService = {
                             );
                             stockMovements.push(sm);
                         }
-                    }
 
-                    // move from reserved to theoretical stock
-                    if (status === ORDER_STATUS.CANCELLED) {
-                        for (const item of updatedOrder.items) {
-                            // check and move stock
+                        if (status === ORDER_STATUS.CANCELLED) {
+                            // move from reserved to theoretical stock
                             const r = await productRepository.cancelReservedForOrderItem(
                                 {
                                     productId: item.productId,
@@ -366,6 +363,7 @@ const orderService = {
                             stockMovements.push(sm);
                         }
                     }
+                    // ON_DEMAND items: no stock changes
                 }
 
                 result = { updatedOrder, stockMovements };
@@ -414,13 +412,19 @@ const orderService = {
                     items ??
                     order.items.map((it) => ({
                         productId: it.productId,
-                        quantity: it.quantity,
+                        quantity: it.lineQuantity,
+                        itemType: it.itemType,
                     }));
 
-                // helper to compare old vs new (by productId and quantity)
+                // helper to compare old vs new (by productId and quantity and itemType)
                 const toQtyMap = (arr) => {
                     const m = new Map();
-                    for (const it of arr) m.set(String(it.productId), Number(it.quantity));
+                    for (const it of arr) {
+                        m.set(String(it.productId), {
+                            quantity: Number(it.quantity),
+                            itemType: it.itemType,
+                        });
+                    }
                     return m;
                 };
 
@@ -433,8 +437,15 @@ const orderService = {
                 const itemsChanged = (() => {
                     if (!itemsProvided) return false;
                     if (oldQtyMap.size !== newQtyMap.size) return true;
-                    for (const [pid, qty] of newQtyMap) {
-                        if (oldQtyMap.get(pid) !== qty) return true;
+                    for (const [pid, data] of newQtyMap) {
+                        const oldData = oldQtyMap.get(pid);
+                        if (
+                            !oldData ||
+                            oldData.quantity !== data.quantity ||
+                            oldData.itemType !== data.itemType
+                        ) {
+                            return true;
+                        }
                     }
                     return false;
                 })();
@@ -469,6 +480,7 @@ const orderService = {
                             actualQuantity,
                             unitPrice, // snapshot
                             totalPrice,
+                            itemType: it.itemType, // CHANGED: include itemType per item
                         };
                     });
                 }
@@ -481,24 +493,26 @@ const orderService = {
                     throw createError("Total cannot be negative (check discount/tax)", 400);
                 }
 
-                // stock logic + movements (ONLY for ON_SHELF and ONLY if items changed)
+                // CHANGED: stock logic + movements per-item based on itemType
                 const stockMovements = [];
-                if (order.orderType === ORDER_TYPE.ON_SHELF && itemsChanged) {
-                    // undo old reservations (unreserve everything from the old order)
+                if (itemsChanged) {
+                    // undo old reservations (unreserve only ON_SHELF items from the old order)
                     for (const oldItem of order.items) {
-                        const r = await productRepository.unreserveOrderItem(
-                            {
-                                productId: oldItem.productId,
-                                actualQuantity: oldItem.actualQuantity,
-                            },
-                            tx,
-                        );
-
-                        if (r.modifiedCount !== 1) {
-                            throw createError(
-                                `Cannot rollback reservation for product ${oldItem.productId} (reserved mismatch)`,
-                                409,
+                        if (oldItem.itemType === ORDER_TYPE.ON_SHELF) {
+                            const r = await productRepository.unreserveOrderItem(
+                                {
+                                    productId: oldItem.productId,
+                                    actualQuantity: oldItem.actualQuantity,
+                                },
+                                tx,
                             );
+
+                            if (r.modifiedCount !== 1) {
+                                throw createError(
+                                    `Cannot rollback reservation for product ${oldItem.productId} (reserved mismatch)`,
+                                    409,
+                                );
+                            }
                         }
                     }
 
@@ -508,35 +522,40 @@ const orderService = {
                         tx,
                     );
 
-                    // reserve new items + create new RESERVE movements
+                    // reserve new items + create new RESERVE movements (only for ON_SHELF items)
                     for (const newItem of pricedItems) {
-                        const r = await productRepository.reserveForOrderItem(
-                            {
-                                productId: newItem.productId,
-                                actualQuantity: newItem.actualQuantity,
-                            },
-                            tx,
-                        );
+                        if (newItem.itemType === ORDER_TYPE.ON_SHELF) {
+                            const r = await productRepository.reserveForOrderItem(
+                                {
+                                    productId: newItem.productId,
+                                    actualQuantity: newItem.actualQuantity,
+                                },
+                                tx,
+                            );
 
-                        if (r.modifiedCount !== 1) {
-                            throw createError(`Product ${newItem.productId} is out of stock`, 409);
+                            if (r.modifiedCount !== 1) {
+                                throw createError(
+                                    `Product ${newItem.productId} is out of stock`,
+                                    409,
+                                );
+                            }
+
+                            const sm = await stockMovementRepository.createStockMovement(
+                                {
+                                    productId: newItem.productId,
+                                    quantityChange: newItem.actualQuantity,
+                                    from: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                    to: STOCK_MOVEMENT_TYPE.RESERVE,
+                                    createdByUserId: userId,
+                                    notes: `Order ${order.orderNumber} edited (reserve updated)`,
+                                    orderId: order._id,
+                                    isExecuted: true,
+                                },
+                                tx,
+                            );
+
+                            stockMovements.push(sm);
                         }
-
-                        const sm = await stockMovementRepository.createStockMovement(
-                            {
-                                productId: newItem.productId,
-                                quantityChange: newItem.actualQuantity,
-                                from: STOCK_MOVEMENT_TYPE.INVENTORY,
-                                to: STOCK_MOVEMENT_TYPE.RESERVE,
-                                createdByUserId: userId,
-                                notes: `Order ${order.orderNumber} edited (reserve updated)`,
-                                orderId: order._id,
-                                isExecuted: true,
-                            },
-                            tx,
-                        );
-
-                        stockMovements.push(sm);
                     }
                 }
 
@@ -593,28 +612,27 @@ const orderService = {
 
                 const deletedOrder = await orderRepository.deleteOrderById(orderId, tx);
 
-                // return reserved products to stock (only if ON_SHELF draft reserved stock)
-                if (
-                    deletedOrder.orderType === ORDER_TYPE.ON_SHELF &&
-                    deletedOrder.status === ORDER_STATUS.DRAFT
-                ) {
-                    // return product amount to stock
+                // CHANGED: return reserved products to stock (only for ON_SHELF items in DRAFT status)
+                if (deletedOrder.status === ORDER_STATUS.DRAFT) {
+                    // return reserved stock only for on-shelf items
                     for (const item of deletedOrder.items) {
-                        // add reserved to stock
-                        const r = await productRepository.unreserveOrderItem(
-                            {
-                                productId: item.productId,
-                                actualQuantity: item.actualQuantity,
-                            },
-                            tx,
-                        );
-
-                        if (r.modifiedCount !== 1) {
-                            // This indicates your reserved totals are out of sync.
-                            throw createError(
-                                `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
-                                409,
+                        if (item.itemType === ORDER_TYPE.ON_SHELF) {
+                            // add reserved to stock
+                            const r = await productRepository.unreserveOrderItem(
+                                {
+                                    productId: item.productId,
+                                    actualQuantity: item.actualQuantity,
+                                },
+                                tx,
                             );
+
+                            if (r.modifiedCount !== 1) {
+                                // This indicates your reserved totals are out of sync.
+                                throw createError(
+                                    `Product not found or cannot unreserve product ${item.productId} (reserved stock mismatch)`,
+                                    409,
+                                );
+                            }
                         }
                     }
                 }

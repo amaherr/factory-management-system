@@ -31,7 +31,6 @@ export function OrdersList() {
   const { t } = useTranslation('pos');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,6 +42,12 @@ export function OrdersList() {
   const [statusChangeOpen, setStatusChangeOpen] = useState(false);
   const [deleteSelectedOrder, setDeleteSelectedOrder] = useState<Order | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // ADDED: function to count items by type
+  const getItemTypeBreakdown = (order: Order) => {
+    const onShelf = order.items.filter((item: any) => item.itemType === 'on shelf').length;
+    const onDemand = order.items.filter((item: any) => item.itemType === 'on demand').length;
+    return { onShelf, onDemand };
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -50,7 +55,6 @@ export function OrdersList() {
       try {
         const data = await orderService.getOrders({
           status: statusFilter !== 'all' ? statusFilter : undefined,
-          orderType: typeFilter !== 'all' ? typeFilter : undefined,
           query: searchQuery || undefined,
         });
         setOrders(data);
@@ -62,7 +66,7 @@ export function OrdersList() {
     };
 
     fetchOrders();
-  }, [statusFilter, typeFilter, searchQuery, refreshTrigger, t]);
+  }, [statusFilter, searchQuery, refreshTrigger, t]);
 
   // Defensive check to ensure orders is always an array
   const filteredOrders = Array.isArray(orders) ? orders : [];
@@ -116,19 +120,6 @@ export function OrdersList() {
                 <SelectItem value="cancelled">{t('orderStatus.cancelled')}</SelectItem>
               </SelectContent>
             </Select>
-            <Select
-              value={typeFilter}
-              onValueChange={setTypeFilter}
-            >
-              <SelectTrigger className="h-9 rounded-md">
-                <SelectValue placeholder={t('orderType.label')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allTypes')}</SelectItem>
-                <SelectItem value="on shelf">{t('orderType.onShelf')}</SelectItem>
-                <SelectItem value="on demand">{t('orderType.onDemand')}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -149,7 +140,7 @@ export function OrdersList() {
                 <TableRow>
                   <TableHead>{t('orderNumber')}</TableHead>
                   <TableHead>{t('customer')}</TableHead>
-                  <TableHead>{t('orderType.label')}</TableHead>
+                  <TableHead>{t('items')}</TableHead>
                   <TableHead>{t('status')}</TableHead>
                   <TableHead>{t('pricing.total')}</TableHead>
                   <TableHead>{t('createdDate')}</TableHead>
@@ -166,12 +157,24 @@ export function OrdersList() {
                         : (order.customerId as any).name || '-'}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="capitalize"
-                      >
-                        {order.orderType}
-                      </Badge>
+                      <div className="flex gap-1 flex-wrap">
+                        {getItemTypeBreakdown(order).onShelf > 0 && (
+                          <Badge
+                            variant="default"
+                            className="text-xs"
+                          >
+                            {getItemTypeBreakdown(order).onShelf} {t('itemType.onShelf')}
+                          </Badge>
+                        )}
+                        {getItemTypeBreakdown(order).onDemand > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {getItemTypeBreakdown(order).onDemand} {t('itemType.onDemand')}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge

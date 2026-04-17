@@ -31,6 +31,7 @@ interface CartItem {
   lineQuantity: number; // lines of the product ordered
   unitPrice: number;
   stock: number;
+  itemType: UiOrderType; // CHANGED: now per-item instead of order-level
 }
 
 type UiOrderType = 'on-shelf' | 'on-demand';
@@ -40,7 +41,7 @@ export function NewSale() {
   const { t } = useTranslation('pos');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState('');
-  const [orderType, setOrderType] = useState<UiOrderType>('on-shelf');
+  // CHANGED: removed orderType state; now each item has its own itemType
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discount, setDiscount] = useState(0);
   const [discountMode, setDiscountMode] = useState<ValueMode>('amount');
@@ -90,11 +91,14 @@ export function NewSale() {
   };
 
   const addToCart = (product: Product) => {
-    const existingItem = cart.find((item) => item.productId === product._id);
+    const existingItem = cart.find(
+      (item) => item.productId === product._id && item.itemType === 'on-shelf',
+    );
 
     if (existingItem) {
-      updateQuantity(product._id, existingItem.lineQuantity + 1);
+      updateQuantity(product._id, existingItem.itemType, existingItem.lineQuantity + 1);
     } else {
+      // CHANGED: add itemType with default 'on-shelf' for new items
       setCart([
         ...cart,
         {
@@ -106,22 +110,24 @@ export function NewSale() {
           lineQuantity: 1,
           unitPrice: product.unitSalePrice,
           stock: product.totalTheoreticalStock,
+          itemType: 'on-shelf', // default to on-shelf, user can change per item
         },
       ]);
     }
   };
 
-  const updateQuantity = (productId: string, newQuantity: number) => {
+  const updateQuantity = (productId: string, itemType: UiOrderType, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, itemType);
       return;
     }
 
     setCart(
       cart.map((item) => {
-        if (item.productId === productId) {
+        if (item.productId === productId && item.itemType === itemType) {
           const actualQuantity = newQuantity * item.sku;
-          if (orderType === 'on-shelf' && actualQuantity > item.stock) {
+          // CHANGED: only validate stock for on-shelf items
+          if (item.itemType === 'on-shelf' && actualQuantity > item.stock) {
             toast.error(t('errors.onlyStockAvailable', { stock: item.stock }));
             return item;
           }
@@ -132,8 +138,49 @@ export function NewSale() {
     );
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter((item) => item.productId !== productId));
+  // ADDED: function to change item type for a cart item
+  const updateItemType = (productId: string, currentType: UiOrderType, newType: UiOrderType) => {
+    if (currentType === newType) return;
+
+    const currentItem = cart.find(
+      (item) => item.productId === productId && item.itemType === currentType,
+    );
+    if (!currentItem) return;
+
+    const targetItem = cart.find(
+      (item) => item.productId === productId && item.itemType === newType,
+    );
+
+    if (targetItem) {
+      const mergedQuantity = currentItem.lineQuantity + targetItem.lineQuantity;
+      if (newType === 'on-shelf' && mergedQuantity * currentItem.sku > currentItem.stock) {
+        toast.error(t('errors.onlyStockAvailable', { stock: currentItem.stock }));
+        return;
+      }
+
+      setCart(
+        cart
+          .filter((item) => !(item.productId === productId && item.itemType === currentType))
+          .map((item) =>
+            item.productId === productId && item.itemType === newType
+              ? { ...item, lineQuantity: mergedQuantity }
+              : item,
+          ),
+      );
+      return;
+    }
+
+    setCart(
+      cart.map((item) =>
+        item.productId === productId && item.itemType === currentType
+          ? { ...item, itemType: newType }
+          : item,
+      ),
+    );
+  };
+
+  const removeFromCart = (productId: string, itemType: UiOrderType) => {
+    setCart(cart.filter((item) => !(item.productId === productId && item.itemType === itemType)));
   };
 
   const resetOrderForm = () => {
@@ -162,24 +209,26 @@ export function NewSale() {
       return false;
     }
 
-    if (orderType === 'on-shelf') {
-      const outOfStock = cart.find((item) => item.lineQuantity * item.sku > item.stock);
-      if (outOfStock) {
-        toast.error(t('errors.outOfStock', { product: outOfStock.productName }));
-        return false;
-      }
+    // CHANGED: validate stock per item based on itemType
+    const outOfStock = cart.find(
+      (item) => item.itemType === 'on-shelf' && item.lineQuantity * item.sku > item.stock,
+    );
+    if (outOfStock) {
+      toast.error(t('errors.outOfStock', { product: outOfStock.productName }));
+      return false;
     }
 
     return true;
   };
 
   const createOrder = async () => {
+    // CHANGED: pass itemType per item to the API
     return orderService.createOrder({
       customerId: selectedCustomer,
-      orderType: mapUiTypeToApiType(orderType),
       items: cart.map((item) => ({
         productId: item.productId,
         quantity: item.lineQuantity,
+        itemType: mapUiTypeToApiType(item.itemType), // per-item itemType
       })),
       discountAmount,
       taxAmount,
@@ -288,11 +337,7 @@ export function NewSale() {
                               size="sm"
                               className="h-7 px-2"
                               onClick={() => addToCart(product)}
-                              disabled={
-                                processingAction ||
-                                (orderType === 'on-shelf' &&
-                                  product.totalTheoreticalStock < product.sku)
-                              }
+                              disabled={processingAction}
                             >
                               <Plus className="size-4" />
                             </Button>
@@ -316,28 +361,6 @@ export function NewSale() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('orderType.label')}</Label>
-                <Tabs
-                  value={orderType}
-                  onValueChange={(value) => {
-                    if (isUiOrderType(value)) {
-                      setOrderType(value);
-                    }
-                  }}
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="on-shelf">{t('orderType.onShelf')}</TabsTrigger>
-                    <TabsTrigger value="on-demand">{t('orderType.onDemand')}</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <p className="text-xs text-gray-500">
-                  {orderType === 'on-shelf'
-                    ? t('orderType.onShelfHint')
-                    : t('orderType.onDemandHint')}
-                </p>
-              </div>
-
               <div className="space-y-2">
                 <Label>{t('customer')}</Label>
                 <Select
@@ -368,7 +391,7 @@ export function NewSale() {
                 ) : (
                   cart.map((item) => (
                     <div
-                      key={item.productId}
+                      key={`${item.productId}-${item.itemType}`}
                       className="space-y-2 p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="flex items-start justify-between">
@@ -377,13 +400,28 @@ export function NewSale() {
                           <p className="text-xs text-gray-500">
                             {item.productCode} • {item.productDetails}
                           </p>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge
+                              variant={item.itemType === 'on-shelf' ? 'default' : 'secondary'}
+                              className="text-[10px]"
+                            >
+                              {item.itemType === 'on-shelf'
+                                ? t('itemType.onShelf')
+                                : t('itemType.onDemand')}
+                            </Badge>
+                            {item.itemType === 'on-shelf' && (
+                              <span className="text-xs text-gray-600">
+                                {t('stockAvailable', { count: item.stock })}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
                             <p className="text-xs text-gray-600">
                               {t('lineQuantity')}: {item.lineQuantity} • {t('actualQuantity')}:{' '}
                               {getActualQuantity(item)}
                             </p>
                           </div>
-                          {orderType === 'on-shelf' && getActualQuantity(item) > item.stock && (
+                          {item.itemType === 'on-shelf' && getActualQuantity(item) > item.stock && (
                             <p className="text-xs text-red-600 mt-1">
                               {t('onlyStockAvailable', { count: item.stock })}
                             </p>
@@ -392,18 +430,42 @@ export function NewSale() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFromCart(item.productId)}
+                          onClick={() => removeFromCart(item.productId, item.itemType)}
                           disabled={processingAction}
                         >
                           <Trash2 className="size-4" />
                         </Button>
+                      </div>
+
+                      {/* ADDED: Per-item type selector */}
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs flex-shrink-0">{t('itemType.label')}:</Label>
+                        <Select
+                          value={item.itemType}
+                          onValueChange={(value) => {
+                            if (isUiOrderType(value)) {
+                              updateItemType(item.productId, item.itemType, value);
+                            }
+                          }}
+                          disabled={processingAction}
+                        >
+                          <SelectTrigger className="h-7 w-32 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="on-shelf">{t('itemType.onShelf')}</SelectItem>
+                            <SelectItem value="on-demand">{t('itemType.onDemand')}</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.productId, item.lineQuantity - 1)}
+                            onClick={() =>
+                              updateQuantity(item.productId, item.itemType, item.lineQuantity - 1)
+                            }
                             disabled={processingAction}
                           >
                             <Minus className="size-3" />
@@ -424,14 +486,16 @@ export function NewSale() {
                               if (Number.isNaN(parsed)) {
                                 return;
                               }
-                              updateQuantity(item.productId, parsed);
+                              updateQuantity(item.productId, item.itemType, parsed);
                             }}
                             disabled={processingAction}
                           />
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => updateQuantity(item.productId, item.lineQuantity + 1)}
+                            onClick={() =>
+                              updateQuantity(item.productId, item.itemType, item.lineQuantity + 1)
+                            }
                             disabled={processingAction}
                           >
                             <Plus className="size-3" />

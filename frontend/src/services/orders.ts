@@ -21,11 +21,11 @@ export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 export interface CreateOrderItemPayload {
   productId: string;
   quantity: number;
+  itemType: OrderType;
 }
 
 export interface CreateOrderPayload {
   customerId: string;
-  orderType: OrderType;
   items: CreateOrderItemPayload[];
   discountAmount: number;
   taxAmount: number;
@@ -42,6 +42,7 @@ export interface OrderItem {
   actualQuantity: number;
   unitPrice: number;
   totalPrice: number;
+  itemType?: OrderType;
   _id: string;
 }
 
@@ -60,7 +61,6 @@ export interface Order {
         updatedAt: string;
       };
   createdByUserId: string | { _id: string; name: string; email: string };
-  orderType: OrderType;
   items: OrderItem[];
   subTotal: number;
   discountAmount: number;
@@ -109,20 +109,13 @@ export interface GetOrderResponse {
 }
 
 export const orderService = {
-  async getOrders(filters?: {
-    status?: string;
-    orderType?: string;
-    query?: string;
-  }): Promise<Order[]> {
+  async getOrders(filters?: { status?: string; query?: string }): Promise<Order[]> {
     try {
       axios.defaults.withCredentials = true;
       const params: Record<string, string> = {};
 
       if (filters?.status && filters.status !== 'all') {
         params.status = filters.status;
-      }
-      if (filters?.orderType && filters.orderType !== 'all') {
-        params.orderType = filters.orderType;
       }
       if (filters?.query) {
         const num = Number(filters.query);

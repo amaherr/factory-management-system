@@ -21,16 +21,9 @@ properties:
         pattern: "^[a-fA-F0-9]{24}$"
         description: Related customer id.
         example: 67fd5a33e0f2f3f07a8d86e2
-    orderType:
-        type: string
-        enum:
-            - on shelf
-            - on demand
-        description: Order source and fulfillment type.
-        example: on demand
     items:
         type: array
-        description: Order line items.
+        description: Order line items with individual fulfillment types.
         items:
             type: object
             properties:
@@ -59,12 +52,20 @@ properties:
                     minimum: 0
                     description: Line total (actualQuantity * unitPrice).
                     example: 2040
+                itemType:
+                    type: string
+                    enum:
+                        - on shelf
+                        - on demand
+                    description: Individual item fulfillment type.
+                    example: on shelf
             required:
                 - productId
                 - lineQuantity
                 - actualQuantity
                 - unitPrice
                 - totalPrice
+                - itemType
     subTotal:
         type: number
         minimum: 0
@@ -139,7 +140,6 @@ required:
     - orderNumber
     - createdByUserId
     - customerId
-    - orderType
     - subTotal
     - discountAmount
     - taxAmount

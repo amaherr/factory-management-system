@@ -23,11 +23,28 @@
   "customer": "Customer",
   "selectCustomer": "Select customer",
   "orderType": {
-    "label": "Order Type",
+    "label": "Item Type",
     "onShelf": "On-Shelf",
     "onDemand": "On-Demand",
-    "onShelfHint": "Immediate stock deduction",
-    "onDemandHint": "Reserve/plan for later"
+    "onShelfHint": "Check available stock",
+    "onDemandHint": "No stock requirement",
+    "selectType": "Choose item type"
+  },
+  "itemType": {
+    "label": "Item Type",
+    "onShelf": "On-Shelf",
+    "onDemand": "On-Demand",
+    "selectType": "Select type",
+    "changeType": "Change Type"
+  },
+  "items": {
+    "itemType": {
+      "label": "Item Type",
+      "onShelf": "On-Shelf",
+      "onDemand": "On-Demand",
+      "help": "On-shelf items require available stock. On-demand items have no stock requirements."
+    },
+    "breakdown": "{{onShelf}} on-shelf, {{onDemand}} on-demand"
   },
   "emptyCart": "Cart is empty",
   "onlyStockAvailable": "Only {{count}} available!",
@@ -134,7 +151,9 @@
     },
     "createDialog": {
       "title": "Create Return",
-      "description": "Create a draft return. Stock will only change when finalized.",
+      "description": "Create a draft return. Stock will be automatically reversed for on-shelf items.",
+      "stockReversalNotice": "Stock will be reversed for on-shelf items immediately upon return creation.",
+      "onDemandNote": "On-demand items have no stock impact.",
       "orderLabel": "Order",
       "orderPlaceholder": "Select a finalized order",
       "loadingOrders": "Loading finalized orders...",
@@ -149,6 +168,7 @@
       "unitPrice": "Unit Price",
       "itemTotal": "Item Total",
       "returnQty": "Return Qty",
+      "itemTypeLabel": "Item Type",
       "line": "line",
       "lines": "lines",
       "returnSummary": "Return Summary",
@@ -175,8 +195,8 @@
       "title": "Change Return Status",
       "description": "Select a new status for return #{{returnNumber}}",
       "selectStatus": "Select status",
-      "finalizeWarning": "Finalizing this return will update stock and create stock movement records.",
-      "cancelWarning": "Cancelling this return keeps stock unchanged.",
+      "finalizeWarning": "Finalizing this return will update stock and create stock movement records. Stock reversal for on-shelf items already applied at return creation.",
+      "cancelWarning": "Cancelling this return keeps stock unchanged (reversal already applied for on-shelf items).",
       "confirm": "Confirm"
     },
     "deleteDialog": {

@@ -242,6 +242,16 @@ export function CreateReturnDialog({ open, onOpenChange, onSuccess }: CreateRetu
                           {orderItem.actualQuantity != null &&
                             ` (${t('returns.createDialog.actualQty')}: ${orderItem.actualQuantity})`}
                         </p>
+                        {orderItem.itemType && (
+                          <p className="mt-1 text-xs">
+                            <span className="font-medium">
+                              {t('returns.createDialog.itemTypeLabel')}:
+                            </span>{' '}
+                            {orderItem.itemType === 'on shelf'
+                              ? t('itemType.onShelf')
+                              : t('itemType.onDemand')}
+                          </p>
+                        )}
                       </div>
 
                       <div>

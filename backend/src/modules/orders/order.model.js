@@ -31,6 +31,12 @@ const itemSchema = mongoose.Schema({
         required: true,
         min: 0,
     },
+    itemType: {
+        // individual item fulfillment type: on shelf or on demand
+        type: String,
+        enum: Object.values(ORDER_TYPE),
+        required: true,
+    },
 });
 
 const orderSchema = mongoose.Schema(
@@ -49,11 +55,6 @@ const orderSchema = mongoose.Schema(
         customerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Customer",
-            required: true,
-        },
-        orderType: {
-            type: String,
-            enum: Object.values(ORDER_TYPE),
             required: true,
         },
 

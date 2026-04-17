@@ -86,8 +86,10 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                   </Badge>
                 </div>
                 <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
-                  <p className="text-xs text-muted-foreground">{t('orderType.label')}</p>
-                  <p className="mt-1 text-sm font-semibold capitalize">{order.orderType}</p>
+                  <p className="text-xs text-muted-foreground">{t('items')}</p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {order.items.length} {t('items')}
+                  </p>
                 </div>
                 <div className="rounded-md border border-[--border-default] bg-[--bg-secondary] p-3">
                   <p className="text-xs text-muted-foreground">{t('createdDate')}</p>
@@ -141,7 +143,7 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                         className="rounded-md border border-[--border-default] bg-[--bg-secondary] px-4 py-3"
                       >
                         <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             {typeof item.productId === 'string' ? (
                               <p className="truncate text-sm font-medium">
                                 Product ID: {item.productId}
@@ -157,6 +159,15 @@ export function OrderDetailsDialog({ orderId, open, onOpenChange }: OrderDetails
                               </>
                             )}
                           </div>
+                          {/* ADDED: Per-item itemType badge */}
+                          <Badge
+                            variant={item.itemType === 'on shelf' ? 'default' : 'secondary'}
+                            className="flex-shrink-0 text-[10px]"
+                          >
+                            {item.itemType === 'on shelf'
+                              ? t('itemType.onShelf')
+                              : t('itemType.onDemand')}
+                          </Badge>
                         </div>
 
                         {/* Quantity Section */}

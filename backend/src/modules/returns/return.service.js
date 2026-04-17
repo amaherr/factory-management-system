@@ -7,7 +7,7 @@ const stockMovementRepository = require("../stockMovements/stockMovement.reposit
 
 const { RETURN_STATUS } = require("../../enums/return.enums");
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
-const { ORDER_STATUS } = require("../../enums/order.enums");
+const { ORDER_STATUS, ORDER_TYPE } = require("../../enums/order.enums");
 const { COUNTERS } = require("../../enums/counter.enums");
 
 const response = require("../../utils/responseFactory");
@@ -69,6 +69,7 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
             actualQuantity,
             unitPrice: sold.unitPrice,
             totalPrice,
+            itemType: sold.itemType, // CHANGED: include itemType from original order item
         });
     }
 
@@ -76,7 +77,7 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
 }
 
 const returnService = {
-    // Create return as draft (no stock changes)
+    // Create return as draft and automatically reverse stock for on-shelf items
     createReturn: async (req, res, next) => {
         try {
             const userId = req.user.id;
@@ -84,6 +85,7 @@ const returnService = {
             const returnTime = returnDate ? new Date(returnDate) : new Date();
 
             let newReturn;
+            let stockMovements = [];
             await transactionManager.run(async (tx) => {
                 const session = getMongoSession(tx);
                 // 1) Load & validate order
@@ -112,9 +114,52 @@ const returnService = {
                     },
                     tx,
                 );
+
+                // CHANGED: Auto-reverse stock for on-shelf items immediately upon return creation
+                for (const item of returnItems) {
+                    if (item.itemType === ORDER_TYPE.ON_SHELF) {
+                        // Reverse reserved stock back to theoretical stock
+                        const r = await productRepository.unreserveOrderItem(
+                            {
+                                productId: item.productId,
+                                actualQuantity: item.actualQuantity,
+                            },
+                            tx,
+                        );
+
+                        if (r.modifiedCount !== 1) {
+                            throw createError(
+                                `Cannot reverse stock for product ${item.productId} (reserved mismatch)`,
+                                409,
+                            );
+                        }
+
+                        // Create stock movement record for the reversal
+                        const sm = await stockMovementRepository.createStockMovement(
+                            {
+                                productId: item.productId,
+                                quantityChange: item.actualQuantity,
+                                from: STOCK_MOVEMENT_TYPE.RESERVE,
+                                to: STOCK_MOVEMENT_TYPE.INVENTORY,
+                                createdByUserId: userId,
+                                notes: `Return #${newReturn.returnNumber}: Stock reversed from reserved to inventory`,
+                                returnId: newReturn._id,
+                                isExecuted: true,
+                            },
+                            tx,
+                        );
+                        stockMovements.push(sm);
+                    }
+                    // ON_DEMAND items: no stock reversal (they never had reserved stock)
+                }
             });
 
-            return res.status(201).json(response("Return created successfully", newReturn));
+            return res.status(201).json(
+                response("Return created successfully and stock reversed", {
+                    newReturn,
+                    stockMovements,
+                }),
+            );
         } catch (err) {
             return next(err);
         }
@@ -157,7 +202,7 @@ const returnService = {
         }
     },
 
-    // Update return while still draft (no stock changes)
+    // Update return while still draft (no stock changes - stock was already reversed at creation)
     editReturn: async (req, res, next) => {
         try {
             const returnId = req.params.returnId;
@@ -185,6 +230,7 @@ const returnService = {
                     const orderItemMap = buildOrderItemMap(order);
                     const requestedMap = normalizeRequestedItems(items);
                     updateObject.items = buildReturnItemsSnapshot(requestedMap, orderItemMap);
+                    // NOTE: Stock reversal already happened at creation time, no need to handle here
                 }
 
                 if (note !== undefined) updateObject.note = note;

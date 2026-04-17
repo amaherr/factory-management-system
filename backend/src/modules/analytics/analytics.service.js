@@ -291,13 +291,16 @@ const getSalesDashboard = async (req, res, next) => {
             ]),
 
             // On-shelf vs on-demand split by count and revenue
+            { $unwind: "$items" },
             Order.aggregate([
                 { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
                 {
                     $group: {
-                        _id: "$orderType",
+                        _id: "$items.itemType",
                         count: { $sum: 1 },
-                        revenue: { $sum: "$total" },
+                        revenue: {
+                            $sum: { $multiply: ["$items.quantity", "$items.unitPrice"] },
+                        },
                     },
                 },
             ]),

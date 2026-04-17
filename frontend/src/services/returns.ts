@@ -24,6 +24,7 @@ export interface ReturnItem {
   actualQuantity: number;
   unitPrice: number;
   totalPrice: number;
+  itemType?: 'on shelf' | 'on demand';
 }
 
 export interface ReturnRecord {
