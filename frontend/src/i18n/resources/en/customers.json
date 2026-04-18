@@ -71,6 +71,8 @@
   "returns_tab": "Returns",
   "history_no_orders": "No orders found for this customer",
   "history_no_returns": "No returns found for this customer",
+  "history_orders_search_placeholder": "Search by order number...",
+  "history_returns_search_placeholder": "Search by return #, order #, note, or user...",
   "history_load_failed": "Failed to load customer history",
   "history_invalid_customer": "Invalid customer id"
 }

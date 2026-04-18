@@ -123,6 +123,12 @@
   "generalError": "حدث خطأ ما",
   "lineQuantity": "العدد",
   "actualQuantity": "الوحدات",
+  "ordersPagination": {
+    "showing": "عرض {{from}} إلى {{to}} من أصل {{total}} طلب",
+    "previous": "السابق",
+    "next": "التالي",
+    "page": "الصفحة {{current}} من {{total}}"
+  },
   "returns": {
     "title": "المرتجعات",
     "description": "إنشاء وإدارة مرتجعات المنتجات",

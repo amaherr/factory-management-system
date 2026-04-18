@@ -30,6 +30,35 @@ async function getOrders(data, tx = null) {
     return query;
 }
 
+async function getOrdersPaginated(data, tx = null) {
+    const { filter, page, limit } = data;
+    const session = getMongoSession(tx);
+    const skip = (page - 1) * limit;
+
+    const query = Order.find(filter)
+        .populate("customerId")
+        .populate("items.productId", "name productCode")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    if (session) {
+        query.session(session);
+    }
+
+    return query;
+}
+
+async function countOrders(data, tx = null) {
+    const { filter } = data;
+    const session = getMongoSession(tx);
+    const query = Order.countDocuments(filter);
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
 async function getUserOrders(data, tx = null) {
     const { userId, filter } = data;
     const session = getMongoSession(tx);
@@ -93,6 +122,8 @@ const orderRepository = {
     getOrderById,
     createOrder,
     getOrders,
+    getOrdersPaginated,
+    countOrders,
     getUserOrders,
     getOrderWithDetails,
     updateDraftOrderStatus,

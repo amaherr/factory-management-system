@@ -71,6 +71,8 @@
   "returns_tab": "المرتجعات",
   "history_no_orders": "لا توجد طلبات لهذا العميل",
   "history_no_returns": "لا توجد مرتجعات لهذا العميل",
+  "history_orders_search_placeholder": "ابحث برقم الطلب...",
+  "history_returns_search_placeholder": "ابحث برقم المرتجع أو رقم الطلب أو الملاحظة أو المستخدم...",
   "history_load_failed": "فشل تحميل سجل العميل",
   "history_invalid_customer": "معرف العميل غير صالح"
 }

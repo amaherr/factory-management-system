@@ -34,6 +34,8 @@ const orderDtos = {
             .min(Joi.ref("from")) // ensures to >= from if both exist
             .optional(),
         q: Joi.string().trim().optional(),
+        page: Joi.number().integer().min(1).optional(),
+        limit: Joi.number().integer().min(1).max(100).optional(),
     }),
 
     getOrderQuerySchema: Joi.object({

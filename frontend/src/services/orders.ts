@@ -97,9 +97,21 @@ export interface GetOrdersResponse {
   success: boolean;
   message: string;
   data: {
+    total?: number;
+    page?: number;
+    limit?: number;
+    pages?: number;
     count: number;
     orders: Order[];
   };
+}
+
+export interface PaginatedOrdersData {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  orders: Order[];
 }
 
 export interface GetOrderResponse {
@@ -125,10 +137,31 @@ export const orderService = {
     status?: string;
     query?: string;
     customerId?: string;
+    limit?: number;
   }): Promise<Order[]> {
+    const safeLimit = Math.min(filters?.limit ?? 100, 100);
+
+    const data = await orderService.getOrdersPaginated({
+      status: filters?.status,
+      query: filters?.query,
+      customerId: filters?.customerId,
+      page: 1,
+      limit: safeLimit,
+    });
+
+    return data.orders;
+  },
+
+  async getOrdersPaginated(filters?: {
+    status?: string;
+    query?: string;
+    customerId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedOrdersData> {
     try {
       axios.defaults.withCredentials = true;
-      const params: Record<string, string> = {};
+      const params: Record<string, string | number> = {};
 
       if (filters?.status && filters.status !== 'all') {
         params.status = filters.status;
@@ -143,10 +176,23 @@ export const orderService = {
         }
       }
 
+      if (filters?.page) {
+        params.page = filters.page;
+      }
+
+      if (filters?.limit) {
+        params.limit = filters.limit;
+      }
+
       const response = await axios.get<GetOrdersResponse>(`${API_URL}/orders`, { params });
-      const orders = response.data.data.orders;
-      // Ensure we always return an array
-      return Array.isArray(orders) ? orders : [];
+      const payload = response.data.data;
+      return {
+        total: Number(payload?.total || 0),
+        page: Number(payload?.page || filters?.page || 1),
+        limit: Number(payload?.limit || filters?.limit || 20),
+        pages: Number(payload?.pages || 0),
+        orders: Array.isArray(payload?.orders) ? payload.orders : [],
+      };
     } catch (error: any) {
       console.error('Failed to fetch orders:', error?.response?.data?.message || error.message);
       throw new Error(error?.response?.data?.message || 'Failed to fetch orders');

@@ -160,7 +160,12 @@ const orderService = {
                 from, // date filter
                 to, // date filter
                 q, // search by order number
+                page = 1,
+                limit = 20,
             } = req.query;
+
+            const pageNum = Number(page) || 1;
+            const limitNum = Number(limit) || 20;
 
             // build the filter object (NO orderType filtering)
             const filter = {};
@@ -181,11 +186,25 @@ const orderService = {
                 if (!Number.isNaN(num)) filter.orderNumber = num;
             }
 
-            // get filtered orders with populated fields
-            const orders = await orderRepository.getOrders({ filter });
+            const total = await orderRepository.countOrders({ filter });
+
+            const pages = total === 0 ? 0 : Math.ceil(total / limitNum);
+            const safePage = pages === 0 ? 1 : Math.min(pageNum, pages);
+            const orders = await orderRepository.getOrdersPaginated({
+                filter,
+                page: safePage,
+                limit: limitNum,
+            });
 
             res.status(200).json(
-                response("Orders retrieved successfully", { count: orders.length, orders }),
+                response("Orders retrieved successfully", {
+                    total,
+                    page: safePage,
+                    limit: limitNum,
+                    pages,
+                    count: orders.length,
+                    orders,
+                }),
             );
         } catch (err) {
             return next(err);

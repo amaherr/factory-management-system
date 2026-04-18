@@ -123,6 +123,12 @@
   "generalError": "An error occurred",
   "lineQuantity": "Lines",
   "actualQuantity": "Units",
+  "ordersPagination": {
+    "showing": "Showing {{from}} to {{to}} of {{total}} orders",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{current}} of {{total}}"
+  },
   "returns": {
     "title": "Returns",
     "description": "Create and manage product returns",
