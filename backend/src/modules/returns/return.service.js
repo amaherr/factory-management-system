@@ -15,6 +15,7 @@ const createError = require("../../utils/errorFactory");
 const transactionManager = require("../../database/transactionManager/instance");
 const { getMongoSession } = require("../../database/transactionManager/mongoAdapter");
 const { getNextDocumentNumber } = require("../../utils/helpers");
+const { buildReturnInvoicePdf } = require("../../utils/invoicePdf");
 
 // ------------ Helpers ------------
 
@@ -514,6 +515,28 @@ const returnService = {
                     stockMovements,
                 }),
             );
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // Download return invoice PDF
+    downloadInvoice: async (req, res, next) => {
+        try {
+            const { returnId } = req.params;
+
+            const returnDoc = await returnRepository.getReturnWithDetails(returnId);
+            if (!returnDoc) throw createError("Return not found", 404);
+
+            const order = await orderRepository.getOrderWithDetails(returnDoc.orderId._id);
+            if (!order) throw createError("Order not found", 404);
+
+            const invoiceBuffer = await buildReturnInvoicePdf(returnDoc, order, order.customerId);
+            const fileName = `return-invoice-RET-${returnDoc.returnNumber}.pdf`;
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+            return res.status(200).send(invoiceBuffer);
         } catch (err) {
             return next(err);
         }

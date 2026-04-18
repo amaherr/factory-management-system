@@ -72,7 +72,8 @@
     "finalizing": "Finalizing...",
     "saveDraft": "Save as Draft",
     "savingDraft": "Saving...",
-    "clearCart": "Clear Cart"
+    "clearCart": "Clear Cart",
+    "downloadInvoice": "Download Invoice"
   },
   "toasts": {
     "finalizedSuccess": "Sale finalized successfully (Order #{{orderNumber}})",
@@ -80,6 +81,8 @@
     "orderFinalized": "Order finalized successfully",
     "orderCancelled": "Order cancelled successfully",
     "orderDeleted": "Order #{{orderNumber}} deleted",
+    "invoiceDownloaded": "Invoice downloaded successfully",
+    "invoiceDownloadFailed": "Failed to download invoice",
     "generalError": "An error occurred"
   },
   "errors": {
@@ -151,6 +154,7 @@
     },
     "actions": {
       "viewDetails": "View Details",
+      "downloadInvoice": "Download Invoice",
       "edit": "Edit",
       "changeStatus": "Change Status",
       "delete": "Delete"
@@ -222,6 +226,8 @@
       "finalizedSuccess": "Return finalized successfully",
       "cancelledSuccess": "Return cancelled successfully",
       "deletedSuccess": "Return #{{returnNumber}} deleted",
+      "invoiceDownloaded": "Return invoice downloaded successfully",
+      "invoiceDownloadFailed": "Failed to download return invoice",
       "selectOrder": "Please select an order",
       "selectAtLeastOneItem": "Please enter at least one return quantity",
       "generalError": "An error occurred"

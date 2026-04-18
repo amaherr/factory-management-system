@@ -40,6 +40,13 @@ router.post(
 );
 
 // Edit return (Admin, Sales)
+router.get(
+    "/:returnId/invoice",
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
+    returnService.downloadInvoice,
+);
+
+// Edit return (Admin, Sales)
 router.put(
     "/:returnId",
     authorizor([ROLES.ADMIN, ROLES.SALES]),

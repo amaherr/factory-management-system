@@ -20,6 +20,7 @@ const { getNextDocumentNumber } = require("../../utils/helpers");
 const stockMovementRepository = require("../stockMovements/stockMovement.repository");
 const transactionManager = require("../../database/transactionManager/instance");
 const { getMongoSession } = require("../../database/transactionManager/mongoAdapter");
+const { buildOrderInvoicePdf } = require("../../utils/invoicePdf");
 
 const orderService = {
     // function to create a new order
@@ -589,6 +590,27 @@ const orderService = {
             return res
                 .status(200)
                 .json(response("Order updated successfully", { updatedOrder, stockMovements }));
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // function to download an order invoice PDF
+    downloadInvoice: async (req, res, next) => {
+        try {
+            const { orderId } = req.params;
+
+            const order = await orderRepository.getOrderWithDetails(orderId);
+            if (!order) {
+                return next(createError("Order not found", 404));
+            }
+
+            const invoiceBuffer = await buildOrderInvoicePdf(order);
+            const fileName = `order-invoice-ORD-${order.orderNumber}.pdf`;
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+            return res.status(200).send(invoiceBuffer);
         } catch (err) {
             return next(err);
         }

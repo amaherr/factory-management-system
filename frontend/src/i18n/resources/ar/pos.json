@@ -72,7 +72,8 @@
     "finalizing": "جاري الإنهاء...",
     "saveDraft": "حفظ كمسودة",
     "savingDraft": "جاري الحفظ...",
-    "clearCart": "تفريغ السلة"
+    "clearCart": "تفريغ السلة",
+    "downloadInvoice": "تنزيل الفاتورة"
   },
   "toasts": {
     "finalizedSuccess": "تم إنهاء البيع بنجاح (طلب رقم {{orderNumber}})",
@@ -80,6 +81,8 @@
     "orderFinalized": "تم تنهاء الطلب بنجاح",
     "orderCancelled": "تم إلغاء الطلب بنجاح",
     "orderDeleted": "تم حذف الطلب رقم {{orderNumber}}",
+    "invoiceDownloaded": "تم تنزيل الفاتورة بنجاح",
+    "invoiceDownloadFailed": "فشل تنزيل الفاتورة",
     "generalError": "حدث خطأ ما"
   },
   "errors": {
@@ -151,6 +154,7 @@
     },
     "actions": {
       "viewDetails": "عرض التفاصيل",
+      "downloadInvoice": "تنزيل الفاتورة",
       "edit": "تعديل",
       "changeStatus": "تغيير الحالة",
       "delete": "حذف"
@@ -222,6 +226,8 @@
       "finalizedSuccess": "تم إنهاء المرتجع بنجاح",
       "cancelledSuccess": "تم إلغاء المرتجع بنجاح",
       "deletedSuccess": "تم حذف المرتجع رقم {{returnNumber}}",
+      "invoiceDownloaded": "تم تنزيل فاتورة المرتجع بنجاح",
+      "invoiceDownloadFailed": "فشل تنزيل فاتورة المرتجع",
       "selectOrder": "يرجى اختيار طلب",
       "selectAtLeastOneItem": "يرجى إدخال كمية مرتجع لعنصر واحد على الأقل",
       "generalError": "حدث خطأ ما"

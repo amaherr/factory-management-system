@@ -19,6 +19,17 @@ async function getReturnById(returnId, tx = null) {
     return query;
 }
 
+async function getReturnWithDetails(returnId, tx = null) {
+    const session = getMongoSession(tx);
+    const query = Return.findById(returnId)
+        .populate("orderId userId")
+        .populate("items.productId", "name productCode");
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
 async function updateReturnById(data, tx = null) {
     const { returnId, updateObject } = data;
     const session = getMongoSession(tx);
@@ -147,6 +158,7 @@ async function deleteReturnById(returnId, tx = null) {
 const returnRepository = {
     createReturn,
     getReturnById,
+    getReturnWithDetails,
     updateReturnById,
     getAllReturns,
     getReturnsByProductId,

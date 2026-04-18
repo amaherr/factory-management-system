@@ -11,6 +11,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  FileDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
@@ -124,6 +125,27 @@ export function Returns() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const downloadBlobFile = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadInvoice = async (returnId: string) => {
+    try {
+      const { blob, fileName } = await returnService.downloadInvoice(returnId);
+      downloadBlobFile(blob, fileName);
+      toast.success(t('returns.toasts.invoiceDownloaded'));
+    } catch (error: any) {
+      toast.error(error.message || t('returns.toasts.invoiceDownloadFailed'));
+    }
+  };
+
   const from = total === 0 ? 0 : (currentPage - 1) * limit + 1;
   const to = Math.min(currentPage * limit, total);
 
@@ -233,6 +255,19 @@ export function Returns() {
                     <TableCell>{new Date(item.returnDate).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                          title={t('returns.actions.downloadInvoice')}
+                          onClick={() => handleDownloadInvoice(item._id)}
+                        >
+                          <FileDown className="size-4" />
+                          <span className="ml-1.5 hidden lg:inline">
+                            {t('returns.actions.downloadInvoice')}
+                          </span>
+                        </Button>
+
                         <Button
                           variant="ghost"
                           size="sm"

@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, Eye, Pencil, Trash2, Loader2, X } from 'lucide-react';
+import { Search, Eye, Pencil, Trash2, Loader2, X, FileDown } from 'lucide-react';
 import type { Order } from '../../services/orders';
 import { orderService, CURRENCY } from '../../services/orders';
 import { OrderDetailsDialog } from '../../components/pos/orders/OrderDetailsDialog';
@@ -73,6 +73,27 @@ export function OrdersList() {
 
   const handleRefresh = () => {
     setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const downloadBlobFile = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      const { blob, fileName } = await orderService.downloadInvoice(orderId);
+      downloadBlobFile(blob, fileName);
+      toast.success(t('toasts.invoiceDownloaded'));
+    } catch (error: any) {
+      toast.error(error.message || t('toasts.invoiceDownloadFailed'));
+    }
   };
 
   return (
@@ -196,6 +217,18 @@ export function OrdersList() {
                     <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadInvoice(order._id)}
+                          title={t('actions.downloadInvoice')}
+                          className="border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        >
+                          <FileDown className="size-4" />
+                          <span className="ml-1.5 hidden lg:inline">
+                            {t('actions.downloadInvoice')}
+                          </span>
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

@@ -76,6 +76,18 @@ interface ApiResponse<T> {
   data: T;
 }
 
+function extractFileNameFromDisposition(disposition?: string): string | null {
+  if (!disposition) return null;
+  const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+  const encodedName = match?.[1] || match?.[2];
+  if (!encodedName) return null;
+  try {
+    return decodeURIComponent(encodedName);
+  } catch {
+    return encodedName;
+  }
+}
+
 export interface GetReturnsFilters {
   customerId?: string;
   status?: string;
@@ -183,6 +195,26 @@ export const returnService = {
       await axios.delete(`${API_URL}/returns/${returnId}`);
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Failed to delete return');
+    }
+  },
+
+  async downloadInvoice(returnId: string): Promise<{ blob: Blob; fileName: string }> {
+    try {
+      axios.defaults.withCredentials = true;
+      const response = await axios.get(`${API_URL}/returns/${returnId}/invoice`, {
+        responseType: 'blob',
+      });
+
+      const fileName =
+        extractFileNameFromDisposition(response.headers['content-disposition']) ||
+        `return-invoice-${returnId}.pdf`;
+
+      return {
+        blob: response.data,
+        fileName,
+      };
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.message || 'Failed to download return invoice');
     }
   },
 };

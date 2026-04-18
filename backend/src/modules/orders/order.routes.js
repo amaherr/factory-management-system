@@ -35,6 +35,13 @@ router.get(
 
 // route to get a specific order
 router.get(
+    "/:orderId/invoice",
+    authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
+    orderService.downloadInvoice,
+);
+
+// route to get a specific order
+router.get(
     "/:orderId",
     authorizor([ROLES.ADMIN, ROLES.SALES, ROLES.ACCOUNTING]),
     orderService.getOrder,

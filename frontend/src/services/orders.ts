@@ -108,6 +108,18 @@ export interface GetOrderResponse {
   data: Order;
 }
 
+function extractFileNameFromDisposition(disposition?: string): string | null {
+  if (!disposition) return null;
+  const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+  const encodedName = match?.[1] || match?.[2];
+  if (!encodedName) return null;
+  try {
+    return decodeURIComponent(encodedName);
+  } catch {
+    return encodedName;
+  }
+}
+
 export const orderService = {
   async getOrders(filters?: {
     status?: string;
@@ -180,6 +192,26 @@ export const orderService = {
       return response.data.data.updatedOrder;
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Failed to update order status');
+    }
+  },
+
+  async downloadInvoice(orderId: string): Promise<{ blob: Blob; fileName: string }> {
+    try {
+      axios.defaults.withCredentials = true;
+      const response = await axios.get(`${API_URL}/orders/${orderId}/invoice`, {
+        responseType: 'blob',
+      });
+
+      const fileName =
+        extractFileNameFromDisposition(response.headers['content-disposition']) ||
+        `order-invoice-${orderId}.pdf`;
+
+      return {
+        blob: response.data,
+        fileName,
+      };
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.message || 'Failed to download order invoice');
     }
   },
 };
