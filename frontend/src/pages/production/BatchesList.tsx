@@ -77,8 +77,8 @@ export function BatchesList() {
 
   const fetchProducts = async () => {
     try {
-      const data = await productService.getAllProducts();
-      setProducts(data.map((p) => ({ _id: p._id!, code: p.code, name: p.name })));
+      const data = await productService.getAllProducts({ page: 1, limit: 100 });
+      setProducts(data.products.map((p) => ({ _id: p._id!, code: p.code, name: p.name })));
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }

@@ -15,10 +15,19 @@ const upload = multer({
 });
 
 // Get all active products (Public/Authenticated)
-router.get("/", productService.getAllActiveProducts);
+router.get(
+    "/",
+    validator({ querySchema: productDtos.listProductsQuerySchema }),
+    productService.getAllActiveProducts,
+);
 
 // Get all products (Admin, Planner)
-router.get("/all", authorizor([ROLES.ADMIN, ROLES.PLANNING]), productService.getAllProducts);
+router.get(
+    "/all",
+    validator({ querySchema: productDtos.listProductsQuerySchema }),
+    authorizor([ROLES.ADMIN, ROLES.PLANNING]),
+    productService.getAllProducts,
+);
 
 // Create product (Admin, Planner)
 router.post(
@@ -30,11 +39,16 @@ router.post(
 );
 
 // Get products in stock (Authenticated)
-router.get("/in-stock", productService.getProductsWithStock);
+router.get(
+    "/in-stock",
+    validator({ querySchema: productDtos.listProductsQuerySchema }),
+    productService.getProductsWithStock,
+);
 
 // Get products by location (Admin, Inventory)
 router.get(
     "/location/:location",
+    validator({ querySchema: productDtos.listProductsQuerySchema }),
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     productService.getProductsByLocation,
 );

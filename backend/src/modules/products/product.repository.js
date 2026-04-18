@@ -98,6 +98,27 @@ async function getAllProducts(data = null, tx = null) {
     return query;
 }
 
+async function countProducts(filter = {}, tx = null) {
+    const session = getMongoSession(tx);
+    const query = Product.countDocuments(filter);
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
+async function getProductsPaginated(data, tx = null) {
+    const { filter = {}, page = 1, limit = 20, sort = { createdAt: -1 } } = data;
+    const session = getMongoSession(tx);
+    const skip = (page - 1) * limit;
+
+    const query = Product.find(filter).sort(sort).skip(skip).limit(limit);
+    if (session) {
+        query.session(session);
+    }
+    return query;
+}
+
 async function getAllActiveProducts(data = null, tx = null) {
     const session = getMongoSession(tx);
     const query = Product.find({ status: PRODUCT_STATUS.ACTIVE });
@@ -274,6 +295,8 @@ const productRepository = {
     updateProductById,
     updateProductLocations,
     updateProductInventorySnapshot,
+    countProducts,
+    getProductsPaginated,
     getAllProducts,
     getAllActiveProducts,
     getProductsWithStock,

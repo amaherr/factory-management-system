@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const productRepository = require("./product.repository");
-const { PRODUCT_STATUS, FACTORY_LOCATIONS } = require("../../enums/product.enums");
+const { PRODUCT_STATUS } = require("../../enums/product.enums");
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
@@ -131,6 +131,75 @@ function toInventorySnapshot(product) {
         totalPhysicalStock: Number(product.totalPhysicalStock || 0),
         totalTheoreticalStock: Number(product.totalTheoreticalStock || 0),
     };
+}
+
+function getPaginationParams(query) {
+    const page = Math.max(1, Number.parseInt(query.page, 10) || 1);
+    const limit = Math.max(1, Math.min(100, Number.parseInt(query.limit, 10) || 20));
+    return { page, limit };
+}
+
+function buildProductListFilter(query, defaults = {}) {
+    const filter = { ...defaults };
+
+    if (query.q) {
+        filter.$or = [
+            { name: { $regex: query.q, $options: "i" } },
+            { code: { $regex: query.q, $options: "i" } },
+        ];
+    }
+
+    if (query.color) {
+        filter.color = query.color;
+    }
+
+    if (query.season) {
+        filter.season = query.season;
+    }
+
+    if (query.status && filter.status == null) {
+        filter.status = query.status;
+    }
+
+    if (query.inStock === true && filter.totalPhysicalStock == null) {
+        filter.totalPhysicalStock = { $gt: 0 };
+    }
+
+    if (query.location && filter.locations == null) {
+        filter.locations = {
+            $elemMatch: {
+                location: query.location,
+                quantityInStock: { $gt: 0 },
+            },
+        };
+    }
+
+    return filter;
+}
+
+async function listProductsWithPagination({ req, res, message, defaults = {} }) {
+    const { page, limit } = getPaginationParams(req.query);
+    const filter = buildProductListFilter(req.query, defaults);
+
+    const [total, products] = await Promise.all([
+        productRepository.countProducts(filter),
+        productRepository.getProductsPaginated({
+            filter,
+            page,
+            limit,
+            sort: { createdAt: -1 },
+        }),
+    ]);
+
+    return res.status(200).json(
+        response(message, {
+            total,
+            page,
+            limit,
+            pages: Math.max(1, Math.ceil(total / limit)),
+            products,
+        }),
+    );
 }
 
 // ------------ Services ------------
@@ -318,8 +387,11 @@ const productService = {
 
     getAllProducts: async (req, res, next) => {
         try {
-            const products = await productRepository.getAllProducts();
-            res.status(200).json(response("Products retrieved successfully", products));
+            return await listProductsWithPagination({
+                req,
+                res,
+                message: "Products retrieved successfully",
+            });
         } catch (err) {
             return next(err);
         }
@@ -327,8 +399,12 @@ const productService = {
 
     getAllActiveProducts: async (req, res, next) => {
         try {
-            const products = await productRepository.getAllActiveProducts();
-            res.status(200).json(response("Active products retrieved successfully", products));
+            return await listProductsWithPagination({
+                req,
+                res,
+                message: "Active products retrieved successfully",
+                defaults: { status: PRODUCT_STATUS.ACTIVE },
+            });
         } catch (err) {
             return next(err);
         }
@@ -354,8 +430,12 @@ const productService = {
     // Get all products that have stock (physical stock > 0)
     getProductsWithStock: async (req, res, next) => {
         try {
-            const products = await productRepository.getProductsWithStock();
-            res.status(200).json(response("Products with stock retrieved successfully", products));
+            return await listProductsWithPagination({
+                req,
+                res,
+                message: "Products with stock retrieved successfully",
+                defaults: { totalPhysicalStock: { $gt: 0 } },
+            });
         } catch (err) {
             return next(err);
         }
@@ -366,16 +446,23 @@ const productService = {
         try {
             const { location } = req.params;
 
-            // Validate location
-            if (!Object.values(FACTORY_LOCATIONS).includes(location)) {
+            if (!location || typeof location !== "string" || !location.trim()) {
                 return next(createError("Invalid location", 400));
             }
 
-            const products = await productRepository.getProductsByLocation(location);
-
-            res.status(200).json(
-                response("Products for location retrieved successfully", products),
-            );
+            return await listProductsWithPagination({
+                req,
+                res,
+                message: "Products for location retrieved successfully",
+                defaults: {
+                    locations: {
+                        $elemMatch: {
+                            location: location.trim(),
+                            quantityInStock: { $gt: 0 },
+                        },
+                    },
+                },
+            });
         } catch (err) {
             return next(err);
         }

@@ -46,8 +46,8 @@ export function StockOverview() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      const data = await productService.getAllProducts();
-      setProducts(data);
+      const data = await productService.getAllProducts({ page: 1, limit: 100 });
+      setProducts(data.products);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('errors.loadFailed'));
     } finally {

@@ -83,9 +83,9 @@ export function WarehouseManagementPage() {
       setProductsLoading(true);
 
       try {
-        const data = await productService.getProductsWithStock();
+        const data = await productService.getProductsWithStock({ page: 1, limit: 100 });
         if (!ignore) {
-          setProducts(data);
+          setProducts(data.products);
         }
       } catch (error) {
         if (!ignore) {
@@ -140,8 +140,8 @@ export function WarehouseManagementPage() {
     setProductsLoading(true);
 
     try {
-      const data = await productService.getProductsWithStock();
-      setProducts(data);
+      const data = await productService.getProductsWithStock({ page: 1, limit: 100 });
+      setProducts(data.products);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('errors.productsLoadFailed'));
     } finally {

@@ -20,7 +20,17 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Plus, Search, Eye, Pencil, Trash2, X } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Eye,
+  Pencil,
+  Trash2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+} from 'lucide-react';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { getProductImageSrc } from '../../utils/imageUpload';
 import { AddProductDialog } from '../../components/inventory/products/AddProductDialog';
@@ -28,7 +38,7 @@ import { EditProductDialog } from '../../components/inventory/products/EditProdu
 import { DeleteProductDialog } from '../../components/inventory/products/DeleteProductDialog';
 import { ProductDetailsDialog } from '../../components/inventory/products/ProductDetailsDialog';
 import { productService } from '../../services/products';
-import type { Product } from '../../services/products';
+import type { Product, Color, Season, ProductStatus } from '../../services/products';
 import { COLORS_VALUES, SEASONS_VALUES, PRODUCT_STATUS } from '../../services/enums/product.enums';
 import { useAuth } from '../../contexts/AuthContext';
 import { ROLES } from '../../services/enums/user.enums';
@@ -38,11 +48,16 @@ export function ProductsList() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [colorFilter, setColorFilter] = useState('all');
-  const [seasonFilter, setSeasonFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [colorFilter, setColorFilter] = useState<'all' | Color>('all');
+  const [seasonFilter, setSeasonFilter] = useState<'all' | Season>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | ProductStatus>('all');
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -52,8 +67,16 @@ export function ProductsList() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page, colorFilter, seasonFilter, statusFilter, debouncedSearch]);
 
   const fetchProducts = async () => {
     try {
@@ -61,26 +84,35 @@ export function ProductsList() {
       // Check if user has admin/planner role to fetch all or just active
       const isAdmin = user?.roles?.includes(ROLES.ADMIN) || user?.roles?.includes(ROLES.PLANNING);
       const data = isAdmin
-        ? await productService.getAllProducts()
-        : await productService.getAllActiveProducts();
-      setProducts(data);
+        ? await productService.getAllProducts({
+            q: debouncedSearch || undefined,
+            color: colorFilter === 'all' ? undefined : colorFilter,
+            season: seasonFilter === 'all' ? undefined : seasonFilter,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            page,
+            limit,
+          })
+        : await productService.getAllActiveProducts({
+            q: debouncedSearch || undefined,
+            color: colorFilter === 'all' ? undefined : colorFilter,
+            season: seasonFilter === 'all' ? undefined : seasonFilter,
+            page,
+            limit,
+          });
+
+      setProducts(data.products);
+      setTotal(data.total);
+      setPages(Math.max(1, data.pages));
+
+      if (data.pages > 0 && page > data.pages) {
+        setPage(data.pages);
+      }
     } catch (error) {
       toast.error(t('fetch_error'));
     } finally {
       setLoading(false);
     }
   };
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.code.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || product.status === statusFilter;
-    const matchesColor = colorFilter === 'all' || product.color === colorFilter;
-    const matchesSeason = seasonFilter === 'all' || product.season === seasonFilter;
-
-    return matchesSearch && matchesStatus && matchesColor && matchesSeason;
-  });
 
   const canEdit = user?.roles?.includes(ROLES.ADMIN) || user?.roles?.includes(ROLES.PLANNING);
 
@@ -100,7 +132,8 @@ export function ProductsList() {
   };
 
   const handleProductAdded = (product: Product) => {
-    setProducts([...products, product]);
+    setPage(1);
+    setProducts((prev) => [product, ...prev]);
   };
 
   const handleProductUpdated = (product: Product) => {
@@ -108,10 +141,11 @@ export function ProductsList() {
   };
 
   const handleProductDeleted = () => {
-    if (selectedProduct) {
-      setProducts(products.filter((p) => p._id !== selectedProduct._id));
-    }
+    fetchProducts();
   };
+
+  const from = total === 0 ? 0 : (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
 
   return (
     <div className="p-6 space-y-6">
@@ -139,7 +173,10 @@ export function ProductsList() {
                 placeholder={t('search_products')}
                 className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
               />
               {searchQuery && (
                 <Button
@@ -147,7 +184,10 @@ export function ProductsList() {
                   variant="ghost"
                   size="sm"
                   className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPage(1);
+                  }}
                   title={t('clear_search')}
                 >
                   <X className="size-4" />
@@ -156,7 +196,10 @@ export function ProductsList() {
             </div>
             <Select
               value={colorFilter}
-              onValueChange={setColorFilter}
+              onValueChange={(value) => {
+                setColorFilter(value as 'all' | Color);
+                setPage(1);
+              }}
             >
               <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('color')} />
@@ -175,7 +218,10 @@ export function ProductsList() {
             </Select>
             <Select
               value={seasonFilter}
-              onValueChange={setSeasonFilter}
+              onValueChange={(value) => {
+                setSeasonFilter(value as 'all' | Season);
+                setPage(1);
+              }}
             >
               <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('season')} />
@@ -194,7 +240,10 @@ export function ProductsList() {
             </Select>
             <Select
               value={statusFilter}
-              onValueChange={setStatusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value as 'all' | ProductStatus);
+                setPage(1);
+              }}
             >
               <SelectTrigger className="h-9 rounded-md">
                 <SelectValue placeholder={t('status')} />
@@ -235,12 +284,13 @@ export function ProductsList() {
                     colSpan={10}
                     className="text-center py-12"
                   >
-                    <div className="text-gray-500">
+                    <div className="text-gray-500 flex items-center justify-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
                       <p className="font-medium">{t('loading')}</p>
                     </div>
                   </TableCell>
                 </TableRow>
-              ) : filteredProducts.length === 0 ? (
+              ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={10}
@@ -253,7 +303,7 @@ export function ProductsList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProducts.map((product) => (
+                products.map((product) => (
                   <TableRow key={product._id}>
                     <TableCell>
                       <ImageWithFallback
@@ -342,6 +392,44 @@ export function ProductsList() {
               )}
             </TableBody>
           </Table>
+
+          {!loading && total > 0 && (
+            <div className="border-t p-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {t('pagination_showing', {
+                  from,
+                  to,
+                  total,
+                })}
+              </div>
+              <div className="flex gap-2 items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={loading || page === 1}
+                >
+                  <ChevronLeft className="size-4 mr-1" />
+                  {t('pagination_previous')}
+                </Button>
+                <span className="text-sm px-2">
+                  {t('pagination_page', {
+                    current: page,
+                    total: pages,
+                  })}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((prev) => Math.min(pages, prev + 1))}
+                  disabled={loading || page === pages}
+                >
+                  {t('pagination_next')}
+                  <ChevronRight className="size-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

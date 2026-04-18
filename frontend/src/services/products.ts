@@ -64,13 +64,47 @@ interface ChangeProductActivationPayload {
   status: ProductStatus;
 }
 
+interface ProductListParams {
+  q?: string;
+  color?: Color;
+  season?: Season;
+  status?: ProductStatus;
+  inStock?: boolean;
+  location?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface ProductListResponse {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  products: Product[];
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+function sanitizeListParams(params: ProductListParams = {}): ProductListParams {
+  const sanitized = { ...params };
+
+  if (typeof sanitized.limit === 'number') {
+    sanitized.limit = Math.max(1, Math.min(100, sanitized.limit));
+  }
+
+  if (typeof sanitized.page === 'number') {
+    sanitized.page = Math.max(1, sanitized.page);
+  }
+
+  return sanitized;
+}
+
 export const productService = {
-  getAllActiveProducts: async (): Promise<Product[]> => {
+  getAllActiveProducts: async (params: ProductListParams = {}): Promise<ProductListResponse> => {
     try {
       const { data } = await axios.get(`${API_BASE}/products`, {
         withCredentials: true,
+        params: sanitizeListParams(params),
       });
       return data.data;
     } catch (error) {
@@ -78,10 +112,11 @@ export const productService = {
     }
   },
 
-  getAllProducts: async (): Promise<Product[]> => {
+  getAllProducts: async (params: ProductListParams = {}): Promise<ProductListResponse> => {
     try {
       const { data } = await axios.get(`${API_BASE}/products/all`, {
         withCredentials: true,
+        params: sanitizeListParams(params),
       });
       return data.data;
     } catch (error) {
@@ -148,10 +183,11 @@ export const productService = {
   },
 
   // Stock Management
-  getProductsWithStock: async (): Promise<Product[]> => {
+  getProductsWithStock: async (params: ProductListParams = {}): Promise<ProductListResponse> => {
     try {
       const { data } = await axios.get(`${API_BASE}/products/in-stock`, {
         withCredentials: true,
+        params: sanitizeListParams(params),
       });
       return data.data;
     } catch (error) {
@@ -159,10 +195,14 @@ export const productService = {
     }
   },
 
-  getProductsByLocation: async (location: FactoryLocation): Promise<Product[]> => {
+  getProductsByLocation: async (
+    location: string,
+    params: ProductListParams = {},
+  ): Promise<ProductListResponse> => {
     try {
       const { data } = await axios.get(`${API_BASE}/products/location/${location}`, {
         withCredentials: true,
+        params: sanitizeListParams(params),
       });
       return data.data;
     } catch (error) {

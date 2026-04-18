@@ -3,6 +3,23 @@ const Joi = require("joi");
 const { COLORS, PRODUCT_STATUS, SEASONS } = require("../../enums/product.enums");
 
 const productDtos = {
+    listProductsQuerySchema: Joi.object({
+        q: Joi.string().trim().optional(),
+        color: Joi.string()
+            .valid(...Object.values(COLORS))
+            .optional(),
+        season: Joi.string()
+            .valid(...Object.values(SEASONS))
+            .optional(),
+        status: Joi.string()
+            .valid(...Object.values(PRODUCT_STATUS))
+            .optional(),
+        inStock: Joi.boolean().optional(),
+        location: Joi.string().trim().min(1).optional(),
+        page: Joi.number().integer().min(1).optional(),
+        limit: Joi.number().integer().min(1).max(100).optional(),
+    }).unknown(false),
+
     createProductSchema: Joi.object({
         code: Joi.string().trim().min(1).max(50).required(),
         name: Joi.string().trim().min(1).max(200).required(),
