@@ -105,6 +105,37 @@ async function getFinalizedReturnedByOrderExcludingReturn(data, tx = null) {
     return query;
 }
 
+async function getReturnedByOrderExcludingReturn(data, tx = null) {
+    const { orderId, returnId, statuses = [RETURN_STATUS.DRAFT, RETURN_STATUS.FINALIZED] } = data;
+    const session = getMongoSession(tx);
+
+    const match = {
+        orderId: new mongoose.Types.ObjectId(orderId),
+        status: { $in: statuses },
+    };
+
+    if (returnId) {
+        match._id = { $ne: new mongoose.Types.ObjectId(returnId) };
+    }
+
+    const query = Return.aggregate([
+        { $match: match },
+        { $unwind: "$items" },
+        {
+            $group: {
+                _id: "$items.productId",
+                returnedQty: { $sum: "$items.lineQuantity" },
+            },
+        },
+    ]);
+
+    if (session) {
+        query.session(session);
+    }
+
+    return query;
+}
+
 async function deleteReturnById(returnId, tx = null) {
     const session = getMongoSession(tx);
     if (session) {
@@ -122,6 +153,7 @@ const returnRepository = {
     getReturnsByOrderId,
     getReturnsByOrderIds,
     getFinalizedReturnedByOrderExcludingReturn,
+    getReturnedByOrderExcludingReturn,
     deleteReturnById,
 };
 

@@ -76,6 +76,41 @@ function buildReturnItemsSnapshot(requestedMap, orderItemMap) {
     return snapshot;
 }
 
+async function validateRequestedItemsWithinSoldLimits(data, tx) {
+    const { orderId, returnId = null, requestedMap, orderItemMap } = data;
+
+    const returnedAgg = await returnRepository.getReturnedByOrderExcludingReturn(
+        {
+            orderId,
+            returnId,
+            statuses: [RETURN_STATUS.DRAFT, RETURN_STATUS.FINALIZED],
+        },
+        tx,
+    );
+
+    const alreadyReturnedMap = new Map(
+        returnedAgg.map((r) => [String(r._id), Number(r.returnedQty)]),
+    );
+
+    for (const [pid, qty] of requestedMap) {
+        const sold = orderItemMap.get(pid);
+        if (!sold) {
+            throw createError(`Product ${pid} was not sold in this order`, 409);
+        }
+
+        const soldQty = Number(sold.lineQuantity);
+        const alreadyReturned = alreadyReturnedMap.get(pid) || 0;
+        const remaining = soldQty - alreadyReturned;
+
+        if (qty > remaining) {
+            throw createError(
+                `Cannot set return qty ${qty} for product ${pid}. Remaining returnable quantity: ${Math.max(remaining, 0)}`,
+                409,
+            );
+        }
+    }
+}
+
 const returnService = {
     // Create return as draft (no stock changes at draft stage)
     createReturn: async (req, res, next) => {
@@ -97,6 +132,16 @@ const returnService = {
                 // 2) Build return items snapshot from order at creation time
                 const orderItemMap = buildOrderItemMap(order);
                 const requestedMap = normalizeRequestedItems(items);
+
+                await validateRequestedItemsWithinSoldLimits(
+                    {
+                        orderId,
+                        requestedMap,
+                        orderItemMap,
+                    },
+                    tx,
+                );
+
                 const returnItems = buildReturnItemsSnapshot(requestedMap, orderItemMap);
 
                 // 3) Get next return number and create return doc
@@ -280,6 +325,17 @@ const returnService = {
 
                     const orderItemMap = buildOrderItemMap(order);
                     const requestedMap = normalizeRequestedItems(items);
+
+                    await validateRequestedItemsWithinSoldLimits(
+                        {
+                            orderId: existingReturn.orderId,
+                            returnId,
+                            requestedMap,
+                            orderItemMap,
+                        },
+                        tx,
+                    );
+
                     updateObject.items = buildReturnItemsSnapshot(requestedMap, orderItemMap);
                 }
 
