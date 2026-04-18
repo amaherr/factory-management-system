@@ -16,11 +16,11 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, PackagePlus, Settings2, RefreshCw, Eye, X, MapPinned } from 'lucide-react';
+import { Search, PackagePlus, Settings2, RefreshCw, Eye, X } from 'lucide-react';
 import { AdjustStockDialog } from '../../components/inventory/stock/AdjustStockDialog';
 import { SetStockDialog } from '../../components/inventory/stock/SetStockDialog';
 import { ProductStockDetailsDialog } from '../../components/inventory/stock/ProductStockDetailsDialog';
-import { LocationStockOverviewDialog } from '../../components/inventory/stock/LocationStockOverviewDialog';
+import { LocationManagementSection } from '../../components/inventory/stock/LocationManagementSection';
 import { toast } from 'sonner';
 import { getProductImageSrc } from '../../utils/imageUpload';
 
@@ -35,7 +35,6 @@ export function StockOverview() {
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [setStockDialogOpen, setSetStockDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [locationOverviewOpen, setLocationOverviewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const LOW_STOCK_THRESHOLD = 50;
@@ -88,20 +87,9 @@ export function StockOverview() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">{t('title')}</h1>
-          <p className="text-gray-500">{t('description')}</p>
-        </div>
-        <Button
-          variant="default"
-          size="sm"
-          className="h-11 rounded-md bg-[#1f4f86] px-5 text-white shadow-sm hover:bg-[#1b4678]"
-          onClick={() => setLocationOverviewOpen(true)}
-        >
-          <MapPinned className="mr-2 size-4" />
-          {t('actions.locationStock')}
-        </Button>
+      <div>
+        <h1 className="text-3xl font-semibold">{t('title')}</h1>
+        <p className="text-gray-500">{t('description')}</p>
       </div>
 
       <Card>
@@ -154,6 +142,8 @@ export function StockOverview() {
           </div>
         </CardContent>
       </Card>
+
+      <LocationManagementSection />
 
       {isLoading ? (
         <Card>
@@ -285,11 +275,6 @@ export function StockOverview() {
         open={setStockDialogOpen}
         onClose={() => setSetStockDialogOpen(false)}
         onSuccess={handleDialogSuccess}
-      />
-      <LocationStockOverviewDialog
-        open={locationOverviewOpen}
-        onOpenChange={setLocationOverviewOpen}
-        products={products}
       />
     </div>
   );

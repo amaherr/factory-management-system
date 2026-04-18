@@ -3,14 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MapPin } from 'lucide-react';
 import {
-  FACTORY_LOCATIONS_VALUES,
-  type FactoryLocation,
-} from '../../../services/enums/product.enums';
-import {
   stockMovementService,
   type StockMovement,
   type WarehouseAction,
 } from '../../../services/stockMovements';
+import { locationService, type Location } from '../../../services/locations';
 import {
   Dialog,
   DialogContent,
@@ -49,9 +46,11 @@ export function ExecuteStockMovementDialog({
   onSuccess,
 }: ExecuteStockMovementDialogProps) {
   const { t } = useTranslation('warehouse');
-  const { t: tStock } = useTranslation('stock');
-  const [sourceLocation, setSourceLocation] = useState<FactoryLocation | ''>('');
-  const [destinationLocation, setDestinationLocation] = useState<FactoryLocation | ''>('');
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [sourceLocation, setSourceLocation] = useState<string>('');
+  const [sourceSection, setSourceSection] = useState<string>('');
+  const [destinationLocation, setDestinationLocation] = useState<string>('');
+  const [destinationSection, setDestinationSection] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const warehouseAction = movement?.warehouseAction;
@@ -63,14 +62,40 @@ export function ExecuteStockMovementDialog({
       return;
     }
 
-    setSourceLocation((movement.sourceLocation as FactoryLocation | null) ?? '');
-    setDestinationLocation((movement.destinationLocation as FactoryLocation | null) ?? '');
+    setSourceLocation(movement.sourceLocation ?? '');
+    setSourceSection(movement.sourceSection ?? '');
+    setDestinationLocation(movement.destinationLocation ?? '');
+    setDestinationSection(movement.destinationSection ?? '');
   }, [open, movement]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const loadLocations = async () => {
+      try {
+        const data = await locationService.getLocations();
+        setLocations(data);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t('errors.productsLoadFailed'));
+      }
+    };
+
+    loadLocations();
+  }, [open, t]);
+
+  const sourceSections =
+    locations.find((loc) => loc.name === sourceLocation || loc._id === sourceLocation)?.sections ||
+    [];
+  const destinationSections =
+    locations.find((loc) => loc.name === destinationLocation || loc._id === destinationLocation)
+      ?.sections || [];
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSourceLocation('');
+      setSourceSection('');
       setDestinationLocation('');
+      setDestinationSection('');
       setIsSubmitting(false);
     }
 
@@ -89,22 +114,24 @@ export function ExecuteStockMovementDialog({
 
     try {
       if (warehouseAction === 'pick') {
-        if (!sourceLocation) {
-          toast.error(t('execute.errors.fillSourceLocation'));
+        if (!sourceLocation || !sourceSection) {
+          toast.error(t('execute.errors.fillSourceSection'));
           return;
         }
 
         await stockMovementService.executePickStockMovement(movement._id, {
           sourceLocation,
+          sourceSection,
         });
       } else if (warehouseAction === 'receive') {
-        if (!destinationLocation) {
-          toast.error(t('execute.errors.fillDestinationLocation'));
+        if (!destinationLocation || !destinationSection) {
+          toast.error(t('execute.errors.fillDestinationSection'));
           return;
         }
 
         await stockMovementService.executeReceiveStockMovement(movement._id, {
           destinationLocation,
+          destinationSection,
         });
       } else {
         toast.error(t('execute.errors.unsupportedAction'));
@@ -149,64 +176,122 @@ export function ExecuteStockMovementDialog({
                   <p className="text-xs text-muted-foreground">{movement.productId?.code || '-'}</p>
                 </div>
                 <Badge variant={getWarehouseActionVariant(movement.warehouseAction)}>
-                  {movement.warehouseAction
-                    ? tStock(`movements.warehouseActions.${movement.warehouseAction}`)
-                    : t('execute.notSet')}
+                  {movement.warehouseAction || t('execute.notSet')}
                 </Badge>
               </div>
               {requiresSource && (
-                <div className="space-y-2">
-                  <Label htmlFor="execute-source-location">{t('execute.sourceLocation')}</Label>
-                  <Select
-                    value={sourceLocation}
-                    onValueChange={(value) => setSourceLocation(value as FactoryLocation)}
-                  >
-                    <SelectTrigger
-                      id="execute-source-location"
-                      className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="execute-source-location">{t('execute.sourceLocation')}</Label>
+                    <Select
+                      value={sourceLocation}
+                      onValueChange={(value) => {
+                        setSourceLocation(value);
+                        setSourceSection('');
+                      }}
                     >
-                      <SelectValue placeholder={t('execute.selectLocation')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FACTORY_LOCATIONS_VALUES.map((location) => (
-                        <SelectItem
-                          key={location}
-                          value={location}
-                        >
-                          {tStock(`locations.${location}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger
+                        id="execute-source-location"
+                        className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                      >
+                        <SelectValue placeholder={t('execute.selectLocation')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem
+                            key={location._id}
+                            value={location.name}
+                          >
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="execute-source-section">{t('execute.sourceSection')}</Label>
+                    <Select
+                      value={sourceSection}
+                      onValueChange={setSourceSection}
+                    >
+                      <SelectTrigger
+                        id="execute-source-section"
+                        className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                      >
+                        <SelectValue placeholder={t('execute.selectSection')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sourceSections.map((section) => (
+                          <SelectItem
+                            key={section._id}
+                            value={section.name}
+                          >
+                            {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
 
               {requiresDestination && (
-                <div className="space-y-2">
-                  <Label htmlFor="execute-destination-location">
-                    {t('execute.destinationLocation')}
-                  </Label>
-                  <Select
-                    value={destinationLocation}
-                    onValueChange={(value) => setDestinationLocation(value as FactoryLocation)}
-                  >
-                    <SelectTrigger
-                      id="execute-destination-location"
-                      className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="execute-destination-location">
+                      {t('execute.destinationLocation')}
+                    </Label>
+                    <Select
+                      value={destinationLocation}
+                      onValueChange={(value) => {
+                        setDestinationLocation(value);
+                        setDestinationSection('');
+                      }}
                     >
-                      <SelectValue placeholder={t('execute.selectLocation')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FACTORY_LOCATIONS_VALUES.map((location) => (
-                        <SelectItem
-                          key={location}
-                          value={location}
-                        >
-                          {tStock(`locations.${location}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger
+                        id="execute-destination-location"
+                        className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                      >
+                        <SelectValue placeholder={t('execute.selectLocation')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem
+                            key={location._id}
+                            value={location.name}
+                          >
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="execute-destination-section">
+                      {t('execute.destinationSection')}
+                    </Label>
+                    <Select
+                      value={destinationSection}
+                      onValueChange={setDestinationSection}
+                    >
+                      <SelectTrigger
+                        id="execute-destination-section"
+                        className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                      >
+                        <SelectValue placeholder={t('execute.selectSection')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {destinationSections.map((section) => (
+                          <SelectItem
+                            key={section._id}
+                            value={section.name}
+                          >
+                            {section.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
             </div>
@@ -220,9 +305,10 @@ export function ExecuteStockMovementDialog({
                 <div className="rounded-md bg-muted/40 p-3">
                   <p className="text-xs text-muted-foreground">{t('execute.sourceLocation')}</p>
                   <p className="text-sm font-medium">
-                    {movement.sourceLocation
-                      ? tStock(`locations.${movement.sourceLocation}`)
-                      : t('execute.notSet')}
+                    {movement.sourceLocation || t('execute.notSet')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('execute.sourceSection')}: {movement.sourceSection || t('execute.notSet')}
                   </p>
                 </div>
                 <div className="rounded-md bg-muted/40 p-3">
@@ -230,9 +316,11 @@ export function ExecuteStockMovementDialog({
                     {t('execute.destinationLocation')}
                   </p>
                   <p className="text-sm font-medium">
-                    {movement.destinationLocation
-                      ? tStock(`locations.${movement.destinationLocation}`)
-                      : t('execute.notSet')}
+                    {movement.destinationLocation || t('execute.notSet')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('execute.destinationSection')}:{' '}
+                    {movement.destinationSection || t('execute.notSet')}
                   </p>
                 </div>
               </div>

@@ -45,7 +45,9 @@ async function createStockMovement(data, tx = null) {
         warehouseAction,
         isExecuted,
         sourceLocation,
+        sourceSection,
         destinationLocation,
+        destinationSection,
         physicalExecutedAt,
         physicalExecutedByUserId,
     } = data;
@@ -65,7 +67,9 @@ async function createStockMovement(data, tx = null) {
     if (batchId != null) doc.batchId = batchId;
     if (warehouseAction != null) doc.warehouseAction = warehouseAction;
     if (sourceLocation != null) doc.sourceLocation = sourceLocation;
+    if (sourceSection != null) doc.sourceSection = sourceSection;
     if (destinationLocation != null) doc.destinationLocation = destinationLocation;
+    if (destinationSection != null) doc.destinationSection = destinationSection;
     if (physicalExecutedAt != null) doc.physicalExecutedAt = physicalExecutedAt;
     if (physicalExecutedByUserId != null) doc.physicalExecutedByUserId = physicalExecutedByUserId;
 

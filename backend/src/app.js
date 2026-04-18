@@ -19,6 +19,7 @@ const orderRoutes = require("./modules/orders/order.routes");
 const returnRoutes = require("./modules/returns/return.routes");
 const batchRoutes = require("./modules/batches/batch.routes");
 const stockMovementRoutes = require("./modules/stockMovements/stockMovement.routes");
+const locationRoutes = require("./modules/locations/location.routes");
 const exportRoutes = require("./modules/exports/export.routes");
 const analyticsRoutes = require("./modules/analytics/analytics.routes");
 
@@ -72,6 +73,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/returns", returnRoutes);
 app.use("/api/batches", batchRoutes);
 app.use("/api/stock-movements", stockMovementRoutes);
+app.use("/api/locations", locationRoutes);
 app.use("/api/exports", exportRoutes);
 app.use("/api/analytics", analyticsRoutes);
 

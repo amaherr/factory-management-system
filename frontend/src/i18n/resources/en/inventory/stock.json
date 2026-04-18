@@ -42,6 +42,40 @@
     "perProductTitle": "Per Product Distribution",
     "noProductsInLocation": "No products currently in this location"
   },
+  "locationManagement": {
+    "title": "Location Management",
+    "addLocation": "Add Location",
+    "addSection": "Add Section",
+    "rename": "Rename",
+    "delete": "Delete",
+    "newLocationPlaceholder": "Enter new location name",
+    "newSectionPlaceholder": "Enter new section name",
+    "noLocations": "No locations configured yet",
+    "noSections": "No sections in this location yet",
+    "table": {
+      "location": "Location",
+      "productsCount": "Products",
+      "totalStock": "Total Stock"
+    },
+    "prompts": {
+      "renameLocation": "Enter new location name",
+      "renameSection": "Enter new section name"
+    },
+    "toasts": {
+      "locationCreated": "Location created successfully",
+      "locationUpdated": "Location updated successfully",
+      "locationDeleted": "Location deleted successfully",
+      "sectionCreated": "Section created successfully",
+      "sectionUpdated": "Section updated successfully",
+      "sectionDeleted": "Section deleted successfully"
+    },
+    "errors": {
+      "loadFailed": "Failed to load location overview",
+      "locationNameRequired": "Location name is required",
+      "sectionNameRequired": "Section name is required",
+      "general": "Operation failed"
+    }
+  },
   "productDetails": {
     "title": "Product Stock Details",
     "productInfo": "Product Information",

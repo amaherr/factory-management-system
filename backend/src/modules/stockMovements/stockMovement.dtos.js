@@ -1,7 +1,6 @@
 const Joi = require("joi");
 
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
-const { FACTORY_LOCATIONS } = require("../../enums/product.enums");
 
 const objectId = Joi.string().hex().length(24);
 
@@ -34,15 +33,13 @@ const stockMovementDtos = {
     }).unknown(false),
 
     executePickStockMovement: Joi.object({
-        sourceLocation: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
-            .required(),
+        sourceLocation: Joi.string().trim().min(1).required(),
+        sourceSection: Joi.string().trim().min(1).required(),
     }).unknown(false),
 
     executeReceiveStockMovement: Joi.object({
-        destinationLocation: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
-            .required(),
+        destinationLocation: Joi.string().trim().min(1).required(),
+        destinationSection: Joi.string().trim().min(1).required(),
     }).unknown(false),
 };
 

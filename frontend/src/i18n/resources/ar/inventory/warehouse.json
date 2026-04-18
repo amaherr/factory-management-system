@@ -49,8 +49,11 @@
     "title": "تنفيذ حركة المخزون",
     "description": "أكد إجراء المستودع الفعلي للمنتج {{productName}} ({{productCode}}).",
     "sourceLocation": "الموقع المصدر",
+    "sourceSection": "القسم المصدر",
     "destinationLocation": "موقع الوجهة",
+    "destinationSection": "قسم الوجهة",
     "selectLocation": "اختر الموقع",
+    "selectSection": "اختر القسم",
     "currentLocations": "المواقع المسجلة",
     "notSet": "غير محدد",
     "cancel": "إلغاء",
@@ -60,7 +63,9 @@
     "errors": {
       "fillAllFields": "يرجى اختيار موقع المصدر والوجهة.",
       "fillSourceLocation": "يرجى اختيار الموقع المصدر.",
+      "fillSourceSection": "يرجى اختيار الموقع المصدر والقسم.",
       "fillDestinationLocation": "يرجى اختيار موقع الوجهة.",
+      "fillDestinationSection": "يرجى اختيار موقع الوجهة والقسم.",
       "sameLocation": "يجب أن يكون موقع المصدر والوجهة مختلفين.",
       "unsupportedAction": "يمكن تنفيذ إجراءات السحب والاستلام فقط من هذا الجدول.",
       "failed": "فشل تنفيذ حركة المخزون."

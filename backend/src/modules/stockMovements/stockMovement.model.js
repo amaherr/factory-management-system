@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
-const { FACTORY_LOCATIONS } = require("../../enums/product.enums");
 
 const stockMovementSchema = new mongoose.Schema(
     {
@@ -63,12 +62,22 @@ const stockMovementSchema = new mongoose.Schema(
         },
         sourceLocation: {
             type: String,
-            enum: Object.values(FACTORY_LOCATIONS),
+            trim: true,
+            default: null,
+        },
+        sourceSection: {
+            type: String,
+            trim: true,
             default: null,
         },
         destinationLocation: {
             type: String,
-            enum: Object.values(FACTORY_LOCATIONS),
+            trim: true,
+            default: null,
+        },
+        destinationSection: {
+            type: String,
+            trim: true,
             default: null,
         },
 

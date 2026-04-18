@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { COLORS, PRODUCT_STATUS, SEASONS, FACTORY_LOCATIONS } = require("../../enums/product.enums");
+const { COLORS, PRODUCT_STATUS, SEASONS } = require("../../enums/product.enums");
 
 const productSchema = new mongoose.Schema(
     {
@@ -107,7 +107,7 @@ const productSchema = new mongoose.Schema(
             {
                 location: {
                     type: String,
-                    enum: Object.values(FACTORY_LOCATIONS),
+                    trim: true,
                     required: true,
                 },
                 quantityInStock: {

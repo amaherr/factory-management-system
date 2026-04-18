@@ -280,7 +280,7 @@ const stockMovementService = {
     // function to execute a pick stock movement
     executePickStockMovement: async (req, res, next) => {
         try {
-            const { sourceLocation } = req.body;
+            const { sourceLocation, sourceSection } = req.body;
             const movementId = req.params.movementId;
             const userId = req.user.id;
 
@@ -289,7 +289,7 @@ const stockMovementService = {
                 userId,
                 requiredAction: WAREHOUSE_ACTIONS.PICK,
                 locationField: "sourceLocation",
-                locationUpdates: { sourceLocation },
+                locationUpdates: { sourceLocation, sourceSection },
             });
 
             return res
@@ -303,7 +303,7 @@ const stockMovementService = {
     // function to execute a receive stock movement
     executeReceiveStockMovement: async (req, res, next) => {
         try {
-            const { destinationLocation } = req.body;
+            const { destinationLocation, destinationSection } = req.body;
             const movementId = req.params.movementId;
             const userId = req.user.id;
 
@@ -312,7 +312,7 @@ const stockMovementService = {
                 userId,
                 requiredAction: WAREHOUSE_ACTIONS.RECEIVE,
                 locationField: "destinationLocation",
-                locationUpdates: { destinationLocation },
+                locationUpdates: { destinationLocation, destinationSection },
             });
 
             return res

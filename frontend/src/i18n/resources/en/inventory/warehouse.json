@@ -49,8 +49,11 @@
     "title": "Execute stock movement",
     "description": "Confirm the physical warehouse action for {{productName}} ({{productCode}}).",
     "sourceLocation": "Source location",
+    "sourceSection": "Source section",
     "destinationLocation": "Destination location",
+    "destinationSection": "Destination section",
     "selectLocation": "Select location",
+    "selectSection": "Select section",
     "currentLocations": "Recorded locations",
     "notSet": "Not set",
     "cancel": "Cancel",
@@ -60,7 +63,9 @@
     "errors": {
       "fillAllFields": "Please select both source and destination locations.",
       "fillSourceLocation": "Please select source location.",
+      "fillSourceSection": "Please select source location and section.",
       "fillDestinationLocation": "Please select destination location.",
+      "fillDestinationSection": "Please select destination location and section.",
       "sameLocation": "Source and destination locations must be different.",
       "unsupportedAction": "Only pick and receive actions can be executed from this table.",
       "failed": "Failed to execute stock movement."

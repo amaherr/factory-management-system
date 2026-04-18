@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-const { COLORS, FACTORY_LOCATIONS, PRODUCT_STATUS, SEASONS } = require("../../enums/product.enums");
+const { COLORS, PRODUCT_STATUS, SEASONS } = require("../../enums/product.enums");
 
 const productDtos = {
     createProductSchema: Joi.object({
@@ -41,11 +41,10 @@ const productDtos = {
     }),
 
     transferProductStockSchema: Joi.object({
-        fromLocation: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
-            .required(),
+        fromLocation: Joi.string().trim().min(1).required(),
         toLocation: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
+            .trim()
+            .min(1)
             .invalid(Joi.ref("fromLocation")) // cannot be same as fromLocation
             .required(),
         quantity: Joi.number()
@@ -55,9 +54,7 @@ const productDtos = {
     }),
 
     manualPhysicalStockAdjustmentSchema: Joi.object({
-        location: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
-            .required(),
+        location: Joi.string().trim().min(1).required(),
         adjustmentType: Joi.string().valid("add", "subtract").required(),
         quantity: Joi.number()
             .integer()
@@ -66,9 +63,7 @@ const productDtos = {
     }),
 
     setPhysicalStockSchema: Joi.object({
-        location: Joi.string()
-            .valid(...Object.values(FACTORY_LOCATIONS))
-            .required(),
+        location: Joi.string().trim().min(1).required(),
         newQuantity: Joi.number().integer().min(0).required(),
     }),
 };

@@ -42,6 +42,40 @@
     "perProductTitle": "توزيع كل منتج",
     "noProductsInLocation": "لا توجد منتجات حاليًا في هذا الموقع"
   },
+  "locationManagement": {
+    "title": "إدارة المواقع",
+    "addLocation": "إضافة موقع",
+    "addSection": "إضافة قسم",
+    "rename": "إعادة تسمية",
+    "delete": "حذف",
+    "newLocationPlaceholder": "أدخل اسم موقع جديد",
+    "newSectionPlaceholder": "أدخل اسم قسم جديد",
+    "noLocations": "لا توجد مواقع مضافة بعد",
+    "noSections": "لا توجد أقسام في هذا الموقع بعد",
+    "table": {
+      "location": "الموقع",
+      "productsCount": "المنتجات",
+      "totalStock": "إجمالي المخزون"
+    },
+    "prompts": {
+      "renameLocation": "أدخل اسم الموقع الجديد",
+      "renameSection": "أدخل اسم القسم الجديد"
+    },
+    "toasts": {
+      "locationCreated": "تم إنشاء الموقع بنجاح",
+      "locationUpdated": "تم تحديث الموقع بنجاح",
+      "locationDeleted": "تم حذف الموقع بنجاح",
+      "sectionCreated": "تم إنشاء القسم بنجاح",
+      "sectionUpdated": "تم تحديث القسم بنجاح",
+      "sectionDeleted": "تم حذف القسم بنجاح"
+    },
+    "errors": {
+      "loadFailed": "فشل تحميل نظرة المواقع",
+      "locationNameRequired": "اسم الموقع مطلوب",
+      "sectionNameRequired": "اسم القسم مطلوب",
+      "general": "فشلت العملية"
+    }
+  },
   "productDetails": {
     "title": "بيانات مخزون المنتج",
     "productInfo": "بيانات المنتج",

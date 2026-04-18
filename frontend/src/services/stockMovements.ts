@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { FactoryLocation } from './enums/product.enums';
 
 const API_URL =
   import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -47,7 +46,9 @@ export interface StockMovement {
   warehouseAction?: WarehouseAction | null;
   isExecuted: boolean;
   sourceLocation?: string | null;
+  sourceSection?: string | null;
   destinationLocation?: string | null;
+  destinationSection?: string | null;
   physicalExecutedAt?: string | null;
   physicalExecutedByUserId?: MovementUser | null;
   createdAt?: string;
@@ -84,11 +85,13 @@ export interface StockMovementResponse {
 }
 
 export interface ExecutePickStockMovementPayload {
-  sourceLocation: FactoryLocation;
+  sourceLocation: string;
+  sourceSection: string;
 }
 
 export interface ExecuteReceiveStockMovementPayload {
-  destinationLocation: FactoryLocation;
+  destinationLocation: string;
+  destinationSection: string;
 }
 
 export const stockMovementService = {
