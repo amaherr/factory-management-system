@@ -14,6 +14,7 @@ import { PendingWarehouseExecutionsTable } from '../../components/inventory/ware
 import { WarehouseTransferPanel } from '../../components/inventory/warehouse/WarehouseTransferPanel';
 import { ExecuteStockMovementDialog } from '../../components/inventory/warehouse/ExecuteStockMovementDialog';
 import { StockMovementDetailsDialog } from '../../components/inventory/stock/StockMovementDetailsDialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 
 const PAGE_SIZE = 10;
 
@@ -176,39 +177,51 @@ export function WarehouseManagementPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="min-w-0">
-          <PendingWarehouseExecutionsTable
-            movements={movements}
-            loading={pendingLoading}
-            total={total}
-            page={page}
-            totalPages={pages}
-            searchQuery={searchQuery}
-            actionFilter={actionFilter}
-            onSearchChange={(query) => {
-              setSearchQuery(query);
-              setPage(1);
-            }}
-            onActionFilterChange={(value) => {
-              setActionFilter(value);
-              setPage(1);
-            }}
-            onRefresh={() => void refreshPendingMovements()}
-            onPageChange={setPage}
-            onView={handleView}
-            onExecute={handleExecute}
-          />
-        </div>
+      <Tabs
+        defaultValue="warehouse-actions"
+        className="space-y-4"
+      >
+        <TabsList>
+          <TabsTrigger value="warehouse-actions">{t('tabs.warehouseActions')}</TabsTrigger>
+          <TabsTrigger value="transfer-stock">{t('tabs.transferStock')}</TabsTrigger>
+        </TabsList>
 
-        <div className="min-w-0">
-          <WarehouseTransferPanel
-            products={products}
-            loading={productsLoading}
-            onSuccess={refreshProducts}
-          />
-        </div>
-      </div>
+        <TabsContent value="warehouse-actions">
+          <div className="min-w-0">
+            <PendingWarehouseExecutionsTable
+              movements={movements}
+              loading={pendingLoading}
+              total={total}
+              page={page}
+              totalPages={pages}
+              searchQuery={searchQuery}
+              actionFilter={actionFilter}
+              onSearchChange={(query) => {
+                setSearchQuery(query);
+                setPage(1);
+              }}
+              onActionFilterChange={(value) => {
+                setActionFilter(value);
+                setPage(1);
+              }}
+              onRefresh={() => void refreshPendingMovements()}
+              onPageChange={setPage}
+              onView={handleView}
+              onExecute={handleExecute}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="transfer-stock">
+          <div className="min-w-0">
+            <WarehouseTransferPanel
+              products={products}
+              loading={productsLoading}
+              onSuccess={refreshProducts}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <ExecuteStockMovementDialog
         movement={selectedMovement}
