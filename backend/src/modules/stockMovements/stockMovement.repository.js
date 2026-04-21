@@ -1,4 +1,5 @@
 const StockMovement = require("./stockMovement.model");
+const { EXECUTION_STATUS } = require("../../enums/stockMovement.enums");
 
 const { getMongoSession } = require("../../database/transactionManager/mongoAdapter");
 
@@ -43,11 +44,10 @@ async function createStockMovement(data, tx = null) {
         returnId,
         batchId,
         warehouseAction,
-        isExecuted,
-        sourceLocation,
-        sourceSection,
-        destinationLocation,
-        destinationSection,
+        executionStatus,
+        sourceAllocations,
+        destinationAllocations,
+        physicalQuantityExecuted,
         physicalExecutedAt,
         physicalExecutedByUserId,
     } = data;
@@ -58,7 +58,9 @@ async function createStockMovement(data, tx = null) {
         from,
         to,
         createdByUserId,
-        isExecuted: isExecuted ?? false,
+        executionStatus:
+            executionStatus ??
+            (warehouseAction ? EXECUTION_STATUS.NOT_EXECUTED : EXECUTION_STATUS.EXECUTED),
     };
 
     if (notes != null) doc.notes = notes;
@@ -66,10 +68,9 @@ async function createStockMovement(data, tx = null) {
     if (returnId != null) doc.returnId = returnId;
     if (batchId != null) doc.batchId = batchId;
     if (warehouseAction != null) doc.warehouseAction = warehouseAction;
-    if (sourceLocation != null) doc.sourceLocation = sourceLocation;
-    if (sourceSection != null) doc.sourceSection = sourceSection;
-    if (destinationLocation != null) doc.destinationLocation = destinationLocation;
-    if (destinationSection != null) doc.destinationSection = destinationSection;
+    if (sourceAllocations != null) doc.sourceAllocations = sourceAllocations;
+    if (destinationAllocations != null) doc.destinationAllocations = destinationAllocations;
+    if (physicalQuantityExecuted != null) doc.physicalQuantityExecuted = physicalQuantityExecuted;
     if (physicalExecutedAt != null) doc.physicalExecutedAt = physicalExecutedAt;
     if (physicalExecutedByUserId != null) doc.physicalExecutedByUserId = physicalExecutedByUserId;
 
@@ -177,7 +178,7 @@ async function getByProductId(data, tx = null) {
 async function getMovementForExecution(movementId, tx = null) {
     const session = getMongoSession(tx);
     const query = StockMovement.findById(movementId).select(
-        "_id isExecuted warehouseAction productId quantityChange",
+        "_id executionStatus warehouseAction productId quantityChange physicalQuantityExecuted sourceAllocations destinationAllocations",
     );
     if (session) {
         query.session(session);
@@ -185,7 +186,7 @@ async function getMovementForExecution(movementId, tx = null) {
     return query;
 }
 
-async function markMovementExecuted(data, tx = null) {
+async function updateMovementExecution(data, tx = null) {
     const { movementId, userId, locationUpdates } = data;
     const session = getMongoSession(tx);
     const options = { new: true };
@@ -197,11 +198,10 @@ async function markMovementExecuted(data, tx = null) {
         StockMovement.findOneAndUpdate(
             {
                 _id: movementId,
-                isExecuted: false,
+                executionStatus: { $ne: EXECUTION_STATUS.EXECUTED },
             },
             {
                 $set: {
-                    isExecuted: true,
                     ...locationUpdates,
                     physicalExecutedAt: new Date(),
                     physicalExecutedByUserId: userId,
@@ -228,7 +228,7 @@ const stockMovementRepository = {
     countByProductId,
     getByProductId,
     getMovementForExecution,
-    markMovementExecuted,
+    updateMovementExecution,
 };
 
 module.exports = stockMovementRepository;

@@ -24,6 +24,7 @@ import {
   stockMovementService,
   type StockMovement,
   type StockBucket,
+  type StockMovementExecutionStatus,
   type WarehouseAction,
 } from '../../services/stockMovements';
 import { StockMovementDetailsDialog } from '../../components/inventory/stock/StockMovementDetailsDialog';
@@ -32,7 +33,9 @@ export function StockMovementPage() {
   const { t } = useTranslation('stock');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [executionFilter, setExecutionFilter] = useState<'all' | 'executed' | 'pending'>('all');
+  const [executionFilter, setExecutionFilter] = useState<'all' | StockMovementExecutionStatus>(
+    'all',
+  );
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +58,7 @@ export function StockMovementPage() {
         const response = await stockMovementService.getStockMovements({
           productCode: searchQuery || undefined,
           bucketType: typeFilter !== 'all' ? (typeFilter as StockBucket) : undefined,
-          isExecuted:
-            executionFilter === 'all' ? undefined : executionFilter === 'executed' ? true : false,
+          executionStatus: executionFilter === 'all' ? undefined : executionFilter,
           page: currentPage,
           limit,
         });
@@ -93,6 +95,16 @@ export function StockMovementPage() {
 
   const getQuantityColor = (quantity: number) => {
     return quantity > 0 ? 'default' : 'destructive';
+  };
+
+  const getExecutionStatus = (movement: StockMovement): StockMovementExecutionStatus => {
+    return movement.executionStatus || 'not_executed';
+  };
+
+  const getExecutionBadgeVariant = (status: StockMovementExecutionStatus) => {
+    if (status === 'executed') return 'default';
+    if (status === 'partially_executed') return 'secondary';
+    return 'outline';
   };
 
   const from = (currentPage - 1) * limit + 1;
@@ -159,7 +171,7 @@ export function StockMovementPage() {
             </Select>
             <Select
               value={executionFilter}
-              onValueChange={(value: 'all' | 'executed' | 'pending') => {
+              onValueChange={(value: 'all' | StockMovementExecutionStatus) => {
                 setExecutionFilter(value);
                 setCurrentPage(1);
               }}
@@ -169,10 +181,15 @@ export function StockMovementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('movements.filters.execution.all')}</SelectItem>
+                <SelectItem value="not_executed">
+                  {t('movements.filters.execution.not_executed')}
+                </SelectItem>
+                <SelectItem value="partially_executed">
+                  {t('movements.filters.execution.partially_executed')}
+                </SelectItem>
                 <SelectItem value="executed">
                   {t('movements.filters.execution.executed')}
                 </SelectItem>
-                <SelectItem value="pending">{t('movements.filters.execution.pending')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -250,10 +267,8 @@ export function StockMovementPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
-                          {movement.isExecuted
-                            ? t('movements.execution.executed')
-                            : t('movements.execution.pending')}
+                        <Badge variant={getExecutionBadgeVariant(getExecutionStatus(movement))}>
+                          {t(`movements.execution.${getExecutionStatus(movement)}`)}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-mono text-sm">

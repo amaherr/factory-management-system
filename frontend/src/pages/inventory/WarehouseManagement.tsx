@@ -47,7 +47,7 @@ export function WarehouseManagementPage() {
         const response = await stockMovementService.getStockMovements({
           productCode: searchQuery || undefined,
           warehouseAction: actionFilter === 'all' ? undefined : actionFilter,
-          isExecuted: false,
+          executionStatus: ['not_executed', 'partially_executed'],
           page,
           limit: PAGE_SIZE,
         });
@@ -122,7 +122,7 @@ export function WarehouseManagementPage() {
       const response = await stockMovementService.getStockMovements({
         productCode: searchQuery || undefined,
         warehouseAction: actionFilter === 'all' ? undefined : actionFilter,
-        isExecuted: false,
+        executionStatus: ['not_executed', 'partially_executed'],
         page,
         limit: PAGE_SIZE,
       });

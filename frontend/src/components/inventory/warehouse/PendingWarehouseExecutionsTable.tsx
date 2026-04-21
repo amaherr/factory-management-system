@@ -1,6 +1,10 @@
 import { ArrowRight, Eye, Play, RefreshCw, Search, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { StockMovement, WarehouseAction } from '../../../services/stockMovements';
+import type {
+  StockMovement,
+  StockMovementExecutionStatus,
+  WarehouseAction,
+} from '../../../services/stockMovements';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import {
@@ -44,6 +48,16 @@ function getWarehouseActionColor(action?: WarehouseAction | null) {
 
 function getQuantityColor(quantity: number) {
   return quantity > 0 ? 'default' : 'destructive';
+}
+
+function getExecutionStatus(movement: StockMovement): StockMovementExecutionStatus {
+  return movement.executionStatus || 'not_executed';
+}
+
+function getExecutionStatusBadgeVariant(status: StockMovementExecutionStatus) {
+  if (status === 'executed') return 'default';
+  if (status === 'partially_executed') return 'secondary';
+  return 'outline';
 }
 
 function getReference(movement: StockMovement) {
@@ -159,6 +173,8 @@ export function PendingWarehouseExecutionsTable({
                 <TableHead>{t('table.action')}</TableHead>
                 <TableHead>{t('table.flow')}</TableHead>
                 <TableHead>{t('table.quantity')}</TableHead>
+                <TableHead>{t('table.executionStatus')}</TableHead>
+                <TableHead>{t('table.executionProgress')}</TableHead>
                 <TableHead>{t('table.reference')}</TableHead>
                 <TableHead>{t('table.requestedBy')}</TableHead>
                 <TableHead>{t('table.createdAt')}</TableHead>
@@ -169,7 +185,7 @@ export function PendingWarehouseExecutionsTable({
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={10}
                     className="py-12 text-center text-muted-foreground"
                   >
                     {t('pending.loading')}
@@ -178,7 +194,7 @@ export function PendingWarehouseExecutionsTable({
               ) : movements.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={10}
                     className="py-12 text-center text-muted-foreground"
                   >
                     {t('pending.empty')}
@@ -188,6 +204,12 @@ export function PendingWarehouseExecutionsTable({
                 movements.map((movement) => {
                   const canExecute =
                     movement.warehouseAction === 'pick' || movement.warehouseAction === 'receive';
+                  const status = getExecutionStatus(movement);
+                  const totalQuantity = Math.abs(Number(movement.quantityChange || 0));
+                  const executedQuantity = Math.max(
+                    0,
+                    Number(movement.physicalQuantityExecuted || 0),
+                  );
 
                   return (
                     <TableRow key={movement._id}>
@@ -225,6 +247,17 @@ export function PendingWarehouseExecutionsTable({
                           {movement.quantityChange > 0 ? '+' : ''}
                           {movement.quantityChange}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getExecutionStatusBadgeVariant(status)}>
+                          {tStock(`movements.execution.${status}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {t('pending.executionProgress', {
+                          executed: executedQuantity,
+                          quantity: totalQuantity,
+                        })}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
                         {getReference(movement) || t('pending.referenceNone')}

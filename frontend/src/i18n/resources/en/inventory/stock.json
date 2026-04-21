@@ -210,6 +210,8 @@
       "allTypes": "All Types",
       "execution": {
         "all": "All Execution States",
+        "not_executed": "Not Executed",
+        "partially_executed": "Partially Executed",
         "executed": "Executed",
         "pending": "Pending"
       }
@@ -229,6 +231,8 @@
       "none": "No Action"
     },
     "execution": {
+      "not_executed": "Not Executed",
+      "partially_executed": "Partially Executed",
       "executed": "Executed",
       "pending": "Pending"
     },
@@ -256,6 +260,8 @@
       "quantity": "Quantity Changed",
       "warehouseAction": "Warehouse Action",
       "executionStatus": "Execution Status",
+      "executionProgress": "Execution Progress",
+      "remaining": "Remaining Quantity",
       "sourceLocation": "Source Location",
       "destinationLocation": "Destination Location",
       "noLocation": "No Location",

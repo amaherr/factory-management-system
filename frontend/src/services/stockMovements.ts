@@ -12,6 +12,13 @@ export type StockBucket =
   | 'inventory';
 
 export type WarehouseAction = 'pick' | 'receive' | 'transfer';
+export type StockMovementExecutionStatus = 'not_executed' | 'partially_executed' | 'executed';
+
+export interface MovementAllocation {
+  location: string;
+  section: string;
+  quantity: number;
+}
 
 export interface MovementUser {
   _id: string;
@@ -44,11 +51,10 @@ export interface StockMovement {
   notes?: string;
   createdByUserId?: MovementUser | null;
   warehouseAction?: WarehouseAction | null;
-  isExecuted: boolean;
-  sourceLocation?: string | null;
-  sourceSection?: string | null;
-  destinationLocation?: string | null;
-  destinationSection?: string | null;
+  executionStatus: StockMovementExecutionStatus;
+  sourceAllocations?: MovementAllocation[];
+  destinationAllocations?: MovementAllocation[];
+  physicalQuantityExecuted?: number | null;
   physicalExecutedAt?: string | null;
   physicalExecutedByUserId?: MovementUser | null;
   createdAt?: string;
@@ -61,7 +67,7 @@ export interface GetStockMovementsFilters {
   toType?: StockBucket;
   bucketType?: StockBucket;
   warehouseAction?: WarehouseAction;
-  isExecuted?: boolean;
+  executionStatus?: StockMovementExecutionStatus | StockMovementExecutionStatus[];
   createdFrom?: string;
   createdTo?: string;
   page?: number;
@@ -85,13 +91,18 @@ export interface StockMovementResponse {
 }
 
 export interface ExecutePickStockMovementPayload {
-  sourceLocation: string;
-  sourceSection: string;
+  sourceAllocations: MovementAllocation[];
 }
 
 export interface ExecuteReceiveStockMovementPayload {
-  destinationLocation: string;
-  destinationSection: string;
+  destinationAllocations: MovementAllocation[];
+}
+
+function clampPageLimit(page: number, limit: number) {
+  return {
+    page: Math.max(1, Number(page) || 1),
+    limit: Math.max(1, Math.min(100, Number(limit) || 20)),
+  };
 }
 
 export const stockMovementService = {
@@ -111,20 +122,26 @@ export const stockMovementService = {
         toType,
         bucketType,
         warehouseAction,
-        isExecuted,
+        executionStatus,
         createdFrom,
         createdTo,
         page = 1,
         limit = 20,
       } = filters;
 
-      const params: any = { page, limit };
+      const normalized = clampPageLimit(page, limit);
+
+      const params: any = { page: normalized.page, limit: normalized.limit };
       if (productCode) params.q = productCode;
       if (bucketType) params.bucketType = bucketType;
       if (fromType) params.fromType = fromType;
       if (toType) params.toType = toType;
       if (warehouseAction) params.warehouseAction = warehouseAction;
-      if (typeof isExecuted === 'boolean') params.isExecuted = isExecuted;
+      if (executionStatus) {
+        params.executionStatus = Array.isArray(executionStatus)
+          ? executionStatus.join(',')
+          : executionStatus;
+      }
       if (createdFrom) params.createdFrom = createdFrom;
       if (createdTo) params.createdTo = createdTo;
 
@@ -168,9 +185,11 @@ export const stockMovementService = {
     try {
       axios.defaults.withCredentials = true;
 
+      const normalized = clampPageLimit(page, limit);
+
       const response = await axios.get<GetStockMovementsResponse>(
         `${API_URL}/stock-movements/product/${productId}`,
-        { params: { page, limit } },
+        { params: { page: normalized.page, limit: normalized.limit } },
       );
 
       return response.data.data;

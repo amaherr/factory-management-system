@@ -210,6 +210,8 @@
       "allTypes": "جميع الأنواع",
       "execution": {
         "all": "جميع حالات التنفيذ",
+        "not_executed": "غير منفذ",
+        "partially_executed": "منفذ جزئيًا",
         "executed": "تم التنفيذ",
         "pending": "قيد الانتظار"
       }
@@ -229,6 +231,8 @@
       "none": "بدون إجراء"
     },
     "execution": {
+      "not_executed": "غير منفذ",
+      "partially_executed": "منفذ جزئيًا",
       "executed": "تم التنفيذ",
       "pending": "قيد الانتظار"
     },
@@ -256,6 +260,8 @@
       "quantity": "تغيير الكمية",
       "warehouseAction": "إجراء المستودع",
       "executionStatus": "حالة التنفيذ",
+      "executionProgress": "تقدم التنفيذ",
+      "remaining": "الكمية المتبقية",
       "sourceLocation": "الموقع المصدر",
       "destinationLocation": "موقع الوجهة",
       "noLocation": "لا يوجد موقع",

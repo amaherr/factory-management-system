@@ -75,29 +75,51 @@ properties:
         nullable: true
         description: Physical warehouse operation type.
         example: pick
-    isExecuted:
-        type: boolean
-        default: false
-        description: Whether physical action has been executed.
-        example: true
-    sourceLocation:
+    executionStatus:
         type: string
         enum:
-            - showroom
-            - warehouse a
-            - warehouse b
+            - not_executed
+            - partially_executed
+            - executed
+        description: Physical execution state for warehouse-required movements.
+        example: partially_executed
+    sourceAllocations:
+        type: array
+        description: Cumulative source location/section allocations executed for pick movements.
+        items:
+            type: object
+            properties:
+                location:
+                    type: string
+                section:
+                    type: string
+                quantity:
+                    type: number
+            required:
+                - location
+                - section
+                - quantity
+    destinationAllocations:
+        type: array
+        description: Cumulative destination location/section allocations executed for receive movements.
+        items:
+            type: object
+            properties:
+                location:
+                    type: string
+                section:
+                    type: string
+                quantity:
+                    type: number
+            required:
+                - location
+                - section
+                - quantity
+    physicalQuantityExecuted:
+        type: number
         nullable: true
-        description: Source physical location.
-        example: warehouse a
-    destinationLocation:
-        type: string
-        enum:
-            - showroom
-            - warehouse a
-            - warehouse b
-        nullable: true
-        description: Destination physical location.
-        example: showroom
+        description: Cumulative physically executed quantity.
+        example: 40
     physicalExecutedAt:
         type: string
         format: date-time
@@ -128,4 +150,4 @@ required:
     - from
     - to
     - createdByUserId
-    - isExecuted
+    - executionStatus

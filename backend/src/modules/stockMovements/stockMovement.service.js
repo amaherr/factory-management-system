@@ -1,6 +1,6 @@
 const stockMovementRepository = require("./stockMovement.repository");
 const productRepository = require("../products/product.repository");
-const { WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
+const { WAREHOUSE_ACTIONS, EXECUTION_STATUS } = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -26,14 +26,77 @@ function ensureLocation(product, location) {
     return existingLocation;
 }
 
+function normalizeAllocations(rawAllocations) {
+    if (!Array.isArray(rawAllocations) || rawAllocations.length === 0) {
+        return [];
+    }
+
+    const merged = new Map();
+
+    for (const allocation of rawAllocations) {
+        const location = String(allocation.location || "").trim();
+        const section = String(allocation.section || "").trim();
+        const quantity = Number(allocation.quantity || 0);
+
+        if (!location || !section || !Number.isFinite(quantity) || quantity <= 0) {
+            throw createError(
+                "Each allocation must include location, section, and positive quantity",
+                400,
+            );
+        }
+
+        const key = `${location}::${section}`;
+        const existing = merged.get(key);
+        if (existing) {
+            existing.quantity += quantity;
+        } else {
+            merged.set(key, { location, section, quantity });
+        }
+    }
+
+    return Array.from(merged.values());
+}
+
+function aggregateQuantityByLocation(allocations) {
+    const byLocation = new Map();
+    for (const allocation of allocations) {
+        byLocation.set(
+            allocation.location,
+            (byLocation.get(allocation.location) || 0) + Number(allocation.quantity || 0),
+        );
+    }
+    return byLocation;
+}
+
+function mergeAllocations(existingAllocations, newAllocations) {
+    return normalizeAllocations([...(existingAllocations || []), ...(newAllocations || [])]);
+}
+
+function getExecutionStatus(executedQuantity, totalQuantity) {
+    if (executedQuantity <= 0) {
+        return EXECUTION_STATUS.NOT_EXECUTED;
+    }
+
+    if (executedQuantity >= totalQuantity) {
+        return EXECUTION_STATUS.EXECUTED;
+    }
+
+    return EXECUTION_STATUS.PARTIALLY_EXECUTED;
+}
+
 const executeWarehouseMovement = async ({
     movementId,
     userId,
     requiredAction,
-    locationField,
-    locationUpdates,
+    allocations,
+    allocationsField,
 }) => {
-    const executionLocation = locationUpdates[locationField];
+    const normalizedAllocations = normalizeAllocations(allocations);
+    const totalAllocatedQuantity = normalizedAllocations.reduce(
+        (sum, item) => sum + Number(item.quantity || 0),
+        0,
+    );
+
     let stockMovement;
     await transactionManager.run(async (tx) => {
         const existingMovement = await stockMovementRepository.getMovementForExecution(
@@ -45,7 +108,7 @@ const executeWarehouseMovement = async ({
             throw createError("Stock movement not found", 404);
         }
 
-        if (existingMovement.isExecuted) {
+        if (existingMovement.executionStatus === EXECUTION_STATUS.EXECUTED) {
             throw createError("Stock movement already executed", 409);
         }
 
@@ -60,9 +123,27 @@ const executeWarehouseMovement = async ({
             );
         }
 
-        const quantity = Number(existingMovement.quantityChange);
+        const quantity = Math.abs(Number(existingMovement.quantityChange));
         if (!Number.isFinite(quantity) || quantity <= 0) {
             throw createError("Stock movement has invalid quantityChange", 409);
+        }
+
+        const executedQuantity = Number(existingMovement.physicalQuantityExecuted || 0);
+        if (!Number.isFinite(executedQuantity) || executedQuantity < 0) {
+            throw createError("Stock movement has invalid executed quantity", 409);
+        }
+
+        const remainingQuantity = quantity - executedQuantity;
+        if (remainingQuantity <= 0) {
+            throw createError("Stock movement already fully executed", 409);
+        }
+
+        if (totalAllocatedQuantity > remainingQuantity) {
+            throw createError("Total allocated quantity cannot exceed remaining movement quantity", 400);
+        }
+
+        if (totalAllocatedQuantity <= 0) {
+            throw createError("Allocated quantity must be greater than zero", 400);
         }
 
         const product = await productRepository.getProductById(existingMovement.productId, tx);
@@ -71,34 +152,64 @@ const executeWarehouseMovement = async ({
         }
 
         const totalPhysicalStock = Number(product.totalPhysicalStock || 0);
+        const locationQuantityMap = aggregateQuantityByLocation(normalizedAllocations);
 
         if (requiredAction === WAREHOUSE_ACTIONS.PICK) {
-            const sourceLoc = findLocation(product, executionLocation);
-
-            if (!sourceLoc) {
-                throw createError(`Source location ${executionLocation} not found in product`, 404);
-            }
-
-            if (sourceLoc.quantityInStock < quantity) {
-                throw createError("Insufficient stock in source location", 400);
-            }
-
-            if (totalPhysicalStock < quantity) {
+            if (totalPhysicalStock < totalAllocatedQuantity) {
                 throw createError("Stock totals cannot become negative", 409);
             }
 
-            sourceLoc.quantityInStock -= quantity;
-            product.totalPhysicalStock = totalPhysicalStock - quantity;
-        } else if (requiredAction === WAREHOUSE_ACTIONS.RECEIVE) {
-            const destinationLoc = ensureLocation(product, executionLocation);
+            for (const [location, locationQuantity] of locationQuantityMap.entries()) {
+                const sourceLoc = findLocation(product, location);
 
-            destinationLoc.quantityInStock += quantity;
-            product.totalPhysicalStock = totalPhysicalStock + quantity;
+                if (!sourceLoc) {
+                    throw createError(`Source location ${location} not found in product`, 404);
+                }
+
+                if (sourceLoc.quantityInStock < locationQuantity) {
+                    throw createError(`Insufficient stock in source location ${location}`, 400);
+                }
+            }
+
+            for (const [location, locationQuantity] of locationQuantityMap.entries()) {
+                const sourceLoc = findLocation(product, location);
+                sourceLoc.quantityInStock -= locationQuantity;
+            }
+
+            product.totalPhysicalStock = totalPhysicalStock - totalAllocatedQuantity;
+        } else if (requiredAction === WAREHOUSE_ACTIONS.RECEIVE) {
+            for (const [location, locationQuantity] of locationQuantityMap.entries()) {
+                const destinationLoc = ensureLocation(product, location);
+                destinationLoc.quantityInStock += locationQuantity;
+            }
+
+            product.totalPhysicalStock = totalPhysicalStock + totalAllocatedQuantity;
         }
 
-        await productRepository.saveProduct({ productDoc: product }, tx);
+        await productRepository.updateProductInventorySnapshot(
+            {
+                productId: product._id,
+                locations: product.locations,
+                totalPhysicalStock: product.totalPhysicalStock,
+                totalTheoreticalStock: product.totalTheoreticalStock,
+            },
+            tx,
+        );
 
-        const updatedMovement = await stockMovementRepository.markMovementExecuted(
+        const mergedAllocations = mergeAllocations(
+            existingMovement[allocationsField],
+            normalizedAllocations,
+        );
+        const nextExecutedQuantity = executedQuantity + totalAllocatedQuantity;
+        const executionStatus = getExecutionStatus(nextExecutedQuantity, quantity);
+
+        const locationUpdates = {
+            [allocationsField]: mergedAllocations,
+            physicalQuantityExecuted: nextExecutedQuantity,
+            executionStatus,
+        };
+
+        const updatedMovement = await stockMovementRepository.updateMovementExecution(
             {
                 movementId,
                 userId,
@@ -130,7 +241,7 @@ const stockMovementService = {
                 toType, // filter by destination stock bucket
                 bucketType, // filter by any stock bucket (matches from OR to)
                 warehouseAction,
-                isExecuted,
+                executionStatus,
                 createdByUserId,
                 physicalExecutedByUserId,
                 createdFrom, // date range filter
@@ -166,8 +277,14 @@ const stockMovementService = {
                 filter.warehouseAction = warehouseAction;
             }
 
-            if (typeof isExecuted !== "undefined") {
-                filter.isExecuted = isExecuted === "true";
+            if (executionStatus) {
+                const executionStatuses = String(executionStatus)
+                    .split(",")
+                    .map((status) => status.trim())
+                    .filter(Boolean);
+
+                filter.executionStatus =
+                    executionStatuses.length > 1 ? { $in: executionStatuses } : executionStatuses[0];
             }
 
             if (createdByUserId) {
@@ -280,7 +397,7 @@ const stockMovementService = {
     // function to execute a pick stock movement
     executePickStockMovement: async (req, res, next) => {
         try {
-            const { sourceLocation, sourceSection } = req.body;
+            const { sourceAllocations } = req.body;
             const movementId = req.params.movementId;
             const userId = req.user.id;
 
@@ -288,8 +405,8 @@ const stockMovementService = {
                 movementId,
                 userId,
                 requiredAction: WAREHOUSE_ACTIONS.PICK,
-                locationField: "sourceLocation",
-                locationUpdates: { sourceLocation, sourceSection },
+                allocations: sourceAllocations,
+                allocationsField: "sourceAllocations",
             });
 
             return res
@@ -303,7 +420,7 @@ const stockMovementService = {
     // function to execute a receive stock movement
     executeReceiveStockMovement: async (req, res, next) => {
         try {
-            const { destinationLocation, destinationSection } = req.body;
+            const { destinationAllocations } = req.body;
             const movementId = req.params.movementId;
             const userId = req.user.id;
 
@@ -311,8 +428,8 @@ const stockMovementService = {
                 movementId,
                 userId,
                 requiredAction: WAREHOUSE_ACTIONS.RECEIVE,
-                locationField: "destinationLocation",
-                locationUpdates: { destinationLocation, destinationSection },
+                allocations: destinationAllocations,
+                allocationsField: "destinationAllocations",
             });
 
             return res

@@ -12,7 +12,11 @@ const productRepository = require("../products/product.repository");
 const { ORDER_TYPE, ORDER_STATUS } = require("../../enums/order.enums");
 const { PRODUCT_STATUS } = require("../../enums/product.enums");
 const { COUNTERS } = require("../../enums/counter.enums");
-const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
+const {
+    STOCK_MOVEMENT_TYPE,
+    WAREHOUSE_ACTIONS,
+    EXECUTION_STATUS,
+} = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -128,7 +132,7 @@ const orderService = {
                                 createdByUserId: userId,
                                 notes: `Reserve from order ${orderNumber} - ${notes || ""}`,
                                 orderId: createdOrder._id,
-                                isExecuted: true,
+                                executionStatus: EXECUTION_STATUS.EXECUTED,
                             },
                             tx,
                         );
@@ -376,7 +380,7 @@ const orderService = {
                                     createdByUserId: userId,
                                     notes: `Order ${updatedOrder.orderNumber} cancelled (unreserved)`,
                                     orderId: updatedOrder._id,
-                                    isExecuted: true,
+                                    executionStatus: EXECUTION_STATUS.EXECUTED,
                                 },
                                 tx,
                             );
@@ -569,7 +573,7 @@ const orderService = {
                                     createdByUserId: userId,
                                     notes: `Order ${order.orderNumber} edited (reserve updated)`,
                                     orderId: order._id,
-                                    isExecuted: true,
+                                    executionStatus: EXECUTION_STATUS.EXECUTED,
                                 },
                                 tx,
                             );

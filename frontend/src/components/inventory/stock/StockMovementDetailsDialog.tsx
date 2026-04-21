@@ -3,7 +3,11 @@ import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
-import type { StockMovement, WarehouseAction } from '../../../services/stockMovements';
+import type {
+  StockMovement,
+  StockMovementExecutionStatus,
+  WarehouseAction,
+} from '../../../services/stockMovements';
 
 interface StockMovementDetailsDialogProps {
   movement: StockMovement | null;
@@ -34,6 +38,20 @@ export function StockMovementDetailsDialog({
   const getQuantityColor = (quantity: number) => {
     return quantity > 0 ? 'default' : 'destructive';
   };
+
+  const getExecutionStatus = (movementItem: StockMovement): StockMovementExecutionStatus => {
+    return movementItem.executionStatus || 'not_executed';
+  };
+
+  const getExecutionStatusColor = (status: StockMovementExecutionStatus) => {
+    if (status === 'executed') return 'default';
+    if (status === 'partially_executed') return 'secondary';
+    return 'outline';
+  };
+
+  const totalQuantity = Math.abs(Number(movement.quantityChange || 0));
+  const executedQuantity = Math.max(0, Number(movement.physicalQuantityExecuted || 0));
+  const remainingQuantity = Math.max(totalQuantity - executedQuantity, 0);
 
   return (
     <Dialog
@@ -109,10 +127,8 @@ export function StockMovementDetailsDialog({
                     {t('movements.details.executionStatus')}
                   </p>
                   <div className="mt-1">
-                    <Badge variant={movement.isExecuted ? 'default' : 'outline'}>
-                      {movement.isExecuted
-                        ? t('movements.execution.executed')
-                        : t('movements.execution.pending')}
+                    <Badge variant={getExecutionStatusColor(getExecutionStatus(movement))}>
+                      {t(`movements.execution.${getExecutionStatus(movement)}`)}
                     </Badge>
                   </div>
                 </div>
@@ -120,23 +136,59 @@ export function StockMovementDetailsDialog({
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <p className="text-xs text-muted-foreground">
+                    {t('movements.details.executionProgress')}
+                  </p>
+                  <p className="text-sm">
+                    {executedQuantity} / {totalQuantity}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t('movements.details.remaining')}
+                  </p>
+                  <p className="text-sm">{remainingQuantity}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">
                     {t('movements.details.sourceLocation')}
                   </p>
-                  <p className="font-medium">
-                    {movement.sourceLocation
-                      ? t(`locations.${movement.sourceLocation.toLowerCase()}`)
-                      : t('movements.details.noLocation')}
-                  </p>
+                  {Array.isArray(movement.sourceAllocations) &&
+                  movement.sourceAllocations.length > 0 ? (
+                    <div className="space-y-1">
+                      {movement.sourceAllocations.map((allocation, index) => (
+                        <p
+                          key={`source-${index}`}
+                          className="font-medium"
+                        >
+                          {allocation.location} / {allocation.section} - {allocation.quantity}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium">{t('movements.details.noLocation')}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
                     {t('movements.details.destinationLocation')}
                   </p>
-                  <p className="font-medium">
-                    {movement.destinationLocation
-                      ? t(`locations.${movement.destinationLocation.toLowerCase()}`)
-                      : t('movements.details.noLocation')}
-                  </p>
+                  {Array.isArray(movement.destinationAllocations) &&
+                  movement.destinationAllocations.length > 0 ? (
+                    <div className="space-y-1">
+                      {movement.destinationAllocations.map((allocation, index) => (
+                        <p
+                          key={`destination-${index}`}
+                          className="font-medium"
+                        >
+                          {allocation.location} / {allocation.section} - {allocation.quantity}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium">{t('movements.details.noLocation')}</p>
+                  )}
                 </div>
               </div>
             </div>

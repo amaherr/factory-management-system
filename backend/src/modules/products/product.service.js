@@ -4,7 +4,11 @@ const path = require("path");
 
 const productRepository = require("./product.repository");
 const { PRODUCT_STATUS } = require("../../enums/product.enums");
-const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
+const {
+    STOCK_MOVEMENT_TYPE,
+    WAREHOUSE_ACTIONS,
+    EXECUTION_STATUS,
+} = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -98,7 +102,7 @@ function buildPhysicalAdjustmentMovement({
         quantityChange: quantity,
         createdByUserId,
         notes,
-        isExecuted: true,
+        executionStatus: EXECUTION_STATUS.EXECUTED,
         physicalExecutedAt: new Date(),
         physicalExecutedByUserId: createdByUserId,
     };
@@ -109,7 +113,14 @@ function buildPhysicalAdjustmentMovement({
             from: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
             to: STOCK_MOVEMENT_TYPE.INVENTORY,
             warehouseAction: WAREHOUSE_ACTIONS.RECEIVE,
-            destinationLocation: location,
+            destinationAllocations: [
+                {
+                    location,
+                    section: "UNSPECIFIED",
+                    quantity,
+                },
+            ],
+            physicalQuantityExecuted: quantity,
         };
     }
 
@@ -118,7 +129,14 @@ function buildPhysicalAdjustmentMovement({
         from: STOCK_MOVEMENT_TYPE.INVENTORY,
         to: STOCK_MOVEMENT_TYPE.MANUAL_ADJUSTMENT,
         warehouseAction: WAREHOUSE_ACTIONS.PICK,
-        sourceLocation: location,
+        sourceAllocations: [
+            {
+                location,
+                section: "UNSPECIFIED",
+                quantity,
+            },
+        ],
+        physicalQuantityExecuted: quantity,
     };
 }
 
@@ -515,9 +533,22 @@ const productService = {
                         createdByUserId: userId,
                         notes: `Transferred ${quantity} units from ${fromLocation} to ${toLocation}`,
                         warehouseAction: WAREHOUSE_ACTIONS.TRANSFER,
-                        isExecuted: true,
-                        sourceLocation: fromLocation,
-                        destinationLocation: toLocation,
+                        executionStatus: EXECUTION_STATUS.EXECUTED,
+                        sourceAllocations: [
+                            {
+                                location: fromLocation,
+                                section: "UNSPECIFIED",
+                                quantity,
+                            },
+                        ],
+                        destinationAllocations: [
+                            {
+                                location: toLocation,
+                                section: "UNSPECIFIED",
+                                quantity,
+                            },
+                        ],
+                        physicalQuantityExecuted: quantity,
                         physicalExecutedAt: new Date(),
                         physicalExecutedByUserId: userId,
                     },

@@ -13,4 +13,10 @@ const WAREHOUSE_ACTIONS = Object.freeze({
     TRANSFER: "transfer",
 });
 
-module.exports = { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS };
+const EXECUTION_STATUS = Object.freeze({
+    NOT_EXECUTED: "not_executed",
+    PARTIALLY_EXECUTED: "partially_executed",
+    EXECUTED: "executed",
+});
+
+module.exports = { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS, EXECUTION_STATUS };

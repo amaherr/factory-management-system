@@ -1,6 +1,31 @@
 const mongoose = require("mongoose");
 
-const { STOCK_MOVEMENT_TYPE, WAREHOUSE_ACTIONS } = require("../../enums/stockMovement.enums");
+const {
+    STOCK_MOVEMENT_TYPE,
+    WAREHOUSE_ACTIONS,
+    EXECUTION_STATUS,
+} = require("../../enums/stockMovement.enums");
+
+const movementAllocationSchema = new mongoose.Schema(
+    {
+        location: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        section: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            min: 1,
+        },
+    },
+    { _id: false },
+);
 
 const stockMovementSchema = new mongoose.Schema(
     {
@@ -55,29 +80,23 @@ const stockMovementSchema = new mongoose.Schema(
             enum: Object.values(WAREHOUSE_ACTIONS),
             default: null,
         },
-        isExecuted: {
-            type: Boolean,
+        executionStatus: {
+            type: String,
+            enum: Object.values(EXECUTION_STATUS),
             required: true,
-            default: false,
+            default: EXECUTION_STATUS.NOT_EXECUTED,
         },
-        sourceLocation: {
-            type: String,
-            trim: true,
-            default: null,
+        sourceAllocations: {
+            type: [movementAllocationSchema],
+            default: [],
         },
-        sourceSection: {
-            type: String,
-            trim: true,
-            default: null,
+        destinationAllocations: {
+            type: [movementAllocationSchema],
+            default: [],
         },
-        destinationLocation: {
-            type: String,
-            trim: true,
-            default: null,
-        },
-        destinationSection: {
-            type: String,
-            trim: true,
+        physicalQuantityExecuted: {
+            type: Number,
+            min: 0,
             default: null,
         },
 

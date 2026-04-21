@@ -17,7 +17,7 @@ const productDtos = {
         inStock: Joi.boolean().optional(),
         location: Joi.string().trim().min(1).optional(),
         page: Joi.number().integer().min(1).optional(),
-        limit: Joi.number().integer().min(1).max(100).optional(),
+        limit: Joi.number().integer().min(1).optional(),
     }).unknown(false),
 
     createProductSchema: Joi.object({
