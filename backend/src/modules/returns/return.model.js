@@ -79,8 +79,8 @@ const returnSchema = new mongoose.Schema(
     },
 );
 
-returnSchema.index({ orderId: 1 });
-returnSchema.index({ orderId: 1, "items.productId": 1 });
+returnSchema.index({ orderId: 1, status: 1 });
+returnSchema.index({ "items.productId": 1 });
 
 const Return = mongoose.model("Return", returnSchema);
 module.exports = Return;

@@ -71,6 +71,15 @@ async function clearDatabase() {
                 console.log(
                     `🗑️  Cleared collection: ${collectionName} (${result.deletedCount} documents removed)`,
                 );
+
+                const indexes = await collection.indexes();
+                const hasSecondaryIndexes = indexes.some((index) => index.name !== "_id_");
+
+                if (hasSecondaryIndexes) {
+                    await collection.dropIndexes();
+                    console.log(`🧹 Dropped secondary indexes for collection: ${collectionName}`);
+                }
+
                 clearedCount++;
             } catch (err) {
                 console.error(`❌ Error clearing collection ${collectionName}:`, err.message);

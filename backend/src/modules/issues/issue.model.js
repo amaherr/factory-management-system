@@ -48,5 +48,7 @@ const issueSchema = mongoose.Schema(
     { timestamps: true },
 );
 
+issueSchema.index({ createdByUserId: 1, status: 1, createdAt: -1 });
+
 const Issue = mongoose.model("Issue", issueSchema);
 module.exports = Issue;

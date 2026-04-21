@@ -50,5 +50,7 @@ const batchEventSchema = mongoose.Schema(
     { timestamps: true },
 );
 
+batchEventSchema.index({ batchId: 1, stage: 1 }, { unique: true });
+
 const BatchEvent = mongoose.model("BatchEvent", batchEventSchema);
 module.exports = BatchEvent;
