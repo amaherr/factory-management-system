@@ -54,6 +54,14 @@ function toSectionKey(value) {
     return normalizeSection(value).toLowerCase();
 }
 
+function sectionMatches(entrySection, sectionDoc) {
+    const sectionKey = toSectionKey(entrySection);
+    const sectionNameKey = toSectionKey(sectionDoc?.name);
+    const sectionCodeKey = toSectionKey(sectionDoc?.code);
+
+    return sectionKey === sectionNameKey || (sectionCodeKey && sectionKey === sectionCodeKey);
+}
+
 function findLocationByName(locations, locationName) {
     const normalized = toLocationKey(locationName);
     return locations.find((location) => toLocationKey(location.name) === normalized) || null;
@@ -293,16 +301,52 @@ const locationService = {
     removeSection: async (req, res, next) => {
         try {
             const { locationId, sectionId } = req.params;
-            const location = await locationRepository.removeSection({
-                locationId,
-                sectionId,
+
+            let updatedLocation;
+            await transactionManager.run(async (tx) => {
+                const location = await locationRepository.getLocationById(locationId, tx);
+                if (!location) {
+                    throw createError("Location not found", 404);
+                }
+
+                const section = (location.sections || []).find(
+                    (item) => String(item._id) === String(sectionId),
+                );
+                if (!section) {
+                    throw createError("Section not found", 404);
+                }
+
+                const products = await productRepository.getAllProducts(null, tx);
+                const locationKey = toLocationKey(location.name);
+
+                const hasStockInSection = products.some((product) =>
+                    (product.locations || []).some((entry) => {
+                        const quantity = Number(entry.quantityInStock || 0);
+                        return (
+                            toLocationKey(entry.location) === locationKey &&
+                            sectionMatches(entry.section, section) &&
+                            quantity > 0
+                        );
+                    }),
+                );
+
+                if (hasStockInSection) {
+                    throw createError(
+                        "Cannot delete section while it still has stock assigned in products",
+                        409,
+                    );
+                }
+
+                updatedLocation = await locationRepository.removeSection(
+                    {
+                        locationId,
+                        sectionId,
+                    },
+                    tx,
+                );
             });
 
-            if (!location) {
-                return next(createError("Location not found", 404));
-            }
-
-            return res.status(200).json(response("Section removed successfully", location));
+            return res.status(200).json(response("Section removed successfully", updatedLocation));
         } catch (err) {
             return next(err);
         }

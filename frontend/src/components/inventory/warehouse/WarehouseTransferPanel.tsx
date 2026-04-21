@@ -4,11 +4,11 @@ import { toast } from 'sonner';
 import { ArrowRightLeft, Boxes } from 'lucide-react';
 import type { Product } from '../../../services/products';
 import { locationService, type Location } from '../../../services/locations';
+import { StockDistributionSummary } from '../stock/StockDistributionSummary';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Badge } from '../../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 interface WarehouseTransferPanelProps {
@@ -374,18 +374,19 @@ export function WarehouseTransferPanel({
             {!selectedProduct ? (
               <p className="text-sm text-muted-foreground">{t('transfer.noProduct')}</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {selectedProduct.locations.map((location) => (
-                  <Badge
-                    key={`${location.location}-${location.section || 'UNSPECIFIED'}`}
-                    variant="outline"
-                    className="py-1"
-                  >
-                    {getLocationLabel(location.location)} / {location.section || 'UNSPECIFIED'}:{' '}
-                    {location.quantityInStock}
-                  </Badge>
-                ))}
-              </div>
+              <StockDistributionSummary
+                locations={selectedProduct.locations}
+                getLocationLabel={getLocationLabel}
+                emptyMessage="No stock available for this product."
+                labels={{
+                  totalUnits: 'Total Units',
+                  locations: 'Locations',
+                  sections: 'Sections',
+                  location: 'Location',
+                  locationTotal: 'Location Total',
+                  units: 'units',
+                }}
+              />
             )}
           </div>
 
