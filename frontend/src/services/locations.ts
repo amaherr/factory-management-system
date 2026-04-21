@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Product } from './products';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -149,6 +150,28 @@ export const locationService = {
     try {
       const { data } = await axios.delete<ApiResponse<Location>>(
         `${API_BASE}/locations/${locationId}/sections/${sectionId}`,
+        {
+          withCredentials: true,
+        },
+      );
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  async transferStock(payload: {
+    productId: string;
+    fromLocation: string;
+    fromSection: string;
+    toLocation: string;
+    toSection: string;
+    quantity: number;
+  }): Promise<Product> {
+    try {
+      const { data } = await axios.post<ApiResponse<Product>>(
+        `${API_BASE}/locations/transfer-stock`,
+        payload,
         {
           withCredentials: true,
         },

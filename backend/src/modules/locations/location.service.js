@@ -1,5 +1,11 @@
 const locationRepository = require("./location.repository");
 const productRepository = require("../products/product.repository");
+const stockMovementRepository = require("../stockMovements/stockMovement.repository");
+const {
+    STOCK_MOVEMENT_TYPE,
+    WAREHOUSE_ACTIONS,
+    EXECUTION_STATUS,
+} = require("../../enums/stockMovement.enums");
 
 const response = require("../../utils/responseFactory");
 const createError = require("../../utils/errorFactory");
@@ -24,12 +30,12 @@ function buildLocationTotalsMap(products) {
 
             const quantity = Number(entry.quantityInStock || 0);
             const current = totals.get(key) || {
-                productsCount: 0,
+                products: new Set(),
                 totalStock: 0,
             };
 
             if (quantity > 0) {
-                current.productsCount += 1;
+                current.products.add(String(product._id));
             }
             current.totalStock += quantity;
             totals.set(key, current);
@@ -37,6 +43,101 @@ function buildLocationTotalsMap(products) {
     }
 
     return totals;
+}
+
+function normalizeSection(section) {
+    const resolved = String(section || "").trim();
+    return resolved || "UNSPECIFIED";
+}
+
+function toSectionKey(value) {
+    return normalizeSection(value).toLowerCase();
+}
+
+function findLocationByName(locations, locationName) {
+    const normalized = toLocationKey(locationName);
+    return locations.find((location) => toLocationKey(location.name) === normalized) || null;
+}
+
+function isActiveSection(locationDoc, sectionName) {
+    const normalized = toSectionKey(sectionName);
+
+    if (normalized === "unspecified") {
+        return true;
+    }
+
+    return (locationDoc.sections || []).some((section) => {
+        if (section.isActive === false) return false;
+        return (
+            toSectionKey(section.name) === normalized || toSectionKey(section.code) === normalized
+        );
+    });
+}
+
+function findProductLocationEntry(product, locationName, sectionName) {
+    const normalizedLocation = toLocationKey(locationName);
+    const normalizedSection = toSectionKey(sectionName);
+
+    return (product.locations || []).find((entry) => {
+        return (
+            toLocationKey(entry.location) === normalizedLocation &&
+            toSectionKey(entry.section) === normalizedSection
+        );
+    });
+}
+
+function ensureProductLocationEntry(product, locationName, sectionName) {
+    const normalizedSection = normalizeSection(sectionName);
+    let existingEntry = findProductLocationEntry(product, locationName, normalizedSection);
+
+    if (!existingEntry) {
+        product.locations.push({
+            location: locationName,
+            section: normalizedSection,
+            quantityInStock: 0,
+        });
+        existingEntry = product.locations[product.locations.length - 1];
+    }
+
+    return existingEntry;
+}
+
+function buildTransferMovement({
+    productId,
+    quantity,
+    createdByUserId,
+    fromLocation,
+    fromSection,
+    toLocation,
+    toSection,
+}) {
+    return {
+        productId,
+        quantityChange: quantity,
+        from: STOCK_MOVEMENT_TYPE.INVENTORY,
+        to: STOCK_MOVEMENT_TYPE.INVENTORY,
+        createdByUserId,
+        notes: `Transferred ${quantity} units from ${fromLocation} / ${fromSection} to ${toLocation} / ${toSection}`,
+        warehouseAction: WAREHOUSE_ACTIONS.TRANSFER,
+        executionStatus: EXECUTION_STATUS.EXECUTED,
+        sourceAllocations: [
+            {
+                location: fromLocation,
+                section: normalizeSection(fromSection),
+                quantity,
+            },
+        ],
+        destinationAllocations: [
+            {
+                location: toLocation,
+                section: normalizeSection(toSection),
+                quantity,
+            },
+        ],
+        physicalQuantityExecuted: quantity,
+        physicalExecutedAt: new Date(),
+        physicalExecutedByUserId: createdByUserId,
+    };
 }
 
 // ------------ Services ------------
@@ -74,10 +175,10 @@ const locationService = {
             const totalsMap = buildLocationTotalsMap(products);
             const overview = locations.map((location) => {
                 const key = toLocationKey(location.name);
-                const totals = totalsMap.get(key) || { productsCount: 0, totalStock: 0 };
+                const totals = totalsMap.get(key) || { products: new Set(), totalStock: 0 };
                 return {
                     ...location.toObject(),
-                    productsCount: totals.productsCount,
+                    productsCount: totals.products.size,
                     totalStock: totals.totalStock,
                 };
             });
@@ -202,6 +303,127 @@ const locationService = {
             }
 
             return res.status(200).json(response("Section removed successfully", location));
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    transferStock: async (req, res, next) => {
+        try {
+            const { productId, fromLocation, fromSection, toLocation, toSection, quantity } =
+                req.body;
+            const userId = req.user.id;
+            const normalizedFromSection = normalizeSection(fromSection);
+            const normalizedToSection = normalizeSection(toSection);
+
+            if (
+                toLocation.trim() === fromLocation.trim() &&
+                normalizedToSection === normalizedFromSection
+            ) {
+                throw createError("Source and destination must be different", 400);
+            }
+
+            let updatedProduct;
+            await transactionManager.run(async (tx) => {
+                const [locations, currentProduct] = await Promise.all([
+                    locationRepository.getAllLocations(tx),
+                    productRepository.getProductById(productId, tx),
+                ]);
+
+                if (!currentProduct) {
+                    throw createError("Product not found", 404);
+                }
+
+                const fromLocationDoc = findLocationByName(locations, fromLocation);
+                if (!fromLocationDoc) {
+                    throw createError(`Location ${fromLocation} not found`, 404);
+                }
+                if (fromLocationDoc.isActive === false) {
+                    throw createError(`Location ${fromLocation} is inactive`, 409);
+                }
+
+                const toLocationDoc = findLocationByName(locations, toLocation);
+                if (!toLocationDoc) {
+                    throw createError(`Location ${toLocation} not found`, 404);
+                }
+                if (toLocationDoc.isActive === false) {
+                    throw createError(`Location ${toLocation} is inactive`, 409);
+                }
+
+                if (!isActiveSection(fromLocationDoc, fromSection)) {
+                    throw createError(
+                        `Section ${fromSection} not found in location ${fromLocation}`,
+                        404,
+                    );
+                }
+
+                if (!isActiveSection(toLocationDoc, toSection)) {
+                    throw createError(
+                        `Section ${toSection} not found in location ${toLocation}`,
+                        404,
+                    );
+                }
+
+                const nextInventory = {
+                    locations: (currentProduct.locations || []).map((entry) => ({
+                        location: entry.location,
+                        section: normalizeSection(entry.section),
+                        quantityInStock: Number(entry.quantityInStock || 0),
+                    })),
+                    totalPhysicalStock: Number(currentProduct.totalPhysicalStock || 0),
+                    totalTheoreticalStock: Number(currentProduct.totalTheoreticalStock || 0),
+                };
+
+                const sourceEntry = findProductLocationEntry(
+                    nextInventory,
+                    fromLocation,
+                    normalizedFromSection,
+                );
+                if (!sourceEntry) {
+                    throw createError(
+                        `Source stock not found for ${fromLocation} / ${fromSection}`,
+                        404,
+                    );
+                }
+
+                if (sourceEntry.quantityInStock < quantity) {
+                    throw createError("Insufficient stock in source section", 400);
+                }
+
+                const destinationEntry = ensureProductLocationEntry(
+                    nextInventory,
+                    toLocation,
+                    normalizedToSection,
+                );
+
+                sourceEntry.quantityInStock -= quantity;
+                destinationEntry.quantityInStock += quantity;
+
+                updatedProduct = await productRepository.updateProductInventorySnapshot(
+                    {
+                        productId,
+                        locations: nextInventory.locations,
+                        totalPhysicalStock: nextInventory.totalPhysicalStock,
+                        totalTheoreticalStock: nextInventory.totalTheoreticalStock,
+                    },
+                    tx,
+                );
+
+                await stockMovementRepository.createStockMovement(
+                    buildTransferMovement({
+                        productId: currentProduct._id,
+                        quantity,
+                        createdByUserId: userId,
+                        fromLocation,
+                        fromSection,
+                        toLocation,
+                        toSection,
+                    }),
+                    tx,
+                );
+            });
+
+            return res.status(200).json(response("Stock transferred successfully", updatedProduct));
         } catch (err) {
             return next(err);
         }

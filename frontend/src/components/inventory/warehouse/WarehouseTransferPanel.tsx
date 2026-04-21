@@ -1,12 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ArrowRightLeft, Boxes } from 'lucide-react';
-import { productService, type Product } from '../../../services/products';
-import {
-  FACTORY_LOCATIONS_VALUES,
-  type FactoryLocation,
-} from '../../../services/enums/product.enums';
+import type { Product } from '../../../services/products';
+import { locationService, type Location } from '../../../services/locations';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Input } from '../../ui/input';
@@ -28,26 +25,115 @@ export function WarehouseTransferPanel({
   const { t } = useTranslation('warehouse');
   const { t: tStock } = useTranslation('stock');
   const [productId, setProductId] = useState('');
-  const [fromLocation, setFromLocation] = useState<FactoryLocation | ''>('');
-  const [toLocation, setToLocation] = useState<FactoryLocation | ''>('');
+  const [fromLocation, setFromLocation] = useState('');
+  const [fromSection, setFromSection] = useState('');
+  const [toLocation, setToLocation] = useState('');
+  const [toSection, setToSection] = useState('');
   const [quantity, setQuantity] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadLocations = async () => {
+      setLoadingLocations(true);
+
+      try {
+        const data = await locationService.getLocations();
+        if (!ignore) {
+          setLocations(data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : tStock('transferStock.errors.loadLocationsFailed'),
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingLocations(false);
+        }
+      }
+    };
+
+    void loadLocations();
+
+    return () => {
+      ignore = true;
+    };
+  }, [tStock]);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product._id === productId) || null,
     [products, productId],
   );
 
-  const sourceLocations = (selectedProduct?.locations || []).filter(
-    (location) => location.quantityInStock > 0,
+  const activeLocations = useMemo(
+    () => locations.filter((location) => location.isActive),
+    [locations],
   );
+
+  const sourceLocations = useMemo(() => {
+    const available = new Map<string, string>();
+
+    for (const entry of selectedProduct?.locations || []) {
+      if (entry.quantityInStock > 0) {
+        const key = entry.location;
+        if (!available.has(key)) {
+          available.set(key, key);
+        }
+      }
+    }
+
+    return Array.from(available.values());
+  }, [selectedProduct]);
+
+  const sourceSections = useMemo(() => {
+    return (selectedProduct?.locations || [])
+      .filter((entry) => entry.location === fromLocation && entry.quantityInStock > 0)
+      .map((entry) => ({
+        section: entry.section?.trim() || 'UNSPECIFIED',
+        quantity: entry.quantityInStock,
+      }));
+  }, [fromLocation, selectedProduct]);
+
+  const destinationLocation = useMemo(
+    () => activeLocations.find((location) => location.name === toLocation) || null,
+    [activeLocations, toLocation],
+  );
+
+  const destinationSections = useMemo(() => {
+    if (!destinationLocation) {
+      return [];
+    }
+
+    return [
+      { name: 'UNSPECIFIED', code: 'UNSPECIFIED', isActive: true },
+      ...destinationLocation.sections.filter((section) => section.isActive),
+    ];
+  }, [destinationLocation]);
+
   const availableStock =
-    selectedProduct?.locations.find((location) => location.location === fromLocation)
-      ?.quantityInStock || 0;
+    selectedProduct?.locations.find(
+      (location) =>
+        location.location === fromLocation &&
+        (location.section?.trim() || 'UNSPECIFIED') === fromSection,
+    )?.quantityInStock || 0;
+
+  const getLocationLabel = (locationName: string) => {
+    const normalized = locationName.trim().toLowerCase();
+    return tStock(`locations.${normalized}`, { defaultValue: locationName });
+  };
 
   const resetForm = () => {
     setFromLocation('');
+    setFromSection('');
     setToLocation('');
+    setToSection('');
     setQuantity('');
   };
 
@@ -59,13 +145,20 @@ export function WarehouseTransferPanel({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!selectedProduct || !fromLocation || !toLocation || !quantity) {
+    if (
+      !selectedProduct ||
+      !fromLocation ||
+      !fromSection ||
+      !toLocation ||
+      !toSection ||
+      !quantity
+    ) {
       toast.error(tStock('transferStock.errors.fillAllFields'));
       return;
     }
 
-    if (fromLocation === toLocation) {
-      toast.error(tStock('transferStock.errors.sameLocation'));
+    if (fromLocation === toLocation && fromSection === toSection) {
+      toast.error(tStock('transferStock.errors.samePair'));
       return;
     }
 
@@ -83,9 +176,12 @@ export function WarehouseTransferPanel({
     setIsSubmitting(true);
 
     try {
-      await productService.transferStock(selectedProduct._id, {
+      await locationService.transferStock({
+        productId: selectedProduct._id,
         fromLocation,
+        fromSection,
         toLocation,
+        toSection,
         quantity: parsedQuantity,
       });
 
@@ -141,8 +237,11 @@ export function WarehouseTransferPanel({
               <Label htmlFor="warehouse-from">{tStock('transferStock.fromLocation')}</Label>
               <Select
                 value={fromLocation}
-                onValueChange={(value) => setFromLocation(value as FactoryLocation)}
-                disabled={!selectedProduct}
+                onValueChange={(value) => {
+                  setFromLocation(value);
+                  setFromSection('');
+                }}
+                disabled={!selectedProduct || loadingLocations}
               >
                 <SelectTrigger
                   id="warehouse-from"
@@ -153,10 +252,36 @@ export function WarehouseTransferPanel({
                 <SelectContent>
                   {sourceLocations.map((location) => (
                     <SelectItem
-                      key={location.location}
-                      value={location.location}
+                      key={location}
+                      value={location}
                     >
-                      {tStock(`locations.${location.location}`)} ({location.quantityInStock})
+                      {getLocationLabel(location)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="warehouse-from-section">{tStock('transferStock.fromSection')}</Label>
+              <Select
+                value={fromSection}
+                onValueChange={setFromSection}
+                disabled={!selectedProduct || !fromLocation || loadingLocations}
+              >
+                <SelectTrigger
+                  id="warehouse-from-section"
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                >
+                  <SelectValue placeholder={tStock('transferStock.selectSection')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sourceSections.map((entry) => (
+                    <SelectItem
+                      key={entry.section}
+                      value={entry.section}
+                    >
+                      {entry.section} ({entry.quantity})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -174,8 +299,11 @@ export function WarehouseTransferPanel({
               <Label htmlFor="warehouse-to">{tStock('transferStock.toLocation')}</Label>
               <Select
                 value={toLocation}
-                onValueChange={(value) => setToLocation(value as FactoryLocation)}
-                disabled={!selectedProduct}
+                onValueChange={(value) => {
+                  setToLocation(value);
+                  setToSection('');
+                }}
+                disabled={!selectedProduct || loadingLocations}
               >
                 <SelectTrigger
                   id="warehouse-to"
@@ -184,13 +312,38 @@ export function WarehouseTransferPanel({
                   <SelectValue placeholder={tStock('transferStock.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FACTORY_LOCATIONS_VALUES.map((location) => (
+                  {activeLocations.map((location) => (
                     <SelectItem
-                      key={location}
-                      value={location}
-                      disabled={location === fromLocation}
+                      key={location._id}
+                      value={location.name}
                     >
-                      {tStock(`locations.${location}`)}
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="warehouse-to-section">{tStock('transferStock.toSection')}</Label>
+              <Select
+                value={toSection}
+                onValueChange={setToSection}
+                disabled={!selectedProduct || !toLocation || loadingLocations}
+              >
+                <SelectTrigger
+                  id="warehouse-to-section"
+                  className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] text-sm shadow-sm focus:ring-2 focus:ring-[--primary-500]/30"
+                >
+                  <SelectValue placeholder={tStock('transferStock.selectSection')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {destinationSections.map((section) => (
+                    <SelectItem
+                      key={section.code || section.name}
+                      value={section.name}
+                    >
+                      {section.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,11 +377,12 @@ export function WarehouseTransferPanel({
               <div className="flex flex-wrap gap-2">
                 {selectedProduct.locations.map((location) => (
                   <Badge
-                    key={location.location}
+                    key={`${location.location}-${location.section || 'UNSPECIFIED'}`}
                     variant="outline"
                     className="py-1"
                   >
-                    {tStock(`locations.${location.location}`)}: {location.quantityInStock}
+                    {getLocationLabel(location.location)} / {location.section || 'UNSPECIFIED'}:{' '}
+                    {location.quantityInStock}
                   </Badge>
                 ))}
               </div>

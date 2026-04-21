@@ -17,7 +17,7 @@ const transactionManager = require("../../database/transactionManager/instance")
 
 // ------------ Helpers ------------
 
-const UPLOADS_DIR = path.join(__dirname, "..", "..", "uploads");
+const UPLOADS_DIR = path.join(__dirname, "..", "..", "..", "uploads");
 
 function ensureUploadsDir() {
     if (!fs.existsSync(UPLOADS_DIR)) {
@@ -71,16 +71,27 @@ function deleteUploadedFile(url) {
     return false;
 }
 
-function findLocation(product, location) {
-    return product.locations.find((entry) => entry.location === location);
+function normalizeSection(section) {
+    const resolvedSection = String(section || "").trim();
+    return resolvedSection || "UNSPECIFIED";
 }
 
-function ensureLocation(product, location) {
-    let existingLocation = findLocation(product, location);
+function findSectionLocation(product, location, section) {
+    const normalizedSection = normalizeSection(section);
+    return product.locations.find(
+        (entry) =>
+            entry.location === location && normalizeSection(entry.section) === normalizedSection,
+    );
+}
+
+function ensureSectionLocation(product, location, section) {
+    const normalizedSection = normalizeSection(section);
+    let existingLocation = findSectionLocation(product, location, normalizedSection);
 
     if (!existingLocation) {
         product.locations.push({
             location,
+            section: normalizedSection,
             quantityInStock: 0,
         });
         existingLocation = product.locations[product.locations.length - 1];
@@ -92,6 +103,7 @@ function ensureLocation(product, location) {
 function buildPhysicalAdjustmentMovement({
     productId,
     location,
+    section,
     quantity,
     createdByUserId,
     notes,
@@ -116,7 +128,7 @@ function buildPhysicalAdjustmentMovement({
             destinationAllocations: [
                 {
                     location,
-                    section: "UNSPECIFIED",
+                    section: normalizeSection(section),
                     quantity,
                 },
             ],
@@ -132,7 +144,7 @@ function buildPhysicalAdjustmentMovement({
         sourceAllocations: [
             {
                 location,
-                section: "UNSPECIFIED",
+                section: normalizeSection(section),
                 quantity,
             },
         ],
@@ -144,6 +156,7 @@ function toInventorySnapshot(product) {
     return {
         locations: (product.locations || []).map((entry) => ({
             location: entry.location,
+            section: normalizeSection(entry.section),
             quantityInStock: Number(entry.quantityInStock || 0),
         })),
         totalPhysicalStock: Number(product.totalPhysicalStock || 0),
@@ -486,88 +499,13 @@ const productService = {
         }
     },
 
-    // Transfer stock between locations
-    transferProductStock: async (req, res, next) => {
-        try {
-            const { productId } = req.params;
-            const { fromLocation, toLocation, quantity } = req.body;
-            const userId = req.user.id;
-
-            let product;
-            await transactionManager.run(async (tx) => {
-                const currentProduct = await productRepository.getProductById(productId, tx);
-                if (!currentProduct) {
-                    throw createError("Product not found", 404);
-                }
-
-                const nextInventory = toInventorySnapshot(currentProduct);
-
-                const fromLoc = findLocation(nextInventory, fromLocation);
-                if (!fromLoc) {
-                    throw createError(`Source location ${fromLocation} not found in product`, 404);
-                }
-
-                if (fromLoc.quantityInStock < quantity) {
-                    throw createError("Insufficient stock in source location", 400);
-                }
-
-                const toLoc = ensureLocation(nextInventory, toLocation);
-
-                fromLoc.quantityInStock -= quantity;
-                toLoc.quantityInStock += quantity;
-
-                product = await productRepository.updateProductLocations(
-                    {
-                        productId,
-                        locations: nextInventory.locations,
-                    },
-                    tx,
-                );
-
-                await stockMovementRepository.createStockMovement(
-                    {
-                        productId: currentProduct._id,
-                        quantityChange: quantity,
-                        from: STOCK_MOVEMENT_TYPE.INVENTORY,
-                        to: STOCK_MOVEMENT_TYPE.INVENTORY,
-                        createdByUserId: userId,
-                        notes: `Transferred ${quantity} units from ${fromLocation} to ${toLocation}`,
-                        warehouseAction: WAREHOUSE_ACTIONS.TRANSFER,
-                        executionStatus: EXECUTION_STATUS.EXECUTED,
-                        sourceAllocations: [
-                            {
-                                location: fromLocation,
-                                section: "UNSPECIFIED",
-                                quantity,
-                            },
-                        ],
-                        destinationAllocations: [
-                            {
-                                location: toLocation,
-                                section: "UNSPECIFIED",
-                                quantity,
-                            },
-                        ],
-                        physicalQuantityExecuted: quantity,
-                        physicalExecutedAt: new Date(),
-                        physicalExecutedByUserId: userId,
-                    },
-                    tx,
-                );
-            });
-
-            return res.status(200).json(response("Stock transferred successfully", product));
-        } catch (err) {
-            return next(err);
-        }
-    },
-
     // Manual Physical Stock Adjustment
     manualPhysicalStockAdjustment: async (req, res, next) => {
         try {
             const { productId } = req.params;
-            const { location, adjustmentType, quantity } = req.body;
+            const { location, section, adjustmentType, quantity } = req.body;
             const userId = req.user.id;
+            const normalizedSection = normalizeSection(section);
 
             let product;
             await transactionManager.run(async (tx) => {
@@ -578,14 +516,17 @@ const productService = {
 
                 const nextInventory = toInventorySnapshot(currentProduct);
 
-                let loc = findLocation(nextInventory, location);
+                let loc = findSectionLocation(nextInventory, location, normalizedSection);
 
                 if (!loc) {
                     if (adjustmentType === "subtract") {
-                        throw createError(`Location ${location} not found in product`, 404);
+                        throw createError(
+                            `Location ${location} / ${normalizedSection} not found in product`,
+                            404,
+                        );
                     }
 
-                    loc = ensureLocation(nextInventory, location);
+                    loc = ensureSectionLocation(nextInventory, location, normalizedSection);
                 }
 
                 const totalPhysicalStock = Number(nextInventory.totalPhysicalStock || 0);
@@ -623,9 +564,10 @@ const productService = {
                     buildPhysicalAdjustmentMovement({
                         productId: currentProduct._id,
                         location,
+                        section: normalizedSection,
                         quantity,
                         createdByUserId: userId,
-                        notes: `Manual physical stock ${adjustmentType} of ${quantity} units at ${location}`,
+                        notes: `Manual physical stock ${adjustmentType} of ${quantity} units at ${location} / ${normalizedSection}`,
                         delta: adjustmentType === "add" ? quantity : -quantity,
                     }),
                     tx,
@@ -644,8 +586,9 @@ const productService = {
     setPhysicalStock: async (req, res, next) => {
         try {
             const productId = req.params.productId;
-            const { location, newQuantity } = req.body;
+            const { location, section, newQuantity } = req.body;
             const userId = req.user.id;
+            const normalizedSection = normalizeSection(section);
 
             const qty = Number(newQuantity);
 
@@ -658,7 +601,7 @@ const productService = {
 
                 const nextInventory = toInventorySnapshot(product);
 
-                const loc = ensureLocation(nextInventory, location);
+                const loc = ensureSectionLocation(nextInventory, location, normalizedSection);
                 const prevQty = Number(loc.quantityInStock || 0);
                 const delta = qty - prevQty;
 
@@ -692,9 +635,10 @@ const productService = {
                         buildPhysicalAdjustmentMovement({
                             productId: product._id,
                             location,
+                            section: normalizedSection,
                             quantity: Math.abs(delta),
                             createdByUserId: userId,
-                            notes: `Physical stock set from ${prevQty} to ${qty} at ${location}`,
+                            notes: `Physical stock set from ${prevQty} to ${qty} at ${location} / ${normalizedSection}`,
                             delta,
                         }),
                         tx,
@@ -704,6 +648,7 @@ const productService = {
                 result = {
                     productId: product._id,
                     location,
+                    section: normalizedSection,
                     previousQuantity: prevQty,
                     newQuantity: qty,
                     delta,

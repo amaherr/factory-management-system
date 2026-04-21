@@ -102,6 +102,8 @@
     "stockByLocation": "Stock by Location",
     "noLocations": "No locations assigned",
     "location": "Location",
+    "locationSection": "Location / Section",
+    "noSection": "Unspecified",
     "quantity": "Quantity"
   },
   "locations": {
@@ -140,6 +142,13 @@
     "description": "Manually adjust stock for {{productName}} ({{productCode}})",
     "location": "Location",
     "selectLocation": "Select location",
+    "loadingLocations": "Loading locations...",
+    "noLocations": "No active locations available",
+    "section": "Section",
+    "selectSection": "Select section",
+    "selectLocationFirst": "Select a location first",
+    "loadingSections": "Loading sections...",
+    "noSections": "No active sections available",
     "adjustmentType": "Adjustment Type",
     "add": "Add Stock",
     "subtract": "Subtract Stock",
@@ -152,15 +161,19 @@
     "errors": {
       "fillAllFields": "Please fill all fields",
       "invalidQuantity": "Please enter a valid quantity",
+      "loadLocationsFailed": "Failed to load locations",
       "failed": "Failed to adjust stock"
     }
   },
   "transferStock": {
     "title": "Transfer Stock",
-    "description": "Transfer stock for {{productName}} ({{productCode}}) between locations",
+    "description": "Transfer stock for {{productName}} ({{productCode}}) between sections",
     "fromLocation": "From Location",
+    "fromSection": "From Section",
     "toLocation": "To Location",
+    "toSection": "To Section",
     "selectLocation": "Select location",
+    "selectSection": "Select section",
     "available": "Available",
     "quantity": "Quantity to Transfer",
     "quantityPlaceholder": "Enter quantity",
@@ -170,9 +183,10 @@
     "success": "Stock transferred successfully",
     "errors": {
       "fillAllFields": "Please fill all fields",
-      "sameLocation": "Source and destination locations must be different",
+      "samePair": "Source and destination must be different",
       "invalidQuantity": "Please enter a valid quantity",
-      "insufficientStock": "Insufficient stock in source location",
+      "insufficientStock": "Insufficient stock in source section",
+      "loadLocationsFailed": "Failed to load locations",
       "failed": "Failed to transfer stock"
     }
   },
@@ -182,6 +196,13 @@
     "warning": "This will override the current stock level. Use with caution!",
     "location": "Location",
     "selectLocation": "Select location",
+    "loadingLocations": "Loading locations...",
+    "noLocations": "No active locations available",
+    "section": "Section",
+    "selectSection": "Select section",
+    "selectLocationFirst": "Select a location first",
+    "loadingSections": "Loading sections...",
+    "noSections": "No active sections available",
     "current": "Current",
     "currentStock": "Current stock",
     "newQuantity": "New Quantity",
@@ -194,6 +215,7 @@
     "errors": {
       "fillAllFields": "Please fill all fields",
       "invalidQuantity": "Please enter a valid quantity (0 or greater)",
+      "loadLocationsFailed": "Failed to load locations",
       "failed": "Failed to set stock level"
     }
   },

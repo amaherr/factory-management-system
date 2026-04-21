@@ -62,4 +62,11 @@ router.delete(
     locationService.removeSection,
 );
 
+router.post(
+    "/transfer-stock",
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    validator({ bodySchema: locationDtos.transferStockSchema }),
+    locationService.transferStock,
+);
+
 module.exports = router;

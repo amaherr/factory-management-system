@@ -76,14 +76,6 @@ router.patch(
     productService.changeProductActivation,
 );
 
-// Inventory - Transfer stock (Admin, Inventory)
-router.patch(
-    "/:productId/transfer",
-    validator({ bodySchema: productDtos.transferProductStockSchema }),
-    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
-    productService.transferProductStock,
-);
-
 // Inventory - Manual Phyisical Stock Adjustment (Admin, Inventory)
 router.patch(
     "/:productId/manual-physical-adjustment",

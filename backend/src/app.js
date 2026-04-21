@@ -47,6 +47,7 @@ app.use(authenticator);
 
 // serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // serve swagger api documentation
 app.get("/api-docs/openapi.json", (req, res) => {

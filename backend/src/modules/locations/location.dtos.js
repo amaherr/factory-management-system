@@ -31,6 +31,15 @@ const locationDtos = {
         isActive: Joi.boolean().optional(),
     }).min(1),
 
+    transferStockSchema: Joi.object({
+        productId: objectId.required(),
+        fromLocation: Joi.string().trim().min(1).required(),
+        fromSection: Joi.string().trim().min(1).required(),
+        toLocation: Joi.string().trim().min(1).required(),
+        toSection: Joi.string().trim().min(1).required(),
+        quantity: Joi.number().integer().greater(0).required(),
+    }),
+
     objectIdSchema: objectId,
 };
 

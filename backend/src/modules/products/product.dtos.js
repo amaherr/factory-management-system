@@ -57,21 +57,9 @@ const productDtos = {
         status: Joi.string().valid(PRODUCT_STATUS.ACTIVE, PRODUCT_STATUS.DEACTIVE).required(),
     }),
 
-    transferProductStockSchema: Joi.object({
-        fromLocation: Joi.string().trim().min(1).required(),
-        toLocation: Joi.string()
-            .trim()
-            .min(1)
-            .invalid(Joi.ref("fromLocation")) // cannot be same as fromLocation
-            .required(),
-        quantity: Joi.number()
-            .integer()
-            .greater(0) // > 0
-            .required(),
-    }),
-
     manualPhysicalStockAdjustmentSchema: Joi.object({
         location: Joi.string().trim().min(1).required(),
+        section: Joi.string().trim().min(1).required(),
         adjustmentType: Joi.string().valid("add", "subtract").required(),
         quantity: Joi.number()
             .integer()
@@ -81,6 +69,7 @@ const productDtos = {
 
     setPhysicalStockSchema: Joi.object({
         location: Joi.string().trim().min(1).required(),
+        section: Joi.string().trim().min(1).required(),
         newQuantity: Joi.number().integer().min(0).required(),
     }),
 };

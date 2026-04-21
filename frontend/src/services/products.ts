@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { Color, ProductStatus, Season, FactoryLocation } from './enums/product.enums';
+import type { Color, ProductStatus, Season } from './enums/product.enums';
 
-export type { Color, ProductStatus, Season, FactoryLocation };
+export type { Color, ProductStatus, Season };
 
 interface Product {
   _id: string;
@@ -23,6 +23,7 @@ interface Product {
   totalSold: number;
   locations: Array<{
     location: string;
+    section?: string;
     quantityInStock: number;
   }>;
   activatedByUserId?: string;
@@ -210,28 +211,11 @@ export const productService = {
     }
   },
 
-  transferStock: async (
-    productId: string,
-    payload: {
-      fromLocation: FactoryLocation;
-      toLocation: FactoryLocation;
-      quantity: number;
-    },
-  ): Promise<Product> => {
-    try {
-      const { data } = await axios.patch(`${API_BASE}/products/${productId}/transfer`, payload, {
-        withCredentials: true,
-      });
-      return data.data;
-    } catch (error) {
-      throw extractError(error);
-    }
-  },
-
   adjustStock: async (
     productId: string,
     payload: {
-      location: FactoryLocation;
+      location: string;
+      section: string;
       adjustmentType: 'add' | 'subtract';
       quantity: number;
     },
@@ -253,7 +237,8 @@ export const productService = {
   setStock: async (
     productId: string,
     payload: {
-      location: FactoryLocation;
+      location: string;
+      section: string;
       newQuantity: number;
     },
   ): Promise<{

@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Product, FactoryLocation } from '../../../services/products';
-import { productService } from '../../../services/products';
-import { FACTORY_LOCATIONS_VALUES } from '../../../services/enums/product.enums';
+import type { Product } from '../../../services/products';
+import { locationService, type Location } from '../../../services/locations';
 import {
   Dialog,
   DialogContent,
@@ -32,24 +31,103 @@ export function TransferStockDialog({
   onSuccess,
 }: TransferStockDialogProps) {
   const { t } = useTranslation('stock');
-  const [fromLocation, setFromLocation] = useState<FactoryLocation | ''>('');
-  const [toLocation, setToLocation] = useState<FactoryLocation | ''>('');
+  const [fromLocation, setFromLocation] = useState('');
+  const [fromSection, setFromSection] = useState('');
+  const [toLocation, setToLocation] = useState('');
+  const [toSection, setToSection] = useState('');
   const [quantity, setQuantity] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadLocations = async () => {
+      setLoadingLocations(true);
+
+      try {
+        const data = await locationService.getLocations();
+        if (!ignore) {
+          setLocations(data);
+        }
+      } catch (error) {
+        if (!ignore) {
+          toast.error(
+            error instanceof Error ? error.message : t('transferStock.errors.loadLocationsFailed'),
+          );
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingLocations(false);
+        }
+      }
+    };
+
+    void loadLocations();
+
+    return () => {
+      ignore = true;
+    };
+  }, [t]);
+
+  const activeLocations = useMemo(
+    () => locations.filter((location) => location.isActive),
+    [locations],
+  );
+
+  const sourceSections = useMemo(() => {
+    return (product?.locations || [])
+      .filter(
+        (locationEntry) =>
+          locationEntry.location === fromLocation && locationEntry.quantityInStock > 0,
+      )
+      .map((entry) => ({
+        section: entry.section?.trim() || 'UNSPECIFIED',
+        quantity: entry.quantityInStock,
+      }));
+  }, [fromLocation, product]);
+
+  const destinationLocation = useMemo(
+    () => activeLocations.find((location) => location.name === toLocation) || null,
+    [activeLocations, toLocation],
+  );
+
+  const destinationSections = useMemo(() => {
+    if (!destinationLocation) {
+      return [];
+    }
+
+    return [
+      { name: 'UNSPECIFIED', code: 'UNSPECIFIED', isActive: true },
+      ...destinationLocation.sections.filter((section) => section.isActive),
+    ];
+  }, [destinationLocation]);
 
   const availableStock =
-    product?.locations.find((loc) => loc.location === fromLocation)?.quantityInStock || 0;
+    product?.locations.find(
+      (loc) =>
+        loc.location === fromLocation && (loc.section?.trim() || 'UNSPECIFIED') === fromSection,
+    )?.quantityInStock || 0;
+
+  const resetForm = () => {
+    setFromLocation('');
+    setFromSection('');
+    setToLocation('');
+    setToSection('');
+    setQuantity('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!product || !fromLocation || !toLocation || !quantity) {
+    if (!product || !fromLocation || !fromSection || !toLocation || !toSection || !quantity) {
       toast.error(t('transferStock.errors.fillAllFields'));
       return;
     }
 
-    if (fromLocation === toLocation) {
-      toast.error(t('transferStock.errors.sameLocation'));
+    if (fromLocation === toLocation && fromSection === toSection) {
+      toast.error(t('transferStock.errors.samePair'));
       return;
     }
 
@@ -67,15 +145,19 @@ export function TransferStockDialog({
     setIsSubmitting(true);
 
     try {
-      await productService.transferStock(product._id, {
+      await locationService.transferStock({
+        productId: product._id,
         fromLocation,
+        fromSection,
         toLocation,
+        toSection,
         quantity: qty,
       });
 
       toast.success(t('transferStock.success'));
       onSuccess();
-      handleClose();
+      resetForm();
+      onClose();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('transferStock.errors.failed'));
     } finally {
@@ -84,9 +166,7 @@ export function TransferStockDialog({
   };
 
   const handleClose = () => {
-    setFromLocation('');
-    setToLocation('');
-    setQuantity('');
+    resetForm();
     onClose();
   };
 
@@ -110,29 +190,37 @@ export function TransferStockDialog({
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-end">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-end">
             <div className="space-y-2">
               <Label htmlFor="fromLocation">{t('transferStock.fromLocation')}</Label>
               <Select
                 value={fromLocation}
-                onValueChange={(value) => setFromLocation(value as FactoryLocation)}
+                onValueChange={(value) => {
+                  setFromLocation(value);
+                  setFromSection('');
+                }}
+                disabled={loadingLocations}
               >
                 <SelectTrigger id="fromLocation">
                   <SelectValue placeholder={t('transferStock.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FACTORY_LOCATIONS_VALUES.map((loc) => {
-                    const stock =
-                      product?.locations.find((l) => l.location === loc)?.quantityInStock || 0;
-                    return (
-                      <SelectItem
-                        key={loc}
-                        value={loc}
-                      >
-                        {t(`locations.${loc}`)} ({stock})
-                      </SelectItem>
-                    );
-                  })}
+                  {product
+                    ? Array.from(
+                        new Set(
+                          product.locations
+                            .filter((location) => location.quantityInStock > 0)
+                            .map((location) => location.location),
+                        ),
+                      ).map((location) => (
+                        <SelectItem
+                          key={location}
+                          value={location}
+                        >
+                          {t(`locations.${location}`) || location}
+                        </SelectItem>
+                      ))
+                    : null}
                 </SelectContent>
               </Select>
               {fromLocation && (
@@ -145,22 +233,73 @@ export function TransferStockDialog({
             <ArrowRight className="size-5 text-muted-foreground mb-2" />
 
             <div className="space-y-2">
+              <Label htmlFor="fromSection">{t('transferStock.section')}</Label>
+              <Select
+                value={fromSection}
+                onValueChange={setFromSection}
+                disabled={!fromLocation || loadingLocations}
+              >
+                <SelectTrigger id="fromSection">
+                  <SelectValue placeholder={t('transferStock.selectSection')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sourceSections.map((entry) => (
+                    <SelectItem
+                      key={entry.section}
+                      value={entry.section}
+                    >
+                      {entry.section} ({entry.quantity})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ArrowRight className="hidden md:block size-5 text-muted-foreground mb-2" />
+
+            <div className="space-y-2">
               <Label htmlFor="toLocation">{t('transferStock.toLocation')}</Label>
               <Select
                 value={toLocation}
-                onValueChange={(value) => setToLocation(value as FactoryLocation)}
+                onValueChange={(value) => {
+                  setToLocation(value);
+                  setToSection('');
+                }}
+                disabled={loadingLocations}
               >
                 <SelectTrigger id="toLocation">
                   <SelectValue placeholder={t('transferStock.selectLocation')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {FACTORY_LOCATIONS_VALUES.map((loc) => (
+                  {activeLocations.map((loc) => (
                     <SelectItem
-                      key={loc}
-                      value={loc}
-                      disabled={loc === fromLocation}
+                      key={loc._id}
+                      value={loc.name}
                     >
-                      {t(`locations.${loc}`)}
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="toSection">{t('transferStock.section')}</Label>
+              <Select
+                value={toSection}
+                onValueChange={setToSection}
+                disabled={!toLocation || loadingLocations}
+              >
+                <SelectTrigger id="toSection">
+                  <SelectValue placeholder={t('transferStock.selectSection')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {destinationSections.map((section) => (
+                    <SelectItem
+                      key={section.code || section.name}
+                      value={section.name}
+                    >
+                      {section.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

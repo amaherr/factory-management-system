@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Product, FactoryLocation } from '../../../services/products';
+import type { Product } from '../../../services/products';
 import { productService } from '../../../services/products';
-import { FACTORY_LOCATIONS_VALUES } from '../../../services/enums/product.enums';
+import { locationService, type Location } from '../../../services/locations';
 import {
   Dialog,
   DialogContent,
@@ -27,17 +27,65 @@ interface SetStockDialogProps {
 
 export function SetStockDialog({ product, open, onClose, onSuccess }: SetStockDialogProps) {
   const { t } = useTranslation('stock');
-  const [location, setLocation] = useState<FactoryLocation | ''>('');
+  const [availableLocations, setAvailableLocations] = useState<Location[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [location, setLocation] = useState('');
+  const [section, setSection] = useState('');
   const [newQuantity, setNewQuantity] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const selectedLocation = useMemo(
+    () => availableLocations.find((item) => item.name === location) || null,
+    [availableLocations, location],
+  );
+
+  const activeLocations = useMemo(
+    () => availableLocations.filter((item) => item.isActive !== false),
+    [availableLocations],
+  );
+
+  const activeSections = useMemo(
+    () => (selectedLocation?.sections || []).filter((item) => item.isActive !== false),
+    [selectedLocation],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+
+    const loadLocations = async () => {
+      setLoadingLocations(true);
+      try {
+        const locations = await locationService.getLocations();
+        setAvailableLocations(locations);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : t('setStock.errors.loadLocationsFailed'),
+        );
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    void loadLocations();
+  }, [open, t]);
+
+  useEffect(() => {
+    if (!section) return;
+
+    if (!activeSections.some((item) => item.name === section)) {
+      setSection('');
+    }
+  }, [activeSections, section]);
+
   const currentStock =
-    product?.locations.find((loc) => loc.location === location)?.quantityInStock || 0;
+    product?.locations.find(
+      (loc) => loc.location === location && (loc.section || 'UNSPECIFIED') === section,
+    )?.quantityInStock || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!product || !location || newQuantity === '') {
+    if (!product || !location || !section || newQuantity === '') {
       toast.error(t('setStock.errors.fillAllFields'));
       return;
     }
@@ -53,6 +101,7 @@ export function SetStockDialog({ product, open, onClose, onSuccess }: SetStockDi
     try {
       await productService.setStock(product._id, {
         location,
+        section,
         newQuantity: qty,
       });
 
@@ -68,6 +117,7 @@ export function SetStockDialog({ product, open, onClose, onSuccess }: SetStockDi
 
   const handleClose = () => {
     setLocation('');
+    setSection('');
     setNewQuantity('');
     onClose();
   };
@@ -103,27 +153,77 @@ export function SetStockDialog({ product, open, onClose, onSuccess }: SetStockDi
             <Label htmlFor="location">{t('setStock.location')}</Label>
             <Select
               value={location}
-              onValueChange={(value) => setLocation(value as FactoryLocation)}
+              onValueChange={(value) => {
+                setLocation(value);
+                setSection('');
+              }}
+              disabled={loadingLocations || activeLocations.length === 0}
             >
               <SelectTrigger id="location">
-                <SelectValue placeholder={t('setStock.selectLocation')} />
+                <SelectValue
+                  placeholder={
+                    loadingLocations ? t('setStock.loadingLocations') : t('setStock.selectLocation')
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {FACTORY_LOCATIONS_VALUES.map((loc) => {
+                {activeLocations.map((loc) => {
                   const stock =
-                    product?.locations.find((l) => l.location === loc)?.quantityInStock || 0;
+                    product?.locations.find((l) => l.location === loc.name)?.quantityInStock || 0;
                   return (
                     <SelectItem
-                      key={loc}
-                      value={loc}
+                      key={loc._id}
+                      value={loc.name}
                     >
-                      {t(`locations.${loc}`)} ({t('setStock.current')}: {stock})
+                      {loc.name}
+                      {loc.code ? ` (${loc.code})` : ''} ({t('setStock.current')}: {stock})
                     </SelectItem>
                   );
                 })}
               </SelectContent>
             </Select>
-            {location && (
+            {!loadingLocations && activeLocations.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t('setStock.noLocations')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="section">{t('setStock.section')}</Label>
+            <Select
+              value={section}
+              onValueChange={setSection}
+              disabled={!selectedLocation || activeSections.length === 0}
+            >
+              <SelectTrigger id="section">
+                <SelectValue
+                  placeholder={
+                    !selectedLocation
+                      ? t('setStock.selectLocationFirst')
+                      : activeSections.length === 0
+                        ? t('setStock.noSections')
+                        : t('setStock.selectSection')
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {activeSections.map((item) => (
+                  <SelectItem
+                    key={item._id}
+                    value={item.name}
+                  >
+                    {item.name}
+                    {item.code ? ` (${item.code})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedLocation && activeSections.length === 0 && (
+              <p className="text-sm text-muted-foreground">{t('setStock.noSections')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {location && section && (
               <p className="text-sm text-muted-foreground">
                 {t('setStock.currentStock')}: {currentStock}
               </p>

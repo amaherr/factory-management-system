@@ -176,15 +176,19 @@ export function ProductStockDetailsDialog({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t('productDetails.location')}</TableHead>
+                      <TableHead>{t('productDetails.locationSection')}</TableHead>
                       <TableHead className="text-right">{t('productDetails.quantity')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {product.locations.map((loc) => (
-                      <TableRow key={loc.location}>
+                      <TableRow key={`${loc.location}-${loc.section || 'UNSPECIFIED'}`}>
                         <TableCell>
-                          <Badge variant="outline">{t(`stock:locations.${loc.location}`)}</Badge>
+                          <Badge variant="outline">
+                            {t(`stock:locations.${loc.location}`, { defaultValue: loc.location })}
+                            {' / '}
+                            {loc.section || t('productDetails.noSection')}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
                           {loc.quantityInStock}

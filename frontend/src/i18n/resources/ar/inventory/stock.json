@@ -102,6 +102,8 @@
     "stockByLocation": "المخزون حسب الموقع",
     "noLocations": "لم يتم تعيين مواقع",
     "location": "الموقع",
+    "locationSection": "الموقع / القسم",
+    "noSection": "غير محدد",
     "quantity": "الكمية"
   },
   "locations": {
@@ -140,6 +142,13 @@
     "description": "تعديل المخزون يدويًا لـ {{productName}} ({{productCode}})",
     "location": "الموقع",
     "selectLocation": "اختر الموقع",
+    "loadingLocations": "جاري تحميل المواقع...",
+    "noLocations": "لا توجد مواقع نشطة متاحة",
+    "section": "القسم",
+    "selectSection": "اختر القسم",
+    "selectLocationFirst": "اختر موقعًا أولًا",
+    "loadingSections": "جاري تحميل الأقسام...",
+    "noSections": "لا توجد أقسام نشطة متاحة",
     "adjustmentType": "نوع التعديل",
     "add": "إضافة مخزون",
     "subtract": "خصم مخزون",
@@ -152,15 +161,19 @@
     "errors": {
       "fillAllFields": "يرجى ملء جميع الحقول",
       "invalidQuantity": "يرجى إدخال كمية صحيحة",
+      "loadLocationsFailed": "فشل تحميل المواقع",
       "failed": "فشل تعديل المخزون"
     }
   },
   "transferStock": {
     "title": "نقل المخزون",
-    "description": "نقل المخزون لـ {{productName}} ({{productCode}}) بين المواقع",
+    "description": "نقل المخزون لـ {{productName}} ({{productCode}}) بين الأقسام",
     "fromLocation": "من الموقع",
+    "fromSection": "من القسم",
     "toLocation": "إلى الموقع",
+    "toSection": "إلى القسم",
     "selectLocation": "اختر الموقع",
+    "selectSection": "اختر القسم",
     "available": "المتاح",
     "quantity": "الكمية المراد نقلها",
     "quantityPlaceholder": "أدخل الكمية",
@@ -170,9 +183,10 @@
     "success": "تم نقل المخزون بنجاح",
     "errors": {
       "fillAllFields": "يرجى ملء جميع الحقول",
-      "sameLocation": "يجب أن يكون موقع المصدر والوجهة مختلفين",
+      "samePair": "يجب أن يختلف المصدر والوجهة",
       "invalidQuantity": "يرجى إدخال كمية صحيحة",
-      "insufficientStock": "مخزون غير كافٍ في الموقع المصدر",
+      "insufficientStock": "مخزون غير كافٍ في القسم المصدر",
+      "loadLocationsFailed": "فشل تحميل المواقع",
       "failed": "فشل نقل المخزون"
     }
   },
@@ -182,6 +196,13 @@
     "warning": " سيؤدي هذا إلى تجاوز مستوى المخزون الحالي. استخدم بحذر!",
     "location": "الموقع",
     "selectLocation": "اختر الموقع",
+    "loadingLocations": "جاري تحميل المواقع...",
+    "noLocations": "لا توجد مواقع نشطة متاحة",
+    "section": "القسم",
+    "selectSection": "اختر القسم",
+    "selectLocationFirst": "اختر موقعًا أولًا",
+    "loadingSections": "جاري تحميل الأقسام...",
+    "noSections": "لا توجد أقسام نشطة متاحة",
     "current": "الحالي",
     "currentStock": "المخزون الحالي",
     "newQuantity": "الكمية الجديدة",
@@ -194,6 +215,7 @@
     "errors": {
       "fillAllFields": "يرجى ملء جميع الحقول",
       "invalidQuantity": "يرجى إدخال كمية صحيحة (0 أو أكثر)",
+      "loadLocationsFailed": "فشل تحميل المواقع",
       "failed": "فشل تعيين مستوى المخزون"
     }
   },
