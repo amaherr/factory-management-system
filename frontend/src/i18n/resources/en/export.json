@@ -45,6 +45,7 @@
   "collections": {
     "users": "Users",
     "customers": "Customers",
+    "locations": "Locations",
     "products": "Products",
     "orders": "Orders",
     "issues": "Issues",
@@ -58,6 +59,7 @@
   "collectionDescriptions": {
     "users": "User profiles, roles, and account status fields.",
     "customers": "Customer master records and related contact details.",
+    "locations": "Warehouse and storage location records with section metadata.",
     "products": "Product catalog data, pricing, and stock metadata.",
     "orders": "Order headers, totals, statuses, and linked entities.",
     "issues": "Issue tracking records and their lifecycle statuses.",
