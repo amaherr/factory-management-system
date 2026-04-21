@@ -13,6 +13,12 @@
     "allLocations": "All Locations",
     "lowStockOnly": "Low stock only (<50)"
   },
+  "pagination": {
+    "showing": "Showing {{from}} to {{to}} of {{total}} products",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{current}} of {{total}}"
+  },
   "table": {
     "product": "Product",
     "code": "Code",

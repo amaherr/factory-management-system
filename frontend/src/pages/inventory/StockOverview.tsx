@@ -16,7 +16,16 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { Badge } from '../../components/ui/badge';
-import { Search, PackagePlus, Settings2, RefreshCw, Eye, X } from 'lucide-react';
+import {
+  Search,
+  PackagePlus,
+  Settings2,
+  RefreshCw,
+  Eye,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { AdjustStockDialog } from '../../components/inventory/stock/AdjustStockDialog';
 import { SetStockDialog } from '../../components/inventory/stock/SetStockDialog';
 import { ProductStockDetailsDialog } from '../../components/inventory/stock/ProductStockDetailsDialog';
@@ -28,9 +37,13 @@ import { getProductImageSrc } from '../../utils/imageUpload';
 export function StockOverview() {
   const { t } = useTranslation('stock');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   // Dialog states
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -39,16 +52,35 @@ export function StockOverview() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const LOW_STOCK_THRESHOLD = 50;
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    void loadProducts();
+  }, [page, debouncedSearch]);
 
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      const data = await productService.getAllProducts({ page: 1, limit: 100 });
+      const data = await productService.getAllProducts({
+        q: debouncedSearch || undefined,
+        page,
+        limit: PAGE_SIZE,
+      });
       setProducts(data.products);
+      setTotal(data.total);
+      setPages(Math.max(1, data.pages));
+
+      if (data.pages > 0 && page > data.pages) {
+        setPage(data.pages);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('errors.loadFailed'));
     } finally {
@@ -56,16 +88,12 @@ export function StockOverview() {
     }
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku.toString().includes(searchQuery);
+  const filteredProducts = products.filter(
+    (product) => !lowStockOnly || product.totalPhysicalStock < LOW_STOCK_THRESHOLD,
+  );
 
-    const matchesLowStock = !lowStockOnly || product.totalPhysicalStock < LOW_STOCK_THRESHOLD;
-
-    return matchesSearch && matchesLowStock;
-  });
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
 
   const handleAdjustStock = (product: Product) => {
     setSelectedProduct(product);
@@ -115,7 +143,10 @@ export function StockOverview() {
                     placeholder={t('searchPlaceholder')}
                     className="h-9 rounded-md border-[--border-default] bg-[--bg-secondary] pl-9 pr-9 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-[--primary-500]/30"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(1);
+                    }}
                   />
                   {searchQuery && (
                     <Button
@@ -123,7 +154,10 @@ export function StockOverview() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 text-muted-foreground hover:bg-black/5"
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => {
+                        setSearchQuery('');
+                        setPage(1);
+                      }}
                       aria-label={t('clearSearch')}
                     >
                       <X className="size-4" />
@@ -270,6 +304,44 @@ export function StockOverview() {
                     )}
                   </TableBody>
                 </Table>
+
+                {!isLoading && total > 0 && (
+                  <div className="border-t p-4 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      {t('pagination.showing', {
+                        from,
+                        to,
+                        total,
+                      })}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                        disabled={isLoading || page <= 1}
+                      >
+                        <ChevronLeft className="size-4 mr-1" />
+                        {t('pagination.previous')}
+                      </Button>
+                      <span className="text-sm px-2">
+                        {t('pagination.page', {
+                          current: pages === 0 ? 0 : page,
+                          total: pages,
+                        })}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((prev) => Math.min(pages, prev + 1))}
+                        disabled={isLoading || pages === 0 || page >= pages}
+                      >
+                        {t('pagination.next')}
+                        <ChevronRight className="size-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

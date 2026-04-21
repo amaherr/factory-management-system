@@ -13,6 +13,12 @@
     "allLocations": "جميع المواقع",
     "lowStockOnly": "مخزون منخفض فقط (<50)"
   },
+  "pagination": {
+    "showing": "عرض {{from}} إلى {{to}} من {{total}} منتج",
+    "previous": "السابق",
+    "next": "التالي",
+    "page": "الصفحة {{current}} من {{total}}"
+  },
   "table": {
     "product": "المنتج",
     "code": "الكود",
