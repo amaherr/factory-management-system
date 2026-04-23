@@ -21,7 +21,7 @@ const analyticsDtos = {
 
     productionQuerySchema: Joi.object({
         ...dateRangeFields,
-        granularity: Joi.string().valid("day", "month").default("month"),
+        granularity: Joi.string().valid("day", "week", "month").default("month"),
     }),
 };
 

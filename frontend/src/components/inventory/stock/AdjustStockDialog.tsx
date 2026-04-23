@@ -49,14 +49,6 @@ export function AdjustStockDialog({ product, open, onClose, onSuccess }: AdjustS
     [selectedLocation],
   );
 
-  const currentStock = useMemo(
-    () =>
-      product?.locations.find(
-        (entry) => entry.location === location && (entry.section || 'UNSPECIFIED') === section,
-      )?.quantityInStock || 0,
-    [product, location, section],
-  );
-
   useEffect(() => {
     if (!open) return;
 

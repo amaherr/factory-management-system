@@ -126,6 +126,7 @@ export function ProductionDashboard() {
         onGranularityChange={(value) => setGranularity(value as ProductionGranularity)}
         granularityOptions={[
           { value: 'day', label: t('filters.day') },
+          { value: 'week', label: t('filters.week') },
           { value: 'month', label: t('filters.month') },
         ]}
         onRefresh={() => setRefreshKey((value) => value + 1)}

@@ -1,22 +1,11 @@
-const Order = require("../orders/order.model");
-const Return = require("../returns/return.model");
-const Product = require("../products/product.model");
-const Batch = require("../batches/batch.model");
-const BatchEvent = require("../batches/batchEvent.model");
-const StockMovement = require("../stockMovements/stockMovement.model");
-const Issue = require("../issues/issue.model");
-
 const response = require("../../utils/responseFactory");
 
+const analyticsRepository = require("./analytics.repository");
+
 const { ORDER_STATUS } = require("../../enums/order.enums");
-const { RETURN_STATUS } = require("../../enums/return.enums");
-const { PRODUCT_STATUS } = require("../../enums/product.enums");
-const { BATCH_STATUS } = require("../../enums/batch.enums");
 const { ISSUE_STATUS } = require("../../enums/issue.enums");
 
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
+const LOW_STOCK_THRESHOLD = 50;
 
 const parseSafeDate = (dateStr) => {
     if (!dateStr) return null;
@@ -24,36 +13,25 @@ const parseSafeDate = (dateStr) => {
     return isNaN(d.getTime()) ? null : d;
 };
 
-/**
- * Builds a MongoDB date range filter for the given field.
- * Returns {} when neither bound is provided (meaning "all time").
- */
 const buildDateFilter = (from, to, field = "createdAt") => {
     const fromDate = parseSafeDate(from);
     const toDate = parseSafeDate(to);
     if (!fromDate && !toDate) return {};
+
     const range = {};
     if (fromDate) range.$gte = fromDate;
     if (toDate) range.$lte = toDate;
+
     return { [field]: range };
 };
 
-/** Convert a millisecond duration to rounded hours. */
 const msToHours = (ms) => parseFloat((ms / 3_600_000).toFixed(1));
 
-/**
- * Derive the $dateToString format string from a granularity hint.
- * Supported: "day" | "week" | "month"  (default: "day")
- */
 const dateFormat = (granularity) => {
     if (granularity === "month") return "%Y-%m";
     if (granularity === "week") return "%Y-%U";
     return "%Y-%m-%d";
 };
-
-// ---------------------------------------------------------------------------
-// Executive Summary  –  /api/analytics/executive
-// ---------------------------------------------------------------------------
 
 const getExecutiveSummary = async (req, res, next) => {
     try {
@@ -70,89 +48,11 @@ const getExecutiveSummary = async (req, res, next) => {
             planAttainmentResult,
             openIssues,
             productsByStatus,
-        ] = await Promise.all([
-            // Revenue, discount and order count from finalized orders
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFilter } },
-                {
-                    $group: {
-                        _id: null,
-                        totalRevenue: { $sum: "$total" },
-                        totalDiscount: { $sum: "$discountAmount" },
-                        totalSubTotal: { $sum: "$subTotal" },
-                        orderCount: { $sum: 1 },
-                    },
-                },
-            ]),
-
-            // Return value from finalized returns
-            Return.aggregate([
-                { $match: { status: RETURN_STATUS.FINALIZED, ...returnFilter } },
-                { $unwind: "$items" },
-                {
-                    $group: {
-                        _id: null,
-                        totalReturnValue: {
-                            $sum: { $multiply: ["$items.quantity", "$items.unitPrice"] },
-                        },
-                        returnCount: { $sum: 1 },
-                    },
-                },
-            ]),
-
-            // Order counts by status (for funnel widget)
-            Order.aggregate([
-                { $match: orderCreatedFilter },
-                { $group: { _id: "$status", count: { $sum: 1 } } },
-            ]),
-
-            // Live global stock snapshot (active products only; not date-filtered)
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                {
-                    $group: {
-                        _id: null,
-                        totalPhysical: { $sum: "$totalPhysicalStock" },
-                        totalTheoretical: { $sum: "$totalTheoreticalStock" },
-                        outOfStockCount: {
-                            $sum: { $cond: [{ $eq: ["$totalPhysicalStock", 0] }, 1, 0] },
-                        },
-                    },
-                },
-            ]),
-
-            // Average plan attainment across all completed batches (not date-filtered)
-            Batch.aggregate([
-                { $match: { status: BATCH_STATUS.DONE, producedQuantity: { $gt: 0 } } },
-                {
-                    $group: {
-                        _id: null,
-                        avgAttainment: {
-                            $avg: {
-                                $cond: [
-                                    { $eq: ["$plannedQuantity", 0] },
-                                    0,
-                                    {
-                                        $multiply: [
-                                            { $divide: ["$producedQuantity", "$plannedQuantity"] },
-                                            100,
-                                        ],
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                },
-            ]),
-
-            // Live count of open / in-progress issues
-            Issue.countDocuments({
-                status: { $in: [ISSUE_STATUS.OPEN, ISSUE_STATUS.IN_PROGRESS] },
-            }),
-
-            // Active / pending / deactivated product counts
-            Product.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
-        ]);
+        ] = await analyticsRepository.getExecutiveSummaryData({
+            orderFilter,
+            returnFilter,
+            orderCreatedFilter,
+        });
 
         const rev = revenueResult[0] ?? {
             totalRevenue: 0,
@@ -218,10 +118,6 @@ const getExecutiveSummary = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
-// Sales Dashboard  –  /api/analytics/sales
-// ---------------------------------------------------------------------------
-
 const getSalesDashboard = async (req, res, next) => {
     try {
         const { from, to, granularity = "day" } = req.query;
@@ -238,173 +134,12 @@ const getSalesDashboard = async (req, res, next) => {
             topProducts,
             discountTrend,
             returnsByProduct,
-        ] = await Promise.all([
-            // Revenue, order count, and AOV per time bucket
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: fmt, date: "$finalizedAt" } },
-                        revenue: { $sum: "$total" },
-                        orders: { $sum: 1 },
-                        avgOrderValue: { $avg: "$total" },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]),
-
-            // Top 10 customers by revenue
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
-                {
-                    $group: {
-                        _id: "$customerId",
-                        revenue: { $sum: "$total" },
-                        orderCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { revenue: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "customers",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "customer",
-                    },
-                },
-                { $unwind: { path: "$customer", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        revenue: 1,
-                        orderCount: 1,
-                        customerName: "$customer.name",
-                        customerCompany: "$customer.company",
-                    },
-                },
-            ]),
-
-            // Order counts by status for funnel visualization
-            Order.aggregate([
-                { $match: orderCreatedFilter },
-                { $group: { _id: "$status", count: { $sum: 1 } } },
-            ]),
-
-            // On-shelf vs on-demand split by count and revenue
-            { $unwind: "$items" },
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
-                {
-                    $group: {
-                        _id: "$items.itemType",
-                        count: { $sum: 1 },
-                        revenue: {
-                            $sum: { $multiply: ["$items.quantity", "$items.unitPrice"] },
-                        },
-                    },
-                },
-            ]),
-
-            // Top 10 products by revenue from order line items
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
-                { $unwind: "$items" },
-                {
-                    $group: {
-                        _id: "$items.productId",
-                        unitsSold: { $sum: "$items.quantity" },
-                        revenue: {
-                            $sum: { $multiply: ["$items.quantity", "$items.unitPrice"] },
-                        },
-                    },
-                },
-                { $sort: { revenue: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "products",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "product",
-                    },
-                },
-                { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        unitsSold: 1,
-                        revenue: 1,
-                        productCode: "$product.code",
-                        productName: "$product.name",
-                        productColor: "$product.color",
-                    },
-                },
-            ]),
-
-            // Discount rate per time bucket (for discount trend line)
-            Order.aggregate([
-                { $match: { status: ORDER_STATUS.FINALIZED, ...orderFinalizedFilter } },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: fmt, date: "$finalizedAt" } },
-                        totalDiscount: { $sum: "$discountAmount" },
-                        totalSubTotal: { $sum: "$subTotal" },
-                    },
-                },
-                {
-                    $project: {
-                        _id: 1,
-                        totalDiscount: 1,
-                        discountRate: {
-                            $cond: [
-                                { $eq: ["$totalSubTotal", 0] },
-                                0,
-                                {
-                                    $multiply: [
-                                        { $divide: ["$totalDiscount", "$totalSubTotal"] },
-                                        100,
-                                    ],
-                                },
-                            ],
-                        },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]),
-
-            // Top 10 most returned products (for return rate insight)
-            Return.aggregate([
-                { $match: { status: RETURN_STATUS.FINALIZED, ...returnFilter } },
-                { $unwind: "$items" },
-                {
-                    $group: {
-                        _id: "$items.productId",
-                        unitsReturned: { $sum: "$items.quantity" },
-                        returnValue: {
-                            $sum: { $multiply: ["$items.quantity", "$items.unitPrice"] },
-                        },
-                    },
-                },
-                { $sort: { unitsReturned: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "products",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "product",
-                    },
-                },
-                { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        unitsReturned: 1,
-                        returnValue: 1,
-                        productCode: "$product.code",
-                        productName: "$product.name",
-                    },
-                },
-            ]),
-        ]);
+        ] = await analyticsRepository.getSalesDashboardData({
+            orderFinalizedFilter,
+            orderCreatedFilter,
+            returnFilter,
+            fmt,
+        });
 
         const totalRevenue = revenueTrend.reduce((s, d) => s + d.revenue, 0);
         const totalOrders = revenueTrend.reduce((s, d) => s + d.orders, 0);
@@ -438,15 +173,12 @@ const getSalesDashboard = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
-// Production Dashboard  –  /api/analytics/production
-// ---------------------------------------------------------------------------
-
 const getProductionDashboard = async (req, res, next) => {
     try {
         const { from, to, granularity = "month" } = req.query;
         const batchStartFilter = buildDateFilter(from, to, "startDate");
         const batchEndFilter = buildDateFilter(from, to, "endDate");
+        const batchEventFilter = buildDateFilter(from, to, "startDate");
         const fmt = dateFormat(granularity);
 
         const [
@@ -457,158 +189,12 @@ const getProductionDashboard = async (req, res, next) => {
             avgBatchDuration,
             avgStageDuration,
             topLossBatches,
-        ] = await Promise.all([
-            // Batch counts grouped by status
-            Batch.aggregate([
-                { $match: batchStartFilter },
-                { $group: { _id: "$status", count: { $sum: 1 } } },
-            ]),
-
-            // Plan attainment statistics (done batches only)
-            Batch.aggregate([
-                {
-                    $match: {
-                        status: BATCH_STATUS.DONE,
-                        producedQuantity: { $gt: 0 },
-                        ...batchStartFilter,
-                    },
-                },
-                {
-                    $project: {
-                        batchNumber: 1,
-                        plannedQuantity: 1,
-                        producedQuantity: 1,
-                        attainment: {
-                            $cond: [
-                                { $eq: ["$plannedQuantity", 0] },
-                                0,
-                                {
-                                    $multiply: [
-                                        { $divide: ["$producedQuantity", "$plannedQuantity"] },
-                                        100,
-                                    ],
-                                },
-                            ],
-                        },
-                    },
-                },
-                {
-                    $group: {
-                        _id: null,
-                        avgAttainment: { $avg: "$attainment" },
-                        minAttainment: { $min: "$attainment" },
-                        maxAttainment: { $max: "$attainment" },
-                        totalPlanned: { $sum: "$plannedQuantity" },
-                        totalProduced: { $sum: "$producedQuantity" },
-                        batchCount: { $sum: 1 },
-                    },
-                },
-            ]),
-
-            // Total loss and event count per batch event stage
-            BatchEvent.aggregate([
-                {
-                    $group: {
-                        _id: "$stage",
-                        totalLoss: { $sum: "$loss" },
-                        eventCount: { $sum: 1 },
-                        avgLoss: { $avg: "$loss" },
-                    },
-                },
-                { $sort: { totalLoss: -1 } },
-            ]),
-
-            // Units produced and batch count per time bucket (done batches)
-            Batch.aggregate([
-                {
-                    $match: {
-                        status: BATCH_STATUS.DONE,
-                        endDate: { $exists: true },
-                        ...batchEndFilter,
-                    },
-                },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: fmt, date: "$endDate" } },
-                        unitsProduced: { $sum: "$producedQuantity" },
-                        batchCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]),
-
-            // Average, min, and max batch duration for completed batches
-            Batch.aggregate([
-                { $match: { status: BATCH_STATUS.DONE, endDate: { $exists: true } } },
-                {
-                    $project: {
-                        durationMs: { $subtract: ["$endDate", "$startDate"] },
-                    },
-                },
-                {
-                    $group: {
-                        _id: null,
-                        avgDurationMs: { $avg: "$durationMs" },
-                        minDurationMs: { $min: "$durationMs" },
-                        maxDurationMs: { $max: "$durationMs" },
-                    },
-                },
-            ]),
-
-            // Average duration per batch event stage
-            BatchEvent.aggregate([
-                { $match: { endDate: { $exists: true } } },
-                {
-                    $project: {
-                        stage: 1,
-                        durationMs: { $subtract: ["$endDate", "$startDate"] },
-                    },
-                },
-                {
-                    $group: {
-                        _id: "$stage",
-                        avgDurationMs: { $avg: "$durationMs" },
-                    },
-                },
-                {
-                    $project: {
-                        avgDurationHours: { $divide: ["$avgDurationMs", 3_600_000] },
-                    },
-                },
-            ]),
-
-            // Top 10 batches with the highest cumulative loss
-            BatchEvent.aggregate([
-                {
-                    $group: {
-                        _id: "$batchId",
-                        totalLoss: { $sum: "$loss" },
-                        stageCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { totalLoss: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "batches",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "batch",
-                    },
-                },
-                { $unwind: { path: "$batch", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        totalLoss: 1,
-                        stageCount: 1,
-                        batchNumber: "$batch.batchNumber",
-                        plannedQuantity: "$batch.plannedQuantity",
-                        producedQuantity: "$batch.producedQuantity",
-                        batchStatus: "$batch.status",
-                    },
-                },
-            ]),
-        ]);
+        ] = await analyticsRepository.getProductionDashboardData({
+            batchStartFilter,
+            batchEndFilter,
+            batchEventFilter,
+            fmt,
+        });
 
         const pa = planAttainment[0] ?? {
             avgAttainment: 0,
@@ -652,12 +238,6 @@ const getProductionDashboard = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
-// Inventory Dashboard  –  /api/analytics/inventory
-// ---------------------------------------------------------------------------
-
-const LOW_STOCK_THRESHOLD = 50;
-
 const getInventoryDashboard = async (req, res, next) => {
     try {
         const { from, to } = req.query;
@@ -671,158 +251,10 @@ const getInventoryDashboard = async (req, res, next) => {
             productsByColor,
             productsBySeason,
             stockVarianceProducts,
-        ] = await Promise.all([
-            // Stock quantity aggregated per factory location
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                { $unwind: "$locations" },
-                {
-                    $group: {
-                        _id: "$locations.location",
-                        totalStock: { $sum: "$locations.quantityInStock" },
-                        productCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { totalStock: -1 } },
-            ]),
-
-            // Global stock totals and alert counts
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                {
-                    $group: {
-                        _id: null,
-                        totalPhysical: { $sum: "$totalPhysicalStock" },
-                        totalTheoretical: { $sum: "$totalTheoreticalStock" },
-                        totalReserved: { $sum: "$totalReserved" },
-                        totalSold: { $sum: "$totalSold" },
-                        outOfStockCount: {
-                            $sum: { $cond: [{ $eq: ["$totalPhysicalStock", 0] }, 1, 0] },
-                        },
-                        lowStockCount: {
-                            $sum: {
-                                $cond: [
-                                    {
-                                        $and: [
-                                            { $gt: ["$totalPhysicalStock", 0] },
-                                            { $lt: ["$totalPhysicalStock", LOW_STOCK_THRESHOLD] },
-                                        ],
-                                    },
-                                    1,
-                                    0,
-                                ],
-                            },
-                        },
-                    },
-                },
-            ]),
-
-            // Stock movement volume and quantity per stock flow (from -> to)
-            StockMovement.aggregate([
-                { $match: movementFilter },
-                {
-                    $group: {
-                        _id: {
-                            from: "$from",
-                            to: "$to",
-                        },
-                        count: { $sum: 1 },
-                        netQuantity: { $sum: "$quantityChange" },
-                        absoluteQuantity: { $sum: { $abs: "$quantityChange" } },
-                    },
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        from: "$_id.from",
-                        to: "$_id.to",
-                        count: 1,
-                        netQuantity: 1,
-                        absoluteQuantity: 1,
-                    },
-                },
-                { $sort: { count: -1 } },
-            ]),
-
-            // Top 10 most frequently moved products
-            StockMovement.aggregate([
-                { $match: movementFilter },
-                {
-                    $group: {
-                        _id: "$productId",
-                        movementCount: { $sum: 1 },
-                        absoluteQuantity: { $sum: { $abs: "$quantityChange" } },
-                    },
-                },
-                { $sort: { movementCount: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "products",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "product",
-                    },
-                },
-                { $unwind: { path: "$product", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        movementCount: 1,
-                        absoluteQuantity: 1,
-                        productCode: "$product.code",
-                        productName: "$product.name",
-                        currentStock: "$product.totalPhysicalStock",
-                    },
-                },
-            ]),
-
-            // Total units sold and current stock grouped by product color
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                {
-                    $group: {
-                        _id: "$color",
-                        totalSold: { $sum: "$totalSold" },
-                        totalStock: { $sum: "$totalPhysicalStock" },
-                        productCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { totalSold: -1 } },
-            ]),
-
-            // Total units sold and current stock grouped by season
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                {
-                    $group: {
-                        _id: "$season",
-                        totalSold: { $sum: "$totalSold" },
-                        totalStock: { $sum: "$totalPhysicalStock" },
-                        productCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { totalSold: -1 } },
-            ]),
-
-            // Products whose physical and theoretical stock do not match
-            Product.aggregate([
-                { $match: { status: PRODUCT_STATUS.ACTIVE } },
-                {
-                    $project: {
-                        code: 1,
-                        name: 1,
-                        totalPhysicalStock: 1,
-                        totalTheoreticalStock: 1,
-                        variance: {
-                            $subtract: ["$totalPhysicalStock", "$totalTheoreticalStock"],
-                        },
-                    },
-                },
-                { $match: { variance: { $ne: 0 } } },
-                { $sort: { variance: 1 } },
-                { $limit: 20 },
-            ]),
-        ]);
+        ] = await analyticsRepository.getInventoryDashboardData({
+            movementFilter,
+            lowStockThreshold: LOW_STOCK_THRESHOLD,
+        });
 
         const summary = globalStockSummary[0] ?? {
             totalPhysical: 0,
@@ -858,10 +290,6 @@ const getInventoryDashboard = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
-// Operations Dashboard  –  /api/analytics/operations
-// ---------------------------------------------------------------------------
-
 const getOperationsDashboard = async (req, res, next) => {
     try {
         const { from, to } = req.query;
@@ -876,136 +304,10 @@ const getOperationsDashboard = async (req, res, next) => {
             topIssueReporters,
             topIssueResolvers,
             issueAgeTrend,
-        ] = await Promise.all([
-            // Issue count grouped by type
-            Issue.aggregate([
-                { $match: issueFilter },
-                { $group: { _id: "$issueType", count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-            ]),
-
-            // Issue count grouped by status
-            Issue.aggregate([
-                { $match: issueFilter },
-                { $group: { _id: "$status", count: { $sum: 1 } } },
-            ]),
-
-            // Average resolution time in hours, broken down by issue type
-            Issue.aggregate([
-                {
-                    $match: {
-                        status: ISSUE_STATUS.RESOLVED,
-                        resolvedAt: { $exists: true },
-                        ...issueFilter,
-                    },
-                },
-                {
-                    $project: {
-                        issueType: 1,
-                        resolutionMs: { $subtract: ["$resolvedAt", "$createdAt"] },
-                    },
-                },
-                {
-                    $group: {
-                        _id: "$issueType",
-                        avgResolutionHours: {
-                            $avg: { $divide: ["$resolutionMs", 3_600_000] },
-                        },
-                        resolvedCount: { $sum: 1 },
-                    },
-                },
-                { $sort: { avgResolutionHours: -1 } },
-            ]),
-
-            // Daily manual stock adjustment frequency (high volumes signal operational problems)
-            StockMovement.aggregate([
-                {
-                    $match: {
-                        $or: [{ from: "manual_adjustment" }, { to: "manual_adjustment" }],
-                        ...movementFilter,
-                    },
-                },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                        count: { $sum: 1 },
-                        totalQuantityAdjusted: { $sum: { $abs: "$quantityChange" } },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]),
-
-            // Top 10 users by number of issues reported
-            Issue.aggregate([
-                { $match: issueFilter },
-                { $group: { _id: "$createdByUserId", reported: { $sum: 1 } } },
-                { $sort: { reported: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "user",
-                    },
-                },
-                { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        reported: 1,
-                        userName: "$user.name",
-                        userRoles: "$user.roles",
-                    },
-                },
-            ]),
-
-            // Top 10 users by number of issues resolved
-            Issue.aggregate([
-                {
-                    $match: {
-                        status: ISSUE_STATUS.RESOLVED,
-                        resolvedByUserId: { $exists: true },
-                        ...issueFilter,
-                    },
-                },
-                { $group: { _id: "$resolvedByUserId", resolved: { $sum: 1 } } },
-                { $sort: { resolved: -1 } },
-                { $limit: 10 },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "_id",
-                        foreignField: "_id",
-                        as: "user",
-                    },
-                },
-                { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-                {
-                    $project: {
-                        resolved: 1,
-                        userName: "$user.name",
-                        userRoles: "$user.roles",
-                    },
-                },
-            ]),
-
-            // Monthly issue creation vs resolution trend
-            Issue.aggregate([
-                { $match: issueFilter },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
-                        created: { $sum: 1 },
-                        resolved: {
-                            $sum: {
-                                $cond: [{ $eq: ["$status", ISSUE_STATUS.RESOLVED] }, 1, 0],
-                            },
-                        },
-                    },
-                },
-                { $sort: { _id: 1 } },
-            ]),
-        ]);
+        ] = await analyticsRepository.getOperationsDashboardData({
+            issueFilter,
+            movementFilter,
+        });
 
         const statusMap = Object.fromEntries(issuesByStatus.map((s) => [s._id, s.count]));
         const totalIssues = Object.values(statusMap).reduce((s, c) => s + c, 0);
@@ -1036,14 +338,10 @@ const getOperationsDashboard = async (req, res, next) => {
     }
 };
 
-// ---------------------------------------------------------------------------
-
-const analyticsService = {
+module.exports = {
     getExecutiveSummary,
     getSalesDashboard,
     getProductionDashboard,
     getInventoryDashboard,
     getOperationsDashboard,
 };
-
-module.exports = analyticsService;
