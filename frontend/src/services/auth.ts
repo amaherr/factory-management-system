@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { UserRole } from './enums/user.enums';
+import { getApiBaseUrl } from './apiBase';
 
 export interface User {
   id: string;
@@ -12,7 +13,7 @@ export interface User {
   token?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = getApiBaseUrl();
 
 export const authService = {
   async login(phone: string, pin: string): Promise<User> {

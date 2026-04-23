@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Product } from './products';
+import { getApiBaseUrl } from './apiBase';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE = getApiBaseUrl();
 
 export interface LocationSection {
   _id: string;

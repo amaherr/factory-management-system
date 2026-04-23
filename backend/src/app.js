@@ -31,78 +31,10 @@ const errorHandler = require("./middlewares/errorHandler");
 const app = express();
 connectDB();
 
-const normalizeOrigin = (origin) => {
-    if (!origin || typeof origin !== "string") return "";
-    return origin.trim().replace(/\/$/, "");
-};
-
-const getHostname = (origin) => {
-    const normalized = normalizeOrigin(origin);
-    if (!normalized) return "";
-
-    try {
-        // Handle full origins (https://example.com)
-        return new URL(normalized).hostname.toLowerCase();
-    } catch {
-        // Handle host-only values from env (example.com or example.com:5173)
-        return normalized
-            .replace(/^https?:\/\//i, "")
-            .split(":")[0]
-            .toLowerCase();
-    }
-};
-
-const corsAllowList = [process.env.CLIENT_URL, process.env.CLIENT_URLS, process.env.FRONTEND_URL]
-    .filter(Boolean)
-    .flatMap((value) => value.split(","))
-    .map(normalizeOrigin)
-    .filter(Boolean);
-
-const corsAllowHostnames = corsAllowList.map(getHostname).filter(Boolean);
-
 // mount middlewares
 app.use(
     cors({
-        origin: (origin, callback) => {
-            // Allow server-to-server tools and same-origin requests without Origin header.
-            if (!origin) {
-                return callback(null, true);
-            }
-
-            const normalizedRequestOrigin = normalizeOrigin(origin);
-            const requestHostname = getHostname(origin);
-            const isLocalhostOrigin = /^https?:\/\/localhost(:\d+)?$/i.test(
-                normalizedRequestOrigin,
-            );
-
-            // If no explicit allow-list is configured, allow browser origins by default.
-            // This avoids "login succeeded in backend logs but failed in browser" behavior
-            // when deployment variables are missing.
-            if (corsAllowList.length === 0) {
-                return callback(null, true);
-            }
-
-            // Keep local development working even if production allow-list exists.
-            if (isLocalhostOrigin) {
-                return callback(null, true);
-            }
-
-            if (corsAllowList.includes(normalizedRequestOrigin)) {
-                return callback(null, true);
-            }
-
-            // Accept same host even if env omits protocol or has small formatting differences.
-            if (requestHostname && corsAllowHostnames.includes(requestHostname)) {
-                return callback(null, true);
-            }
-
-            // Optional safety valve for temporary troubleshooting in deployed environments.
-            if (process.env.ALLOW_ALL_CORS === "true") {
-                return callback(null, true);
-            }
-
-            return callback(new Error(`CORS blocked for origin: ${origin}`));
-        },
+        origin: process.env.CLIENT_URL || "http://localhost:5173",
         credentials: true,
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],

@@ -1,30 +1,42 @@
 import axios from 'axios';
-import type { IssueType as IssueTypeValue, IssueStatus as IssueStatusValue } from './enums/issue.enums';
+import type {
+  IssueType as IssueTypeValue,
+  IssueStatus as IssueStatusValue,
+} from './enums/issue.enums';
+import { getApiBaseUrl } from './apiBase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = getApiBaseUrl();
 
 export interface Issue {
   _id?: string;
   issueNumber: number;
-  createdByUserId: {
-    _id: string;
-    name: string;
-    phoneNumber?: string;
-  } | string;
+  createdByUserId:
+    | {
+        _id: string;
+        name: string;
+        phoneNumber?: string;
+      }
+    | string;
   issueType: IssueTypeValue;
   description: string;
   status: IssueStatusValue;
-  resolvedByUserId?: {
-    _id: string;
-    name: string;
-    phoneNumber?: string;
-  } | string | null;
+  resolvedByUserId?:
+    | {
+        _id: string;
+        name: string;
+        phoneNumber?: string;
+      }
+    | string
+    | null;
   resolvedAt?: string | null;
-  cancelledByUserId?: {
-    _id: string;
-    name: string;
-    phoneNumber?: string;
-  } | string | null;
+  cancelledByUserId?:
+    | {
+        _id: string;
+        name: string;
+        phoneNumber?: string;
+      }
+    | string
+    | null;
   cancelledAt?: string | null;
   createdAt?: string;
   updatedAt?: string;

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { UserRole } from './enums/user.enums';
+import { getApiBaseUrl } from './apiBase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = getApiBaseUrl();
 
 export interface User {
   _id?: string;

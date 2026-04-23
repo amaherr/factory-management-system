@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { Color, ProductStatus, Season } from './enums/product.enums';
+import { getApiBaseUrl } from './apiBase';
 
 export type { Color, ProductStatus, Season };
 
@@ -101,7 +102,7 @@ interface LocationSectionProductListResponse {
   products: LocationSectionProduct[];
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE = getApiBaseUrl();
 
 function sanitizeListParams(params: ProductListParams = {}): ProductListParams {
   const sanitized = { ...params };
