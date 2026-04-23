@@ -1,0 +1,19 @@
+# Exported from Render on 2026-04-23T18:04:42Z
+version: "1"
+projects:
+- name: ABA Factory System
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: aba-factory-management-system-frontend
+      runtime: static
+      repo: https://github.com/Factory-System/aba-factory-management-system
+      branch: prod
+      envVars:
+      - key: VITE_API_URL
+        sync: false
+      buildCommand: npm install && npm run build
+      staticPublishPath: dist
+      autoDeployTrigger: commit
+      rootDir: frontend
