@@ -36,11 +36,29 @@ const normalizeOrigin = (origin) => {
     return origin.trim().replace(/\/$/, "");
 };
 
+const getHostname = (origin) => {
+    const normalized = normalizeOrigin(origin);
+    if (!normalized) return "";
+
+    try {
+        // Handle full origins (https://example.com)
+        return new URL(normalized).hostname.toLowerCase();
+    } catch {
+        // Handle host-only values from env (example.com or example.com:5173)
+        return normalized
+            .replace(/^https?:\/\//i, "")
+            .split(":")[0]
+            .toLowerCase();
+    }
+};
+
 const corsAllowList = [process.env.CLIENT_URL, process.env.CLIENT_URLS, process.env.FRONTEND_URL]
     .filter(Boolean)
     .flatMap((value) => value.split(","))
     .map(normalizeOrigin)
     .filter(Boolean);
+
+const corsAllowHostnames = corsAllowList.map(getHostname).filter(Boolean);
 
 // mount middlewares
 app.use(
@@ -52,15 +70,27 @@ app.use(
             }
 
             const normalizedRequestOrigin = normalizeOrigin(origin);
+            const requestHostname = getHostname(origin);
+            const isLocalhostOrigin = /^https?:\/\/localhost(:\d+)?$/i.test(
+                normalizedRequestOrigin,
+            );
 
-            if (
-                corsAllowList.length === 0 &&
-                normalizedRequestOrigin === normalizeOrigin("http://localhost:5173")
-            ) {
+            // Keep local development working even if production allow-list exists.
+            if (isLocalhostOrigin) {
                 return callback(null, true);
             }
 
             if (corsAllowList.includes(normalizedRequestOrigin)) {
+                return callback(null, true);
+            }
+
+            // Accept same host even if env omits protocol or has small formatting differences.
+            if (requestHostname && corsAllowHostnames.includes(requestHostname)) {
+                return callback(null, true);
+            }
+
+            // Optional safety valve for temporary troubleshooting in deployed environments.
+            if (process.env.ALLOW_ALL_CORS === "true") {
                 return callback(null, true);
             }
 

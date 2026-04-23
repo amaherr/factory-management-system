@@ -31,6 +31,9 @@ export const authService = {
 
       return response.data as unknown as User;
     } catch (error: any) {
+      if (error?.code === 'ERR_NETWORK') {
+        throw new Error('Network/CORS error: unable to reach authentication server');
+      }
       const message = error?.response?.data?.message || 'Login failed';
       throw new Error(message);
     }
