@@ -52,11 +52,29 @@ const collectPathCandidates = (req) => {
     return [...candidates];
 };
 
+const matchesPublicPath = (path, publicPath) => {
+    if (!path || !publicPath) return false;
+
+    if (path === publicPath) return true;
+
+    // Allow deployments that prepend a base path before /api or /api-docs.
+    if (path.endsWith(publicPath)) return true;
+
+    // Accept stripped-api variants as well (e.g. /users/login).
+    if (publicPath.startsWith("/api/") && path === publicPath.slice(4)) return true;
+
+    return false;
+};
+
 const isPublicRouteRequest = (req) => {
     const paths = collectPathCandidates(req);
     return paths.some((path) => {
-        const isExactPublic = PUBLIC_PATHS.some((publicPath) => path === publicPath);
-        const isPublicPrefix = PUBLIC_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+        const isExactPublic = PUBLIC_PATHS.some((publicPath) =>
+            matchesPublicPath(path, publicPath),
+        );
+        const isPublicPrefix = PUBLIC_PATH_PREFIXES.some(
+            (prefix) => path.startsWith(prefix) || path.endsWith(prefix),
+        );
         return isExactPublic || isPublicPrefix;
     });
 };
