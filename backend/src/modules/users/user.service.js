@@ -12,6 +12,8 @@ const userService = {
         try {
             const { phoneNumber, password } = req.body;
 
+            console.log("Verifying user credentials");
+
             // find user by phoneNumber (override password's 'select: false')
             const user = await userRepository.findByPhoneNumberWithPassword(phoneNumber);
             if (!user) {
@@ -26,6 +28,8 @@ const userService = {
             if (!match) {
                 return next(createError("Invalid Phone Number or password", 401));
             }
+
+            console.log("Creating JWT token");
 
             // create jwt token
             const JWT_SECRET = process.env.JWT_SECRET;
