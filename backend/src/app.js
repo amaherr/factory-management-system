@@ -75,6 +75,13 @@ app.use(
                 normalizedRequestOrigin,
             );
 
+            // If no explicit allow-list is configured, allow browser origins by default.
+            // This avoids "login succeeded in backend logs but failed in browser" behavior
+            // when deployment variables are missing.
+            if (corsAllowList.length === 0) {
+                return callback(null, true);
+            }
+
             // Keep local development working even if production allow-list exists.
             if (isLocalhostOrigin) {
                 return callback(null, true);

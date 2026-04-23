@@ -53,6 +53,8 @@ const userService = {
             delete userObj.password;
             userObj.lastLoginAt = new Date(loginTimestamp);
 
+            console.log("User logged in successfully");
+
             // sent the jwt token in a cookie
             const isProduction = process.env.NODE_ENV == "development" ? false : true;
             res.status(200)
