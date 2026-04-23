@@ -16,8 +16,18 @@ const productDtos = {
             .optional(),
         inStock: Joi.boolean().optional(),
         location: Joi.string().trim().min(1).optional(),
+        section: Joi.string().trim().min(1).optional(),
         page: Joi.number().integer().min(1).optional(),
         limit: Joi.number().integer().min(1).optional(),
+    }).unknown(false),
+
+    locationParamsSchema: Joi.object({
+        location: Joi.string().trim().min(1).required(),
+    }).unknown(false),
+
+    locationSectionParamsSchema: Joi.object({
+        location: Joi.string().trim().min(1).required(),
+        section: Joi.string().trim().min(1).required(),
     }).unknown(false),
 
     createProductSchema: Joi.object({

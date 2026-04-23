@@ -1,14 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Loader2, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '../../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Card, CardContent } from '../../ui/card';
 import { Input } from '../../ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
-import { Badge } from '../../ui/badge';
-import { locationService, type LocationOverviewItem } from '../../../services/locations';
+import {
+  locationService,
+  type LocationOverviewItem,
+  type LocationSectionOverviewItem,
+} from '../../../services/locations';
+import { type Product } from '../../../services/products';
+import { ProductStockDetailsDialog } from './ProductStockDetailsDialog';
+import { AdjustStockDialog } from './AdjustStockDialog';
+import { SetStockDialog } from './SetStockDialog';
+import { LocationCard } from './location-management/LocationCard';
+import { RenameEntityDialog } from './location-management/RenameEntityDialog';
+import { LocationProductsDrawer } from './location-management/LocationProductsDrawer';
+
+type RenameTarget =
+  | {
+      kind: 'location';
+      location: LocationOverviewItem;
+    }
+  | {
+      kind: 'section';
+      location: LocationOverviewItem;
+      section: LocationSectionOverviewItem;
+    }
+  | null;
+
+type ProductsDrawerTarget = {
+  locationName: string;
+  sectionName?: string | null;
+} | null;
 
 export function LocationManagementSection() {
   const { t } = useTranslation('stock');
@@ -17,6 +43,13 @@ export function LocationManagementSection() {
   const [locations, setLocations] = useState<LocationOverviewItem[]>([]);
   const [newLocationName, setNewLocationName] = useState('');
   const [newSectionByLocation, setNewSectionByLocation] = useState<Record<string, string>>({});
+  const [renameTarget, setRenameTarget] = useState<RenameTarget>(null);
+  const [renameSubmitting, setRenameSubmitting] = useState(false);
+  const [drawerTarget, setDrawerTarget] = useState<ProductsDrawerTarget>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [setStockOpen, setSetStockOpen] = useState(false);
 
   const activeLocations = useMemo(
     () => locations.filter((location) => location.isActive !== false),
@@ -58,23 +91,15 @@ export function LocationManagementSection() {
     }
   };
 
-  const handleDeleteLocation = async (locationId: string) => {
-    try {
-      await locationService.deleteLocation(locationId);
-      toast.success(t('locationManagement.toasts.locationDeleted'));
-      await loadOverview();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('locationManagement.errors.general'));
+  const handleDeleteLocation = async (location: LocationOverviewItem) => {
+    if (location.canDelete === false) {
+      toast.error(location.deleteBlockedReason || t('locationManagement.errors.locationNotEmpty'));
+      return;
     }
-  };
-
-  const handleRenameLocation = async (location: LocationOverviewItem) => {
-    const nextName = window.prompt(t('locationManagement.prompts.renameLocation'), location.name);
-    if (!nextName || nextName.trim() === location.name) return;
 
     try {
-      await locationService.updateLocation(location._id, { name: nextName.trim() });
-      toast.success(t('locationManagement.toasts.locationUpdated'));
+      await locationService.deleteLocation(location._id);
+      toast.success(t('locationManagement.toasts.locationDeleted'));
       await loadOverview();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('locationManagement.errors.general'));
@@ -98,26 +123,21 @@ export function LocationManagementSection() {
     }
   };
 
-  const handleRenameSection = async (
-    locationId: string,
-    sectionId: string,
-    sectionName: string,
+  const handleDeleteSection = async (
+    location: LocationOverviewItem,
+    section: LocationSectionOverviewItem,
   ) => {
-    const nextName = window.prompt(t('locationManagement.prompts.renameSection'), sectionName);
-    if (!nextName || nextName.trim() === sectionName) return;
-
-    try {
-      await locationService.updateSection(locationId, sectionId, { name: nextName.trim() });
-      toast.success(t('locationManagement.toasts.sectionUpdated'));
-      await loadOverview();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('locationManagement.errors.general'));
+    if (section.canDelete === false) {
+      toast.error(section.deleteBlockedReason || t('locationManagement.errors.sectionNotEmpty'));
+      return;
     }
-  };
 
-  const handleDeleteSection = async (locationId: string, sectionId: string) => {
+    if (String(section._id).startsWith('UNSPECIFIED-')) {
+      return;
+    }
+
     try {
-      await locationService.deleteSection(locationId, sectionId);
+      await locationService.deleteSection(location._id, section._id);
       toast.success(t('locationManagement.toasts.sectionDeleted'));
       await loadOverview();
     } catch (error) {
@@ -125,159 +145,172 @@ export function LocationManagementSection() {
     }
   };
 
+  const handleRenameSubmit = async (nextName: string) => {
+    if (!renameTarget) return;
+
+    setRenameSubmitting(true);
+    try {
+      if (renameTarget.kind === 'location') {
+        await locationService.updateLocation(renameTarget.location._id, { name: nextName });
+        toast.success(t('locationManagement.toasts.locationUpdated'));
+      } else {
+        await locationService.updateSection(renameTarget.location._id, renameTarget.section._id, {
+          name: nextName,
+        });
+        toast.success(t('locationManagement.toasts.sectionUpdated'));
+      }
+
+      setRenameTarget(null);
+      await loadOverview();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('locationManagement.errors.general'));
+    } finally {
+      setRenameSubmitting(false);
+    }
+  };
+
+  const handleViewProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setDetailsOpen(true);
+  };
+
+  const handleAdjustProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setAdjustOpen(true);
+  };
+
+  const handleSetStock = (product: Product) => {
+    setSelectedProduct(product);
+    setSetStockOpen(true);
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>{t('locationManagement.title')}</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadOverview}
-            disabled={loading}
-          >
-            <RefreshCw className="mr-2 size-4" />
-            {t('actions.refresh')}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-          <Input
-            value={newLocationName}
-            onChange={(e) => setNewLocationName(e.target.value)}
-            placeholder={t('locationManagement.newLocationPlaceholder')}
-          />
-          <Button onClick={handleCreateLocation}>
-            <Plus className="mr-2 size-4" />
-            {t('locationManagement.addLocation')}
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-6 text-muted-foreground">
-            <Loader2 className="mr-2 size-4 animate-spin" />
-            {t('loading')}
+    <>
+      <Card>
+        <CardContent className="space-y-4 pt-10">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+            <Input
+              value={newLocationName}
+              onChange={(e) => setNewLocationName(e.target.value)}
+              placeholder={t('locationManagement.newLocationPlaceholder')}
+              className="border-[--border-default] bg-[--bg-card] shadow-sm focus-visible:border-[--primary-500] focus-visible:ring-[--primary-500]/30"
+            />
+            <Button onClick={handleCreateLocation}>
+              <Plus className="mr-2 size-4" />
+              {t('locationManagement.addLocation')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={loadOverview}
+              disabled={loading}
+            >
+              <RefreshCw className="mr-2 size-4" />
+              {t('actions.refresh')}
+            </Button>
           </div>
-        ) : activeLocations.length === 0 ? (
-          <div className="rounded-md border p-4 text-sm text-muted-foreground">
-            {t('locationManagement.noLocations')}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('locationManagement.table.location')}</TableHead>
-                  <TableHead>{t('locationManagement.table.productsCount')}</TableHead>
-                  <TableHead>{t('locationManagement.table.totalStock')}</TableHead>
-                  <TableHead className="text-right">{t('table.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activeLocations.map((location) => (
-                  <TableRow key={location._id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{location.name}</span>
-                        {location.code && <Badge variant="outline">{location.code}</Badge>}
-                      </div>
-                    </TableCell>
-                    <TableCell>{location.productsCount || 0}</TableCell>
-                    <TableCell>{location.totalStock || 0}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRenameLocation(location)}
-                          title={t('locationManagement.rename')}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeleteLocation(location._id)}
-                          title={t('locationManagement.delete')}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
 
-            {activeLocations.map((location) => (
-              <div
-                key={`${location._id}-sections`}
-                className="rounded-md border p-3"
-              >
-                <div className="mb-2 text-sm font-medium">{location.name}</div>
+          {loading ? (
+            <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              {t('loading')}
+            </div>
+          ) : activeLocations.length === 0 ? (
+            <div className="rounded-md border p-4 text-sm text-muted-foreground">
+              {t('locationManagement.noLocations')}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activeLocations.map((location) => (
+                <LocationCard
+                  key={`${location._id}-sections`}
+                  location={location}
+                  newSectionName={newSectionByLocation[location._id] || ''}
+                  onSectionInputChange={(locationId, value) =>
+                    setNewSectionByLocation((prev) => ({
+                      ...prev,
+                      [locationId]: value,
+                    }))
+                  }
+                  onAddSection={handleAddSection}
+                  onOpenLocationProducts={(targetLocation) =>
+                    setDrawerTarget({ locationName: targetLocation.name })
+                  }
+                  onOpenSectionProducts={(targetLocation, section) =>
+                    setDrawerTarget({
+                      locationName: targetLocation.name,
+                      sectionName: section.name,
+                    })
+                  }
+                  onRenameLocation={(targetLocation) =>
+                    setRenameTarget({ kind: 'location', location: targetLocation })
+                  }
+                  onRenameSection={(targetLocation, section) =>
+                    setRenameTarget({ kind: 'section', location: targetLocation, section })
+                  }
+                  onDeleteLocation={handleDeleteLocation}
+                  onDeleteSection={handleDeleteSection}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                {location.sections.length === 0 ? (
-                  <p className="mb-3 text-xs text-muted-foreground">
-                    {t('locationManagement.noSections')}
-                  </p>
-                ) : (
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    {location.sections.map((section) => (
-                      <Badge
-                        key={section._id}
-                        variant="secondary"
-                        className="gap-2"
-                      >
-                        {section.name}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleRenameSection(location._id, section._id, section.name)
-                          }
-                          className="text-xs"
-                          title={t('locationManagement.rename')}
-                        >
-                          <Pencil className="size-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteSection(location._id, section._id)}
-                          className="text-xs"
-                          title={t('locationManagement.delete')}
-                        >
-                          <Trash2 className="size-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+      <RenameEntityDialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null);
+        }}
+        title={
+          renameTarget?.kind === 'section'
+            ? t('locationManagement.dialogs.renameSectionTitle')
+            : t('locationManagement.dialogs.renameLocationTitle')
+        }
+        description={t('locationManagement.dialogs.renameDescription')}
+        initialValue={
+          renameTarget?.kind === 'section'
+            ? renameTarget.section.name
+            : renameTarget?.location.name || ''
+        }
+        submitting={renameSubmitting}
+        onSubmit={handleRenameSubmit}
+      />
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-                  <Input
-                    value={newSectionByLocation[location._id] || ''}
-                    onChange={(e) =>
-                      setNewSectionByLocation((prev) => ({
-                        ...prev,
-                        [location._id]: e.target.value,
-                      }))
-                    }
-                    placeholder={t('locationManagement.newSectionPlaceholder')}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddSection(location._id)}
-                  >
-                    <Plus className="mr-2 size-4" />
-                    {t('locationManagement.addSection')}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      <LocationProductsDrawer
+        open={drawerTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDrawerTarget(null);
+        }}
+        locationName={drawerTarget?.locationName || null}
+        sectionName={drawerTarget?.sectionName || null}
+        onViewProduct={handleViewProduct}
+        onAdjustProduct={handleAdjustProduct}
+        onSetStock={handleSetStock}
+      />
+
+      <ProductStockDetailsDialog
+        product={selectedProduct}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
+
+      <AdjustStockDialog
+        product={selectedProduct}
+        open={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+        onSuccess={() => {
+          void loadOverview();
+        }}
+      />
+
+      <SetStockDialog
+        product={selectedProduct}
+        open={setStockOpen}
+        onClose={() => setSetStockOpen(false)}
+        onSuccess={() => {
+          void loadOverview();
+        }}
+      />
+    </>
   );
 }

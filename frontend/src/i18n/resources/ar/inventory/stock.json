@@ -52,16 +52,46 @@
     "title": "إدارة المواقع",
     "addLocation": "إضافة موقع",
     "addSection": "إضافة قسم",
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
     "rename": "إعادة تسمية",
     "delete": "حذف",
+    "deleteUnavailable": "غير قابل للحذف",
+    "openProducts": "عرض المنتجات",
     "newLocationPlaceholder": "أدخل اسم موقع جديد",
     "newSectionPlaceholder": "أدخل اسم قسم جديد",
     "noLocations": "لا توجد مواقع مضافة بعد",
     "noSections": "لا توجد أقسام في هذا الموقع بعد",
+    "productsCountBadge": "{{count}} منتج",
+    "stockBadge": "{{count}} وحدة",
     "table": {
       "location": "الموقع",
       "productsCount": "المنتجات",
       "totalStock": "إجمالي المخزون"
+    },
+    "sectionsTable": {
+      "section": "القسم",
+      "productsCount": "المنتجات",
+      "totalStock": "إجمالي المخزون"
+    },
+    "dialogs": {
+      "renameLocationTitle": "إعادة تسمية الموقع",
+      "renameSectionTitle": "إعادة تسمية القسم",
+      "renameDescription": "حدّث الاسم ثم احفظ التغييرات."
+    },
+    "productsDrawer": {
+      "title": "منتجات الموقع",
+      "locationTitle": "المنتجات في {{location}}",
+      "sectionTitle": "المنتجات في {{location}} / {{section}}",
+      "description": "استعرض المنتجات والكميات ضمن النطاق المحدد.",
+      "searchPlaceholder": "ابحث باسم المنتج أو الكود...",
+      "productsCount": "{{count}} منتج",
+      "totalQuantity": "إجمالي الكمية (كل المخزون): {{count}}",
+      "scopedQuantity": "الكمية داخل هذا النطاق: {{count}}",
+      "totalQuantityColumn": "إجمالي الكمية",
+      "scopedQuantityColumn": "الكمية داخل النطاق",
+      "quantity": "الكمية",
+      "noProducts": "لا توجد منتجات في هذا النطاق"
     },
     "prompts": {
       "renameLocation": "أدخل اسم الموقع الجديد",
@@ -79,6 +109,8 @@
       "loadFailed": "فشل تحميل نظرة المواقع",
       "locationNameRequired": "اسم الموقع مطلوب",
       "sectionNameRequired": "اسم القسم مطلوب",
+      "locationNotEmpty": "هذا الموقع يحتوي على مخزون ولا يمكن حذفه",
+      "sectionNotEmpty": "هذا القسم يحتوي على مخزون ولا يمكن حذفه",
       "general": "فشلت العملية"
     }
   },

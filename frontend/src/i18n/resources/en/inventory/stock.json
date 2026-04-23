@@ -52,16 +52,46 @@
     "title": "Location Management",
     "addLocation": "Add Location",
     "addSection": "Add Section",
+    "save": "Save",
+    "saving": "Saving...",
     "rename": "Rename",
     "delete": "Delete",
+    "deleteUnavailable": "Not deletable",
+    "openProducts": "Open products",
     "newLocationPlaceholder": "Enter new location name",
     "newSectionPlaceholder": "Enter new section name",
     "noLocations": "No locations configured yet",
     "noSections": "No sections in this location yet",
+    "productsCountBadge": "{{count}} products",
+    "stockBadge": "{{count}} units",
     "table": {
       "location": "Location",
       "productsCount": "Products",
       "totalStock": "Total Stock"
+    },
+    "sectionsTable": {
+      "section": "Section",
+      "productsCount": "Products",
+      "totalStock": "Total Stock"
+    },
+    "dialogs": {
+      "renameLocationTitle": "Rename location",
+      "renameSectionTitle": "Rename section",
+      "renameDescription": "Update the name and save your changes."
+    },
+    "productsDrawer": {
+      "title": "Location products",
+      "locationTitle": "Products in {{location}}",
+      "sectionTitle": "Products in {{location}} / {{section}}",
+      "description": "Browse products and quantities in the selected scope.",
+      "searchPlaceholder": "Search by product name or code...",
+      "productsCount": "{{count}} products",
+      "totalQuantity": "Total quantity (all stock): {{count}}",
+      "scopedQuantity": "Quantity in this scope: {{count}}",
+      "totalQuantityColumn": "Total Quantity",
+      "scopedQuantityColumn": "Quantity in Scope",
+      "quantity": "Quantity",
+      "noProducts": "No products found for this scope"
     },
     "prompts": {
       "renameLocation": "Enter new location name",
@@ -79,6 +109,8 @@
       "loadFailed": "Failed to load location overview",
       "locationNameRequired": "Location name is required",
       "sectionNameRequired": "Section name is required",
+      "locationNotEmpty": "This location still has stock and cannot be deleted",
+      "sectionNotEmpty": "This section still has stock and cannot be deleted",
       "general": "Operation failed"
     }
   },

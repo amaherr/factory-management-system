@@ -45,6 +45,65 @@ function buildLocationTotalsMap(products) {
     return totals;
 }
 
+function buildLocationSectionTotalsMap(products) {
+    const totals = new Map();
+
+    for (const product of products) {
+        const locations = Array.isArray(product.locations) ? product.locations : [];
+
+        for (const entry of locations) {
+            const locationKey = toLocationKey(entry.location);
+            if (!locationKey) continue;
+
+            const sectionName = normalizeSection(entry.section);
+            const sectionKey = toSectionKey(sectionName);
+            const quantity = Number(entry.quantityInStock || 0);
+
+            let locationStats = totals.get(locationKey);
+            if (!locationStats) {
+                locationStats = {
+                    products: new Set(),
+                    totalStock: 0,
+                    sections: new Map(),
+                };
+                totals.set(locationKey, locationStats);
+            }
+
+            let sectionStats = locationStats.sections.get(sectionKey);
+            if (!sectionStats) {
+                sectionStats = {
+                    name: sectionName,
+                    products: new Set(),
+                    totalStock: 0,
+                };
+                locationStats.sections.set(sectionKey, sectionStats);
+            }
+
+            locationStats.totalStock += quantity;
+            sectionStats.totalStock += quantity;
+
+            if (quantity > 0) {
+                const productId = String(product._id);
+                locationStats.products.add(productId);
+                sectionStats.products.add(productId);
+            }
+        }
+    }
+
+    return totals;
+}
+
+function resolveSectionStats(sectionStatsMap, sectionDoc) {
+    const keys = [toSectionKey(sectionDoc?.name), toSectionKey(sectionDoc?.code)].filter(Boolean);
+    for (const key of keys) {
+        if (sectionStatsMap.has(key)) {
+            return sectionStatsMap.get(key);
+        }
+    }
+
+    return null;
+}
+
 function normalizeSection(section) {
     const resolved = String(section || "").trim();
     return resolved || "UNSPECIFIED";
@@ -181,13 +240,75 @@ const locationService = {
             ]);
 
             const totalsMap = buildLocationTotalsMap(products);
+            const locationSectionTotalsMap = buildLocationSectionTotalsMap(products);
+
             const overview = locations.map((location) => {
                 const key = toLocationKey(location.name);
                 const totals = totalsMap.get(key) || { products: new Set(), totalStock: 0 };
+                const sectionStatsMap = locationSectionTotalsMap.get(key)?.sections || new Map();
+
+                const sectionKeysUsed = new Set();
+                const sectionsOverview = (location.sections || []).map((section) => {
+                    const sectionStats = resolveSectionStats(sectionStatsMap, section);
+                    const sectionTotalStock = Number(sectionStats?.totalStock || 0);
+                    const sectionProductsCount = Number(sectionStats?.products?.size || 0);
+                    const matchedKey = sectionStats
+                        ? sectionStatsMap.has(toSectionKey(section.code))
+                            ? toSectionKey(section.code)
+                            : toSectionKey(section.name)
+                        : null;
+
+                    if (matchedKey) {
+                        sectionKeysUsed.add(matchedKey);
+                    }
+
+                    return {
+                        _id: section._id,
+                        name: section.name,
+                        code: section.code,
+                        notes: section.notes,
+                        isActive: section.isActive,
+                        productsCount: sectionProductsCount,
+                        totalStock: sectionTotalStock,
+                        canDelete: sectionTotalStock === 0,
+                        deleteBlockedReason:
+                            sectionTotalStock > 0
+                                ? "Cannot delete section while it still has stock assigned in products"
+                                : null,
+                    };
+                });
+
+                for (const [sectionKey, sectionStats] of sectionStatsMap.entries()) {
+                    if (sectionKeysUsed.has(sectionKey)) {
+                        continue;
+                    }
+
+                    sectionsOverview.push({
+                        _id: `UNSPECIFIED-${sectionKey}`,
+                        name: sectionStats.name,
+                        code: null,
+                        notes: null,
+                        isActive: true,
+                        productsCount: Number(sectionStats.products.size || 0),
+                        totalStock: Number(sectionStats.totalStock || 0),
+                        canDelete: Number(sectionStats.totalStock || 0) === 0,
+                        deleteBlockedReason:
+                            Number(sectionStats.totalStock || 0) > 0
+                                ? "Cannot delete section while it still has stock assigned in products"
+                                : null,
+                    });
+                }
+
                 return {
                     ...location.toObject(),
                     productsCount: totals.products.size,
                     totalStock: totals.totalStock,
+                    canDelete: totals.totalStock === 0,
+                    deleteBlockedReason:
+                        totals.totalStock > 0
+                            ? "Cannot delete location while it still has stock assigned in products"
+                            : null,
+                    sectionsOverview,
                 };
             });
 

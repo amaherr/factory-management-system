@@ -2,7 +2,7 @@ const createError = require("../utils/errorFactory");
 
 // function to validate an incoming request against a schema
 const validator =
-    ({ bodySchema, querySchema }) =>
+    ({ bodySchema, querySchema, paramsSchema }) =>
     (req, res, next) => {
         try {
             if (bodySchema) {
@@ -27,6 +27,18 @@ const validator =
                 }
 
                 req.query = value;
+            }
+
+            if (paramsSchema) {
+                // validate request params against request params schema
+                const { error, value } = paramsSchema.validate(req.params, {
+                    stripUnknown: true,
+                });
+                if (error) {
+                    return next(createError(error.details[0].message, 400));
+                }
+
+                req.params = value;
             }
 
             next();

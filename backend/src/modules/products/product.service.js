@@ -76,6 +76,77 @@ function normalizeSection(section) {
     return resolvedSection || "UNSPECIFIED";
 }
 
+function toLocationKey(value) {
+    return String(value || "")
+        .trim()
+        .toLowerCase();
+}
+
+function toSectionKey(value) {
+    return normalizeSection(value).toLowerCase();
+}
+
+function getScopedLocationEntry(product, location, section) {
+    const locationKey = toLocationKey(location);
+    const sectionKey = toSectionKey(section);
+
+    return (product.locations || []).find(
+        (entry) =>
+            toLocationKey(entry.location) === locationKey &&
+            toSectionKey(entry.section) === sectionKey,
+    );
+}
+
+function withScopedLocationStock(products, location, section) {
+    return products.map((product) => {
+        const scopedEntry = getScopedLocationEntry(product, location, section);
+        const scopedStock = Number(scopedEntry?.quantityInStock || 0);
+
+        return {
+            ...product.toObject(),
+            selectedLocationStock: scopedStock,
+            selectedLocation: {
+                location: location.trim(),
+                section: normalizeSection(section),
+                quantityInStock: scopedStock,
+            },
+            locations: scopedEntry
+                ? [
+                      {
+                          location: scopedEntry.location,
+                          section: normalizeSection(scopedEntry.section),
+                          quantityInStock: scopedStock,
+                      },
+                  ]
+                : [],
+        };
+    });
+}
+
+function withLocationStock(products, location) {
+    const locationKey = toLocationKey(location);
+
+    return products.map((product) => {
+        const quantityInLocation = (product.locations || []).reduce((sum, entry) => {
+            if (toLocationKey(entry.location) !== locationKey) {
+                return sum;
+            }
+
+            return sum + Number(entry.quantityInStock || 0);
+        }, 0);
+
+        return {
+            ...product.toObject(),
+            selectedLocationStock: quantityInLocation,
+            selectedLocation: {
+                location: location.trim(),
+                section: null,
+                quantityInStock: quantityInLocation,
+            },
+        };
+    });
+}
+
 function findSectionLocation(product, location, section) {
     const normalizedSection = normalizeSection(section);
     return product.locations.find(
@@ -208,7 +279,13 @@ function buildProductListFilter(query, defaults = {}) {
     return filter;
 }
 
-async function listProductsWithPagination({ req, res, message, defaults = {} }) {
+async function listProductsWithPagination({
+    req,
+    res,
+    message,
+    defaults = {},
+    writeResponse = true,
+}) {
     const { page, limit } = getPaginationParams(req.query);
     const filter = buildProductListFilter(req.query, defaults);
 
@@ -222,15 +299,19 @@ async function listProductsWithPagination({ req, res, message, defaults = {} }) 
         }),
     ]);
 
-    return res.status(200).json(
-        response(message, {
-            total,
-            page,
-            limit,
-            pages: Math.max(1, Math.ceil(total / limit)),
-            products,
-        }),
-    );
+    const payload = {
+        total,
+        page,
+        limit,
+        pages: Math.max(1, Math.ceil(total / limit)),
+        products,
+    };
+
+    if (writeResponse) {
+        res.status(200).json(response(message, payload));
+    }
+
+    return payload;
 }
 
 // ------------ Services ------------
@@ -476,24 +557,71 @@ const productService = {
     getProductsByLocation: async (req, res, next) => {
         try {
             const { location } = req.params;
+            const section = req.query.section;
 
             if (!location || typeof location !== "string" || !location.trim()) {
                 return next(createError("Invalid location", 400));
             }
 
-            return await listProductsWithPagination({
+            const defaults = {
+                locations: {
+                    $elemMatch: {
+                        location: location.trim(),
+                        quantityInStock: { $gt: 0 },
+                    },
+                },
+            };
+
+            if (section && typeof section === "string" && section.trim()) {
+                defaults.locations.$elemMatch.section = normalizeSection(section);
+            }
+
+            const payload = await listProductsWithPagination({
                 req,
                 res,
                 message: "Products for location retrieved successfully",
-                defaults: {
-                    locations: {
-                        $elemMatch: {
-                            location: location.trim(),
-                            quantityInStock: { $gt: 0 },
-                        },
-                    },
-                },
+                defaults,
+                writeResponse: false,
             });
+
+            if (section && typeof section === "string" && section.trim()) {
+                return res.status(200).json(
+                    response("Products for location section retrieved successfully", {
+                        ...payload,
+                        products: withScopedLocationStock(payload.products, location, section),
+                    }),
+                );
+            }
+
+            return res.status(200).json(
+                response("Products for location retrieved successfully", {
+                    ...payload,
+                    products: withLocationStock(payload.products, location),
+                }),
+            );
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    getProductsByLocationAndSection: async (req, res, next) => {
+        try {
+            const { location, section } = req.params;
+
+            if (!location || typeof location !== "string" || !location.trim()) {
+                return next(createError("Invalid location", 400));
+            }
+
+            if (!section || typeof section !== "string" || !section.trim()) {
+                return next(createError("Invalid section", 400));
+            }
+
+            req.query = {
+                ...req.query,
+                section: normalizeSection(section),
+            };
+
+            return await productService.getProductsByLocation(req, res, next);
         } catch (err) {
             return next(err);
         }

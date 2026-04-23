@@ -84,6 +84,23 @@ interface ProductListResponse {
   products: Product[];
 }
 
+export interface LocationSectionProduct extends Product {
+  selectedLocationStock?: number;
+  selectedLocation?: {
+    location: string;
+    section: string | null;
+    quantityInStock: number;
+  };
+}
+
+interface LocationSectionProductListResponse {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  products: LocationSectionProduct[];
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 function sanitizeListParams(params: ProductListParams = {}): ProductListParams {
@@ -205,6 +222,25 @@ export const productService = {
         withCredentials: true,
         params: sanitizeListParams(params),
       });
+      return data.data;
+    } catch (error) {
+      throw extractError(error);
+    }
+  },
+
+  getProductsByLocationSection: async (
+    location: string,
+    section: string,
+    params: ProductListParams = {},
+  ): Promise<LocationSectionProductListResponse> => {
+    try {
+      const { data } = await axios.get(
+        `${API_BASE}/products/location/${encodeURIComponent(location)}/section/${encodeURIComponent(section)}`,
+        {
+          withCredentials: true,
+          params: sanitizeListParams(params),
+        },
+      );
       return data.data;
     } catch (error) {
       throw extractError(error);

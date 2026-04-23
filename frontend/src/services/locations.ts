@@ -27,6 +27,21 @@ export interface Location {
 export interface LocationOverviewItem extends Location {
   productsCount: number;
   totalStock: number;
+  canDelete?: boolean;
+  deleteBlockedReason?: string | null;
+  sectionsOverview?: LocationSectionOverviewItem[];
+}
+
+export interface LocationSectionOverviewItem {
+  _id: string;
+  name: string;
+  code?: string | null;
+  notes?: string | null;
+  isActive: boolean;
+  productsCount: number;
+  totalStock: number;
+  canDelete: boolean;
+  deleteBlockedReason?: string | null;
 }
 
 interface ApiResponse<T> {

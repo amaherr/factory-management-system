@@ -48,9 +48,22 @@ router.get(
 // Get products by location (Admin, Inventory)
 router.get(
     "/location/:location",
-    validator({ querySchema: productDtos.listProductsQuerySchema }),
+    validator({
+        paramsSchema: productDtos.locationParamsSchema,
+        querySchema: productDtos.listProductsQuerySchema,
+    }),
     authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
     productService.getProductsByLocation,
+);
+
+router.get(
+    "/location/:location/section/:section",
+    validator({
+        paramsSchema: productDtos.locationSectionParamsSchema,
+        querySchema: productDtos.listProductsQuerySchema,
+    }),
+    authorizor([ROLES.ADMIN, ROLES.INVENTORY]),
+    productService.getProductsByLocationAndSection,
 );
 
 // Get product by id (Public/Authenticated)
