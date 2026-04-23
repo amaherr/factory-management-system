@@ -3,8 +3,10 @@ version: '1'
 projects:
   - name: ABA Factory System
     environments:
+      ###### Production Environment ######
       - name: Production
         services:
+          ###### Production Deployment ######
           - type: web
             name: prod-frontend
             runtime: static
@@ -22,6 +24,85 @@ projects:
             runtime: node
             repo: https://github.com/Factory-System/aba-factory-management-system
             branch: prod
+            plan: free
+            envVars:
+              - key: JWT_SECRET
+                sync: false
+              - key: CLIENT_URL
+                sync: false
+              - key: NODE_ENV
+                sync: false
+              - key: COOKIE_KEY
+                sync: false
+              - key: MONGO_URI
+                sync: false
+              - key: PORT
+                sync: false
+            region: oregon
+            buildCommand: npm install
+            startCommand: npm start
+            autoDeployTrigger: commit
+            rootDir: backend
+
+      ###### Staging Environment ######
+      - name: Staging
+        services:
+          ###### Staging Deployment ######
+          - type: web
+            name: staging-frontend
+            runtime: static
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: staging
+            envVars:
+              - key: VITE_API_URL
+                sync: false
+            buildCommand: npm install && npm run build
+            staticPublishPath: dist
+            autoDeployTrigger: commit
+            rootDir: frontend
+          - type: web
+            name: staging-backend
+            runtime: node
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: staging
+            plan: free
+            envVars:
+              - key: JWT_SECRET
+                sync: false
+              - key: CLIENT_URL
+                sync: false
+              - key: NODE_ENV
+                sync: false
+              - key: COOKIE_KEY
+                sync: false
+              - key: MONGO_URI
+                sync: false
+              - key: PORT
+                sync: false
+            region: oregon
+            buildCommand: npm install
+            startCommand: npm start
+            autoDeployTrigger: commit
+            rootDir: backend
+
+          ###### Zaid's Deployment ######
+          - type: web
+            name: zaid-frontend
+            runtime: static
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: production
+            envVars:
+              - key: VITE_API_URL
+                sync: false
+            buildCommand: npm install && npm run build
+            staticPublishPath: dist
+            autoDeployTrigger: commit
+            rootDir: frontend
+          - type: web
+            name: zaid-backend
+            runtime: node
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: production
             plan: free
             envVars:
               - key: JWT_SECRET
