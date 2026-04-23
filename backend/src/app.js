@@ -31,10 +31,41 @@ const errorHandler = require("./middlewares/errorHandler");
 const app = express();
 connectDB();
 
+const normalizeOrigin = (origin) => {
+    if (!origin || typeof origin !== "string") return "";
+    return origin.trim().replace(/\/$/, "");
+};
+
+const corsAllowList = [process.env.CLIENT_URL, process.env.CLIENT_URLS, process.env.FRONTEND_URL]
+    .filter(Boolean)
+    .flatMap((value) => value.split(","))
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
 // mount middlewares
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || "http://localhost:5173",
+        origin: (origin, callback) => {
+            // Allow server-to-server tools and same-origin requests without Origin header.
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            const normalizedRequestOrigin = normalizeOrigin(origin);
+
+            if (
+                corsAllowList.length === 0 &&
+                normalizedRequestOrigin === normalizeOrigin("http://localhost:5173")
+            ) {
+                return callback(null, true);
+            }
+
+            if (corsAllowList.includes(normalizedRequestOrigin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error(`CORS blocked for origin: ${origin}`));
+        },
         credentials: true,
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],

@@ -27,7 +27,8 @@ export function Login() {
       toast.success(t('welcome back message'));
       navigate('/');
     } catch (error) {
-      toast.error(t('invalid credentials'));
+      const message = error instanceof Error ? error.message : t('invalid credentials');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
