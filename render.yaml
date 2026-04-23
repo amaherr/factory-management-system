@@ -4,7 +4,7 @@ projects:
   - name: ABA Factory System
     environments:
       ###### Production Environment ######
-      - name: Production
+      - name: Prod
         services:
           ###### Production Deployment ######
           - type: web
@@ -90,7 +90,7 @@ projects:
             name: zaid-frontend
             runtime: static
             repo: https://github.com/Factory-System/aba-factory-management-system
-            branch: production
+            branch: prod
             envVars:
               - key: VITE_API_URL
                 sync: false
@@ -102,7 +102,7 @@ projects:
             name: zaid-backend
             runtime: node
             repo: https://github.com/Factory-System/aba-factory-management-system
-            branch: production
+            branch: prod
             plan: free
             envVars:
               - key: JWT_SECRET
