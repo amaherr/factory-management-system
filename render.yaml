@@ -17,7 +17,7 @@ projects:
             staticPublishPath: dist
             autoDeployTrigger: commit
             rootDir: frontend
-          - type: pserv
+          - type: web
             name: prod-backend
             runtime: node
             repo: https://github.com/Factory-System/aba-factory-management-system
