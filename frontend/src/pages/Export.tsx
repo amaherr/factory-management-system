@@ -14,14 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../components/ui/table';
 import { exportService, type ExportFormat } from '../services/exports';
 
 interface ExportHistoryEntry {
@@ -57,6 +49,9 @@ const downloadBlobFile = (blob: Blob, fileName: string) => {
 export function Export() {
   const { t } = useTranslation('export');
 
+  const exportSelectTriggerClass =
+    'border border-[--border-strong] bg-[--bg-card] shadow-sm focus-visible:border-[--primary-500] focus-visible:ring-[--primary-500]/30';
+
   const [collections, setCollections] = useState<string[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>('');
   const [format, setFormat] = useState<ExportFormat>('csv');
@@ -77,6 +72,8 @@ export function Export() {
       }),
     };
   }, [selectedCollection, t]);
+
+  const recentHistory = useMemo(() => history.slice(0, 5), [history]);
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -136,13 +133,13 @@ export function Export() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">{t('title')}</h1>
-        <p className="text-gray-500">{t('description')}</p>
+    <div className="space-y-6 p-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <Card>
           <CardHeader>
             <CardTitle>{t('generateCard.title')}</CardTitle>
@@ -155,7 +152,7 @@ export function Export() {
                 onValueChange={setSelectedCollection}
                 disabled={loadingCollections || collections.length === 0}
               >
-                <SelectTrigger>
+                <SelectTrigger className={exportSelectTriggerClass}>
                   <SelectValue
                     placeholder={
                       loadingCollections
@@ -177,6 +174,11 @@ export function Export() {
                   ))}
                 </SelectContent>
               </Select>
+              {selectedCollectionInfo ? (
+                <p className="text-xs text-muted-foreground">
+                  {selectedCollectionInfo.description}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -185,7 +187,7 @@ export function Export() {
                 value={format}
                 onValueChange={(value) => setFormat(value as ExportFormat)}
               >
-                <SelectTrigger>
+                <SelectTrigger className={exportSelectTriggerClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -212,82 +214,60 @@ export function Export() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('detailsCard.title')}</CardTitle>
+            <CardTitle>{t('history.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!selectedCollectionInfo ? (
-              <p className="text-sm text-muted-foreground">{t('detailsCard.emptyState')}</p>
+            {recentHistory.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('history.emptyState')}</p>
             ) : (
-              <div className="rounded-lg border p-4 space-y-3 bg-blue-50/50">
-                <div>
-                  <p className="text-sm text-gray-500">{t('detailsCard.collection')}</p>
-                  <p className="font-medium">{selectedCollectionInfo.label}</p>
-                </div>
+              <div className="space-y-3">
+                {recentHistory.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-[--border-default] bg-[--bg-card] p-3"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <FileSpreadsheet className="size-4 text-blue-600" />
+                        <p className="truncate font-medium">{entry.fileName}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t(`collections.${entry.collection.replace(/-/g, '_')}`, {
+                          defaultValue: entry.collection,
+                        })}
+                        {' · '}
+                        {new Date(entry.generatedAt).toLocaleString()}
+                      </p>
+                    </div>
 
-                <div>
-                  <p className="text-sm text-gray-500">{t('detailsCard.descriptionLabel')}</p>
-                  <p className="text-sm">{selectedCollectionInfo.description}</p>
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  <Badge variant="secondary">{t('detailsCard.liveDataBadge')}</Badge>
-                  <Badge variant="outline">{t('detailsCard.adminOnlyBadge')}</Badge>
-                </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="outline">{entry.format.toUpperCase()}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatBytes(entry.sizeBytes)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('history.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('history.table.fileName')}</TableHead>
-                <TableHead>{t('history.table.generatedAt')}</TableHead>
-                <TableHead>{t('history.table.collection')}</TableHead>
-                <TableHead>{t('history.table.format')}</TableHead>
-                <TableHead>{t('history.table.size')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    {t('history.emptyState')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                history.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-medium flex items-center gap-2">
-                      <FileSpreadsheet className="size-4 text-green-600" />
-                      {entry.fileName}
-                    </TableCell>
-                    <TableCell>{new Date(entry.generatedAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      {t(`collections.${entry.collection.replace(/-/g, '_')}`, {
-                        defaultValue: entry.collection,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{entry.format.toUpperCase()}</Badge>
-                    </TableCell>
-                    <TableCell>{formatBytes(entry.sizeBytes)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {selectedCollectionInfo ? (
+        <div className="rounded-lg border border-[--border-default] bg-[--bg-card] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{selectedCollectionInfo.label}</p>
+              <p className="text-sm text-muted-foreground">{selectedCollectionInfo.description}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{t('detailsCard.liveDataBadge')}</Badge>
+              <Badge variant="outline">{t('detailsCard.adminOnlyBadge')}</Badge>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

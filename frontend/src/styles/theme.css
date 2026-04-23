@@ -81,6 +81,8 @@
   --muted-foreground: var(--text-muted);
   --accent: var(--accent-500);
   --accent-foreground: var(--text-on-dark);
+  --menu-highlight: #eaf4ff;
+  --menu-highlight-foreground: #1f4f8f;
   --destructive: var(--error-main);
   --destructive-foreground: var(--text-on-dark);
   --border: var(--border-default);
@@ -127,6 +129,8 @@
   --muted-foreground: var(--text-muted);
   --accent: var(--accent-500);
   --accent-foreground: var(--text-on-dark);
+  --menu-highlight: var(--primary-400);
+  --menu-highlight-foreground: var(--text-on-dark);
   --destructive: var(--error-main);
   --destructive-foreground: var(--text-on-dark);
   --border: #374151;
@@ -157,6 +161,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-menu-highlight: var(--menu-highlight);
+  --color-menu-highlight-foreground: var(--menu-highlight-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
