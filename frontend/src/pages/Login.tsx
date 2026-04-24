@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { demoConfig } from '../config/demo';
 import { toast } from 'sonner';
 import { Factory, Phone, Lock } from 'lucide-react';
 
@@ -17,6 +18,7 @@ export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
+  const showDemoNotice = demoConfig.isDemo && (demoConfig.recruiterPhone || demoConfig.recruiterPin);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,24 @@ export function Login() {
             onSubmit={handleSubmit}
             className="space-y-4"
           >
+            {showDemoNotice && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                <p className="font-semibold">{t('demo recruiter title')}</p>
+                <p className="mt-1 text-amber-900">{t('demo recruiter description')}</p>
+                <div className="mt-3 space-y-1 font-mono text-xs">
+                  {demoConfig.recruiterPhone && (
+                    <p>
+                      {t('demo phone label')}: {demoConfig.recruiterPhone}
+                    </p>
+                  )}
+                  {demoConfig.recruiterPin && (
+                    <p>
+                      {t('demo pin label')}: {demoConfig.recruiterPin}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="phone">{t('phone number')}</Label>
               <div className="relative">
