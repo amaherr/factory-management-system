@@ -310,18 +310,6 @@ export function ExecuteStockMovementDialog({
                 </div>
                 {requiresSource && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>{t('execute.sourceAllocationsTitle')}</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addAllocation('source')}
-                      >
-                        <Plus className="size-4 mr-1" />
-                        {t('execute.addAllocation')}
-                      </Button>
-                    </div>
                     <p className="text-xs text-muted-foreground">
                       {t('execute.multiAllocationHint')}
                     </p>
@@ -404,18 +392,6 @@ export function ExecuteStockMovementDialog({
                       </div>
                     ))}
 
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addAllocation('source')}
-                      >
-                        <Plus className="size-4 mr-1" />
-                        {t('execute.addAllocation')}
-                      </Button>
-                    </div>
-
                     <p className="text-xs text-muted-foreground">
                       {t('execute.allocatedSummary', {
                         allocated: sourceAllocatedTotal,
@@ -429,15 +405,6 @@ export function ExecuteStockMovementDialog({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <Label>{t('execute.destinationAllocationsTitle')}</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addAllocation('destination')}
-                      >
-                        <Plus className="size-4 mr-1" />
-                        {t('execute.addAllocation')}
-                      </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {t('execute.multiAllocationHint')}
