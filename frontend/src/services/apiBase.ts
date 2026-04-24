@@ -7,3 +7,8 @@ export const getApiBaseUrl = () => {
   const normalized = trimTrailingSlash(configuredUrl);
   return normalized.endsWith('/api') ? normalized : `${normalized}/api`;
 };
+
+export const getApiOriginUrl = () => {
+  const baseUrl = getApiBaseUrl();
+  return baseUrl.replace(/\/api\/?$/, '');
+};

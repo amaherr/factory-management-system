@@ -1,9 +1,10 @@
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_DIMENSION = 800; // Max width or height for compression (reduced for smaller payloads)
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-const API_ORIGIN = API_BASE.replace(/\/api\/?$/, '');
 
+import { getApiOriginUrl } from '../services/apiBase';
+
+const API_ORIGIN = getApiOriginUrl();
 export interface ImageUploadResult {
   url: string;
   size: number;
