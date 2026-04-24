@@ -46,9 +46,9 @@ projects:
             autoDeployTrigger: commit
             rootDir: backend
 
-          ###### Recruitment Deployment ######
+          ###### Demo Deployment ######
           - type: web
-            name: recruitment-frontend
+            name: demo-frontend
             runtime: static
             repo: https://github.com/Factory-System/aba-factory-management-system
             branch: prod
@@ -66,7 +66,7 @@ projects:
             autoDeployTrigger: commit
             rootDir: frontend
           - type: web
-            name: recruitment-backend
+            name: demo-backend
             runtime: node
             repo: https://github.com/Factory-System/aba-factory-management-system
             branch: prod
