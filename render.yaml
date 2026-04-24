@@ -3,10 +3,10 @@ version: '1'
 projects:
   - name: ABA Factory System
     environments:
-      ###### Production Environment ######
+      ###### Prod Environment ######
       - name: Prod
         services:
-          ###### Production Deployment ######
+          ###### Prod Deployment ######
           - type: web
             name: prod-frontend
             runtime: static
@@ -21,6 +21,44 @@ projects:
             rootDir: frontend
           - type: web
             name: prod-backend
+            runtime: node
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: prod
+            plan: free
+            envVars:
+              - key: JWT_SECRET
+                sync: false
+              - key: CLIENT_URL
+                sync: false
+              - key: NODE_ENV
+                sync: false
+              - key: COOKIE_KEY
+                sync: false
+              - key: MONGO_URI
+                sync: false
+              - key: PORT
+                sync: false
+            region: oregon
+            buildCommand: npm install
+            startCommand: npm start
+            autoDeployTrigger: commit
+            rootDir: backend
+
+          ###### Recruitment Deployment ######
+          - type: web
+            name: recruitment-frontend
+            runtime: static
+            repo: https://github.com/Factory-System/aba-factory-management-system
+            branch: prod
+            envVars:
+              - key: VITE_API_URL
+                sync: false
+            buildCommand: npm install && npm run build
+            staticPublishPath: dist
+            autoDeployTrigger: commit
+            rootDir: frontend
+          - type: web
+            name: recruitment-backend
             runtime: node
             repo: https://github.com/Factory-System/aba-factory-management-system
             branch: prod
