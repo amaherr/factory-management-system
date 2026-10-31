@@ -16,7 +16,7 @@ A full-stack operations platform for a factory, connecting production planning, 
 
 The interface supports English and Arabic and shows navigation according to each user's role. The API enforces permissions for admin, sales, inventory, accounting, planning, and production roles.
 
-## Architecture
+## Code architecture
 
 ```mermaid
 flowchart LR
@@ -31,7 +31,20 @@ flowchart LR
     A --> S
 ```
 
-The backend is organized by domain under [`backend/src/modules`](backend/src/modules): each module keeps its routes, request schemas, business logic, and persistence code together. Shared middleware handles authentication, authorization, validation, and errors. The frontend separates pages, reusable components, API services, and session state under [`frontend/src`](frontend/src).
+The backend is organized by domain in [`backend/src/modules`](backend/src/modules). Orders, batches, returns, products, and the other modules follow the same request path:
+
+| Layer | Responsibility | Example |
+| --- | --- | --- |
+| App entry | Configure CORS, JSON and cookie parsing, authentication, API documentation, and route prefixes. | [`backend/src/app.js`](backend/src/app.js) |
+| Routes | Declare endpoints and apply role checks and request validation. | [`order.routes.js`](backend/src/modules/orders/order.routes.js) |
+| DTOs | Validate request bodies, params, and queries with Joi. | [`order.dtos.js`](backend/src/modules/orders/order.dtos.js) |
+| Services | Enforce business rules, coordinate related writes, and return API responses. | [`order.service.js`](backend/src/modules/orders/order.service.js) |
+| Repositories and models | Isolate Mongoose queries and define document schemas and indexes. | [`order.repository.js`](backend/src/modules/orders/order.repository.js), [`order.model.js`](backend/src/modules/orders/order.model.js) |
+| Shared infrastructure | Run MongoDB transactions and handle authentication, authorization, errors, and document numbering. | [`transactionManager`](backend/src/database/transactionManager), [`middlewares`](backend/src/middlewares) |
+
+For example, `POST /api/orders` passes through a route and Joi schema before the order service prices each item, creates the order, reserves shelf stock, and writes stock movements in a transaction. Repositories perform the database operations; the same movement records support warehouse execution and reporting.
+
+The React frontend keeps navigation and page definitions in [`routes.tsx`](frontend/src/routes.tsx), backend calls in [`services`](frontend/src/services), session and notification state in [`contexts`](frontend/src/contexts), and English/Arabic resources in [`i18n`](frontend/src/i18n). Pages and reusable UI components live in their own directories under [`frontend/src`](frontend/src).
 
 ### Engineering decisions
 
@@ -62,4 +75,21 @@ API documentation is served at `http://localhost:3000/api-docs`. The OpenAPI doc
 
 ## Deployment
 
-[`render.yaml`](render.yaml) defines separate static frontend and Node API services for production, demo, and staging, with SPA rewrites and environment-specific configuration. Secrets and database URLs are supplied as deployment environment variables.
+[`render.yaml`](render.yaml) describes separate frontend and API services on Render. Each service deploys automatically on commits to its configured branch:
+
+| Environment | Branch | Services |
+| --- | --- | --- |
+| Production | `prod` | `prod-frontend`, `prod-backend` |
+| Demo | `prod` | `demo-frontend`, `demo-backend` |
+| Staging | `staging` | `staging-frontend`, `staging-backend` |
+
+The frontend uses `frontend/` as its root, runs `npm install && npm run build`, and publishes `dist/` as a static site. A `/*` rewrite to `/index.html` supports client-side routes. The API uses `backend/` as its root, runs `npm install` and `npm start`, and connects to MongoDB through `MONGO_URI`. The configuration also includes an additional `zaid-*` service pair.
+
+| Service | Environment variables |
+| --- | --- |
+| Frontend | `VITE_API_URL` (API origin), `VITE_IS_DEMO`; demo also accepts `VITE_DEMO_PHONE` and `VITE_DEMO_PIN` for its login notice. |
+| API | `MONGO_URI`, `JWT_SECRET`, `COOKIE_KEY`, `CLIENT_URL` (frontend origin), `NODE_ENV`, `PORT`. |
+
+Set `VITE_API_URL` and `CLIENT_URL` to the corresponding deployed service URLs. The API uses credentialed CORS and sends the JWT in an HTTP-only cookie; outside development, that cookie is marked `Secure` and `SameSite=None`, so the deployed frontend and API need HTTPS. Provide secrets and database credentials through Render environment variables.
+
+**Storage note:** product uploads are served from the API's local `uploads/` directory. Persistent object storage is needed if uploaded images must survive service restarts or redeployments.
